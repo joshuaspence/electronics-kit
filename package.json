@@ -15,7 +15,8 @@
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "size": "node tools/check-bundle-size.mjs"
   },
   "dependencies": {
     "react": "^19.3.1",

@@ -40,10 +40,12 @@ pnpm lint         # ESLint + Prettier check (pnpm format fixes formatting)
 pnpm typecheck    # whole project, then src/core alone without DOM types
 pnpm test         # Vitest unit tests
 pnpm test:e2e     # Playwright: builds, serves the preview and runs tests/e2e
+pnpm build && pnpm size   # gzipped JS + CSS must stay under the 1 MiB first-load budget
 ```
 
 - Outside CI, run the e2e tests against a preinstalled Chromium with
   `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm test:e2e`
   (only the Chromium project runs). Don't run `playwright install` in cloud sessions.
+- `ci.yml` runs all of these on every PR; `deploy.yml` publishes `master` to GitHub Pages.
 - Markdown is formatted by hand (Prettier skips it); wrap at 100 columns.
 - TypeScript is pinned to 6.x until typescript-eslint supports 7.
