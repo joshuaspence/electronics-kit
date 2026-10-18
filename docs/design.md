@@ -158,6 +158,12 @@ the current. An unlockable **multimeter** shows volts and milliamps for older ch
   success.
 - **Sound** effects synthesised with the Web Audio API (snap, a buzzer that follows the simulation,
   pop, chime). No music in M1. One always-visible mute button; silent until the first interaction.
+- **Current dots** (`src/core/flow.ts`): white dots run along every part and wire carrying at least
+  1 mA, in the direction of conventional current. Their speed grows with the logarithm of the
+  current (20 board units/s at 1 mA, +20 per tenfold, capped at 120), so a dim LED still visibly
+  flows and a short circuit races. They stop under reduce-motion.
+- **Short circuit:** the shorted battery turns red and pulses with a "Hot!" label, a plain-words
+  warning appears above the board (an ARIA status), and a low buzz plays once as it happens.
 - **Mascot: Volty**, a chunky orange AA-style battery with a face, arms and a + cap. It must look
   clearly different from the black battery packs used as parts. Volty gives hints and "Why?"
   cards, uses static poses with simple CSS motion, and never interrupts a drag.

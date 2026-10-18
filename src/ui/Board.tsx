@@ -16,6 +16,8 @@ interface BoardProps {
   board: BoardModel & { kind: 'breadboard' };
   build: Build;
   brightness: ReadonlyMap<string, number>;
+  flows: ReadonlyMap<string, number>;
+  hot: ReadonlySet<string>;
   selectedId: string | null;
   ghost: Ghost | null;
   onHolePointerDown: (hole: Terminal, event: ReactPointerEvent) => void;
@@ -28,6 +30,8 @@ export function Board({
   board,
   build,
   brightness,
+  flows,
+  hot,
   selectedId,
   ghost,
   onHolePointerDown,
@@ -83,6 +87,8 @@ export function Board({
               from={holePosition(a)}
               to={holePosition(b)}
               brightness={brightness.get(part.id) ?? 0}
+              flow={flows.get(part.id) ?? 0}
+              hot={hot.has(part.id)}
               selected={part.id === selectedId}
             />
           </g>

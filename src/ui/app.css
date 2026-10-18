@@ -26,7 +26,7 @@ main {
   width: 100%;
   height: auto;
   /* Keep the whole board on screen on a landscape tablet (docs/design.md §9). */
-  max-height: calc(100vh - 240px);
+  max-height: calc(100vh - 320px);
   touch-action: none;
 }
 
@@ -147,4 +147,54 @@ button:disabled {
 .part-selected .wire {
   stroke: #2f7de1;
   stroke-width: 4;
+}
+
+.flow {
+  stroke: #ffffff;
+  stroke-width: 4;
+  stroke-linecap: round;
+  pointer-events: none;
+  animation-name: flow;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes flow {
+  to {
+    /* One dot gap (DOT_GAP in PartShape.tsx), so the loop is seamless. */
+    stroke-dashoffset: -16;
+  }
+}
+
+.part-hot .battery-body {
+  fill: #d64545;
+  animation: hot-pulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes hot-pulse {
+  to {
+    fill: #f28c28;
+  }
+}
+
+.hot-label {
+  fill: #d64545;
+  font-size: 18px;
+  font-weight: 700;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.warning {
+  min-height: 1.5em;
+  margin: 0;
+  color: #b23a3a;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow,
+  .part-hot .battery-body {
+    animation: none;
+  }
 }

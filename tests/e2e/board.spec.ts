@@ -95,3 +95,31 @@ test('drops where the pointer is released, even before the last move re-renders'
 
   await expect(page.locator('.part-bulb:not(.part-ghost)')).toHaveCount(1);
 });
+
+test('shows current flowing through a lit bulb, and none through a loose one', async ({ page }) => {
+  await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'e5', 'e7'));
+  await expect(page.locator('.part-bulb:not(.part-ghost)')).toHaveCount(1);
+  await expect(page.locator('.part-bulb .flow')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'e1', 'e3'));
+  await expect(page.locator('.part-bulb .flow')).toHaveCount(1);
+  await expect(page.locator('.part-battery .flow')).toHaveCount(1);
+});
+
+test('warns about a short circuit across the battery', async ({ page }) => {
+  await expect(page.getByRole('status')).toHaveText('');
+  // A wire from column 1 to column 3 joins the battery's two terminals with nothing in between.
+  await drag(
+    page,
+    page.locator('[data-hole="c1"]'),
+    await centre(page.locator('[data-hole="c3"]')),
+  );
+
+  await expect(page.locator('.part-battery.part-hot')).toHaveCount(1);
+  await expect(page.getByRole('status')).toContainText('short circuit');
+
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.locator('.part-hot')).toHaveCount(0);
+  await expect(page.getByRole('status')).toHaveText('');
+});

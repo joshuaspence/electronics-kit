@@ -1,5 +1,9 @@
 import type { PartSpec } from '../core/build';
 import type { Point } from './geometry';
+import { strings } from './strings';
+
+/** Distance between flowing dots, in board units. */
+const DOT_GAP = 16;
 
 interface PartShapeProps {
   spec: PartSpec;
@@ -7,6 +11,10 @@ interface PartShapeProps {
   to: Point;
   /** 0 to 1, for bulbs. */
   brightness?: number;
+  /** Speed of the flowing dots in board units per second, signed like the current. */
+  flow?: number;
+  /** A shorted battery. */
+  hot?: boolean;
   ghost?: boolean;
   selected?: boolean;
 }
@@ -15,13 +23,23 @@ interface PartShapeProps {
  * Placeholder art for a part: its legs, and a body at their midpoint. Real art replaces this
  * behind the same props (`PartSkin`, docs/design.md §7).
  */
-export function PartShape({ spec, from, to, brightness = 0, ghost, selected }: PartShapeProps) {
+export function PartShape({
+  spec,
+  from,
+  to,
+  brightness = 0,
+  flow = 0,
+  hot = false,
+  ghost,
+  selected,
+}: PartShapeProps) {
   const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
   const className = [
     'part',
     `part-${spec.kind}`,
     ghost && 'part-ghost',
     selected && 'part-selected',
+    hot && 'part-hot',
   ]
     .filter(Boolean)
     .join(' ');
@@ -30,6 +48,7 @@ export function PartShape({ spec, from, to, brightness = 0, ghost, selected }: P
     return (
       <g className={className}>
         <line className="wire" x1={from.x} y1={from.y} x2={to.x} y2={to.y} />
+        <Flow from={from} to={to} speed={flow} />
       </g>
     );
   }
@@ -37,7 +56,13 @@ export function PartShape({ spec, from, to, brightness = 0, ghost, selected }: P
   return (
     <g className={className}>
       <line className="leg" x1={from.x} y1={from.y} x2={to.x} y2={to.y} />
+      <Flow from={from} to={to} speed={flow} />
       {body(spec, mid, brightness)}
+      {hot && (
+        <text className="hot-label" x={mid.x} y={mid.y + 36}>
+          {strings.hot}
+        </text>
+      )}
     </g>
   );
 }
@@ -85,4 +110,25 @@ function body(spec: PartSpec, { x, y }: Point, brightness: number) {
     case 'wire':
       return null;
   }
+}
+
+/** Dots moving from `from` to `to` (or back, for a negative speed) to show current flowing. */
+function Flow({ from, to, speed }: { from: Point; to: Point; speed: number }) {
+  if (speed === 0) {
+    return null;
+  }
+  return (
+    <line
+      className="flow"
+      x1={from.x}
+      y1={from.y}
+      x2={to.x}
+      y2={to.y}
+      strokeDasharray={`0 ${DOT_GAP}`}
+      style={{
+        animationDuration: `${DOT_GAP / Math.abs(speed)}s`,
+        animationDirection: speed < 0 ? 'reverse' : 'normal',
+      }}
+    />
+  );
 }
