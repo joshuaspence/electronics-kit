@@ -66,10 +66,15 @@ the decision and the main reason for it. When the design changes, update this fi
 - **Chapter 1 levels:** *Light it up* (bulb and two wires), *The long way round* (a far-away bulb),
   *Mind the gap* (one missing wire), *Double bright* (two bulbs in one loop), *Shortcut!* (remove a
   wire that shorts the battery).
-- **Finishing:** the first time the goal is met, a card floats over the bottom of the screen with
-  the stars and the "Why?" text, leaving the working circuit in view, and offers the next level.
-  Parts the level started with don't count towards par. The level list shows the best stars; every
-  level is open from the start. Progress is kept in memory until saving lands with the menus.
+- **Chapter 2 levels** (mini breadboard): *Hidden wires* (a bulb in the battery's columns, no
+  wires), *Sneaky strip* (a bulb with both legs in one column, shorted out by the strip), *Flick the
+  switch*, *Press to glow* (a button) and *All together* (one switch, two bulbs).
+- **Finishing:** the first time the goal is met *and* the goal's bulbs are lit with the switches as
+  the child left them (so a switch level finishes when they switch it on), a card floats over the
+  bottom of the screen with the stars and the "Why?" text, leaving the working circuit in view, and
+  offers the next level. Parts the level started with don't count towards par. The level list shows
+  the best stars; every level is open from the start. Progress is kept in memory until saving lands
+  with the menus.
 
 ## 4. Circuit simulation
 

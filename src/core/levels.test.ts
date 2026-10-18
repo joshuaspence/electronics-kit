@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Circuit, Part, Pins } from './circuit';
-import { checkGoal, type Level, starsFor } from './levels';
+import { checkGoal, type Level, litNow, starsFor } from './levels';
 
 const battery: Part = {
   id: 'battery',
@@ -144,5 +144,18 @@ describe('starsFor', () => {
     expect(starsFor(level, 3, 0)).toBe(2);
     expect(starsFor(level, 2, 1)).toBe(2);
     expect(starsFor(level, 4, 3)).toBe(1);
+  });
+});
+
+describe('litNow', () => {
+  it('counts bulbs lit with switches as they are', () => {
+    const c = (closed: boolean) =>
+      circuit({ id: 's', kind: 'switch', pins: ['+', 'x'], closed }, bulb('b', ['x', '-']));
+    expect(litNow(c(false))).toBe(0);
+    expect(litNow(c(true))).toBe(1);
+  });
+
+  it('counts nothing while the battery is shorted', () => {
+    expect(litNow(circuit(bulb('b', ['+', '-']), wire('w', ['+', '-'])))).toBe(0);
   });
 });

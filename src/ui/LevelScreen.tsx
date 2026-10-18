@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { type Build, toCircuit } from '../core/build';
-import { checkGoal, type Level, starsFor } from '../core/levels';
+import { checkGoal, type Level, litNow, starsFor } from '../core/levels';
 import type { Stars } from '../core/progress';
 import { levelText } from '../levels/strings';
 import { strings } from './strings';
@@ -21,7 +21,13 @@ export function LevelScreen({ level, onFinish, onNext, onBack }: LevelScreenProp
 
   const onChange = useCallback(
     (build: Build) => {
-      if (stars !== null || !checkGoal(level.goal, toCircuit(level.board, build)).met) {
+      if (stars !== null) {
+        return;
+      }
+      // The goal must be met, and the bulbs must be glowing right now: a switch-controlled
+      // circuit finishes when the child switches it on.
+      const circuit = toCircuit(level.board, build);
+      if (!checkGoal(level.goal, circuit).met || litNow(circuit) < level.goal.bulbs) {
         return;
       }
       // Parts the level started with don't count as placed, even if the child moved them.
