@@ -60,9 +60,9 @@ the decision and the main reason for it. When the design changes, update this fi
   No goal is met while a battery is shorted, and a failed check says why (short circuit, too few
   lit, not controlled, no switch) so hints can respond to it.
 - **Level data** (`src/levels/`): each level has a board, its starting parts (fixed, or movable
-  ones that count against the tray), a goal, a tray, a par and a **solution**. Unit tests check every
-  level starts unsolved and that its solution finishes it at par using only its tray; hints can show
-  the solution's parts later. Level text lives in `src/levels/strings.ts`.
+  ones that count against the tray), a goal, a tray, a par and a **solution**. Unit tests check
+  every level starts unsolved and that its solution finishes it at par using only its tray; hints
+  can show the solution's parts later. Level text lives in `src/levels/strings.ts`.
 - **Chapter 1 levels:** *Light it up* (bulb and two wires), *The long way round* (a far-away bulb),
   *Mind the gap* (one missing wire), *Double bright* (two bulbs in one loop), *Shortcut!* (remove a
   wire that shorts the battery).
