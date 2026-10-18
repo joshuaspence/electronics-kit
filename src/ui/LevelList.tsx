@@ -2,6 +2,7 @@ import type { Level } from '../core/levels';
 import type { Progress } from '../core/progress';
 import { chapterTitles, levelText } from '../levels/strings';
 import { strings } from './strings';
+import { UpdatePrompt } from './UpdatePrompt';
 
 interface LevelListProps {
   levels: readonly Level[];
@@ -15,6 +16,8 @@ export function LevelList({ levels, progress, onPlay }: LevelListProps) {
   return (
     <main>
       <h1>{strings.title}</h1>
+      {/* Offered only between levels, never in the middle of one. */}
+      <UpdatePrompt />
       {chapters.map((chapter) => (
         <section key={chapter} className="chapter">
           <h2>{strings.chapter(chapter, chapterTitles[chapter] ?? '')}</h2>

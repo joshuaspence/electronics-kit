@@ -236,7 +236,10 @@ tests/e2e/   Playwright
 - The level list's footer shows the `package.json` version and short git SHA (a settings screen
   later).
 - A new service worker shows **"New version available — tap to update"**; it never reloads silently
-  in the middle of a level.
+  in the middle of a level. The offer appears only on the level list, between levels.
+- **PWA** (`vite-plugin-pwa`, `generateSW`): the service worker precaches every built file, so the
+  game works offline once loaded. The manifest names the app "Electronics Kit" ("Circuits" on the
+  home screen), in landscape, with a bulb icon in SVG and PNG (`public/`).
 
 ## 11. Milestones
 
