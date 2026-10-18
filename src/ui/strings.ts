@@ -9,6 +9,11 @@ export const strings = {
   helloBoard:
     'Drag a bulb onto the board, then draw wires from hole to hole to make it glow. Holes in the same column are joined.',
   wireHint: 'Wires: drag from hole to hole',
+  hot: 'Hot!',
+  shortCircuit:
+    'Whoa, short circuit! The electricity is rushing straight back to the battery without going through anything, so the battery is getting hot.',
+  soundOn: 'Sound on',
+  soundOff: 'Sound off',
   undo: 'Undo',
   redo: 'Redo',
   rotate: 'Rotate',

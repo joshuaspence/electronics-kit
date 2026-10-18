@@ -3,12 +3,14 @@ import { TERMINAL_ROWS } from '../core/breadboard';
 import {
   type Board as BoardModel,
   type Build,
+  type Edit,
   type Location,
   type PartSpec,
   type PlacedPart,
   toCircuit,
 } from '../core/build';
-import { bulbBrightness, solveDc } from '../core/dc';
+import { bulbBrightness, isShorted, solveDc } from '../core/dc';
+import { flowSpeed } from '../core/flow';
 import type { PartAllowance } from '../core/levels';
 import { Board, type Ghost } from './Board';
 import {
@@ -23,6 +25,7 @@ import {
   type Terminal,
 } from './geometry';
 import { strings } from './strings';
+import { playSnap, playWarning } from './sound';
 import { Tray } from './Tray';
 import { useEditor } from './useEditor';
 
@@ -49,15 +52,41 @@ export function Workbench({ board, tray, initial }: WorkbenchProps) {
   const [drag, setDrag] = useState<Drag | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [orientation, setOrientation] = useState<Orientation>('across');
+  const [muted, setMuted] = useState(false);
+
+  /** Applies an edit, with a snap when a part lands in the board. */
+  const edit = (change: Edit) => {
+    const result = apply(change);
+    if (result.ok && change.kind !== 'remove' && !muted) {
+      playSnap();
+    }
+    return result;
+  };
 
   const circuit = toCircuit(board, build);
   const solution = solveDc(circuit);
   const brightness = new Map<string, number>();
+  const flows = new Map<string, number>();
+  const hot = new Set<string>();
   for (const part of circuit.parts) {
+    const reading = solution.parts.get(part.id)!;
+    flows.set(part.id, flowSpeed(reading.current));
     if (part.kind === 'bulb') {
-      brightness.set(part.id, bulbBrightness(part, solution.parts.get(part.id)!));
+      brightness.set(part.id, bulbBrightness(part, reading));
+    } else if (part.kind === 'battery' && isShorted(part, reading)) {
+      hot.add(part.id);
     }
   }
+
+  // Buzz once each time the battery becomes shorted, not on every render while it stays so.
+  const shorted = hot.size > 0;
+  const wasShorted = useRef(false);
+  useEffect(() => {
+    if (shorted && !wasShorted.current && !muted) {
+      playWarning();
+    }
+    wasShorted.current = shorted;
+  }, [shorted, muted]);
 
   const find = (id: string) => build.parts.find((p) => p.id === id);
   const selected = selectedId === null ? undefined : find(selectedId);
@@ -104,7 +133,7 @@ export function Workbench({ board, tray, initial }: WorkbenchProps) {
 
   const placeAndSelect = (spec: PartSpec, at: Legs) => {
     const id = newId(spec.kind);
-    if (apply({ kind: 'place', part: { id, spec, at, fixed: false } }).ok) {
+    if (edit({ kind: 'place', part: { id, spec, at, fixed: false } }).ok) {
       setSelectedId(id);
     }
   };
@@ -133,7 +162,7 @@ export function Workbench({ board, tray, initial }: WorkbenchProps) {
         }
         const legs = movedLegs(part, d.start, d.pointer);
         if (legs) {
-          apply({ kind: 'move', id: d.id, at: legs });
+          edit({ kind: 'move', id: d.id, at: legs });
         }
         return;
       }
@@ -209,7 +238,7 @@ export function Workbench({ board, tray, initial }: WorkbenchProps) {
     const turned = orientationOf(legs[0], legs[1]) === 'across' ? 'down' : 'across';
     const second = secondLeg(legs[0], LEG_SPAN[selected.spec.kind] ?? 1, turned);
     if (second) {
-      apply({ kind: 'move', id: selected.id, at: [legs[0], second] });
+      edit({ kind: 'move', id: selected.id, at: [legs[0], second] });
     }
   };
 
@@ -246,11 +275,16 @@ export function Workbench({ board, tray, initial }: WorkbenchProps) {
   return (
     <div className="workbench">
       <Tray tray={tray} remaining={(kind) => editor.remaining(kind)} onPickUp={onPickUp} />
+      <p className="warning" role="status">
+        {shorted ? strings.shortCircuit : ''}
+      </p>
       <Board
         ref={svgRef}
         board={board}
         build={build}
         brightness={brightness}
+        flows={flows}
+        hot={hot}
         selectedId={selectedId}
         ghost={ghost}
         onHolePointerDown={onHolePointerDown}
@@ -276,6 +310,9 @@ export function Workbench({ board, tray, initial }: WorkbenchProps) {
           }}
         >
           {strings.remove}
+        </button>
+        <button type="button" aria-pressed={muted} onClick={() => setMuted((m) => !m)}>
+          {muted ? strings.soundOff : strings.soundOn}
         </button>
       </div>
     </div>
