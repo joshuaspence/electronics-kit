@@ -1,31 +1,46 @@
-import { useState } from 'react';
-import {
-  type BoardLayout,
-  type Hole,
-  holeName,
-  holesOf,
-  stripOf,
-  TERMINAL_ROWS,
-} from '../core/breadboard';
+import { type PointerEvent as ReactPointerEvent, type Ref, useState } from 'react';
+import { holeName, holesOf, stripOf } from '../core/breadboard';
+import type { Board as BoardModel, Build, PartSpec } from '../core/build';
+import { boardSize, HOLE_RADIUS, holePosition, type Point, type Terminal } from './geometry';
+import { PartShape } from './PartShape';
 import { strings } from './strings';
 
-const PITCH = 40;
-const MARGIN = 30;
-const HOLE_RADIUS = 9;
-
-interface BoardProps {
-  layout: BoardLayout;
+export interface Ghost {
+  readonly spec: PartSpec;
+  readonly from: Point;
+  readonly to: Point;
 }
 
-/** A breadboard that highlights the strip under the pointer. */
-export function Board({ layout }: BoardProps) {
+interface BoardProps {
+  ref?: Ref<SVGSVGElement>;
+  board: BoardModel & { kind: 'breadboard' };
+  build: Build;
+  brightness: ReadonlyMap<string, number>;
+  selectedId: string | null;
+  ghost: Ghost | null;
+  onHolePointerDown: (hole: Terminal, event: ReactPointerEvent) => void;
+  onPartPointerDown: (id: string, event: ReactPointerEvent) => void;
+}
+
+/** A breadboard with the child's parts on it. The strip under the pointer is highlighted. */
+export function Board({
+  ref,
+  board,
+  build,
+  brightness,
+  selectedId,
+  ghost,
+  onHolePointerDown,
+  onPartPointerDown,
+}: BoardProps) {
+  const { layout } = board;
   const [activeStrip, setActiveStrip] = useState<string | null>(null);
-  const terminals = holesOf(layout).filter((hole) => hole.kind === 'terminal');
-  const width = MARGIN * 2 + PITCH * (layout.columns - 1);
-  const height = MARGIN * 2 + PITCH * (TERMINAL_ROWS.length - 1);
+  const terminals = holesOf(layout).filter((hole): hole is Terminal => hole.kind === 'terminal');
+  const { width, height } = boardSize(layout);
 
   return (
     <svg
+      ref={ref}
       className="board"
       viewBox={`0 0 ${width} ${height}`}
       role="img"
@@ -35,7 +50,7 @@ export function Board({ layout }: BoardProps) {
       <rect className="board-body" x={0} y={0} width={width} height={height} rx={16} />
       {terminals.map((hole) => {
         const strip = stripOf(layout, hole);
-        const { x, y } = position(hole);
+        const { x, y } = holePosition(hole);
         return (
           <circle
             key={holeName(hole)}
@@ -45,17 +60,35 @@ export function Board({ layout }: BoardProps) {
             cy={y}
             r={HOLE_RADIUS}
             onPointerEnter={() => setActiveStrip(strip)}
-            onPointerDown={() => setActiveStrip(strip)}
+            onPointerDown={(event) => {
+              setActiveStrip(strip);
+              onHolePointerDown(hole, event);
+            }}
           />
         );
       })}
+      {build.parts.map((part) => {
+        const [a, b] = part.at;
+        if (a.kind !== 'terminal' || b.kind !== 'terminal') {
+          return null;
+        }
+        return (
+          <g
+            key={part.id}
+            data-part={part.id}
+            onPointerDown={(event) => onPartPointerDown(part.id, event)}
+          >
+            <PartShape
+              spec={part.spec}
+              from={holePosition(a)}
+              to={holePosition(b)}
+              brightness={brightness.get(part.id) ?? 0}
+              selected={part.id === selectedId}
+            />
+          </g>
+        );
+      })}
+      {ghost && <PartShape spec={ghost.spec} from={ghost.from} to={ghost.to} ghost />}
     </svg>
   );
-}
-
-function position(hole: Hole & { kind: 'terminal' }): { x: number; y: number } {
-  return {
-    x: MARGIN + PITCH * (hole.column - 1),
-    y: MARGIN + PITCH * TERMINAL_ROWS.indexOf(hole.row),
-  };
 }

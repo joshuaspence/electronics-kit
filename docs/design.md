@@ -121,6 +121,12 @@ the current. An unlockable **multimeter** shows volts and milliamps for older ch
 - **Placement:** drag a part from the tray and its legs snap to the nearest valid holes (fixed leg
   spacing per part); rotate with a button; draw wires by dragging hole to hole. Battery packs sit
   off the board with leads into the rails.
+- **Interaction** (`src/ui/Workbench.tsx`). A part is held by its middle while dragged, with a ghost
+  where it will land; dropping off the board or on a taken hole just puts nothing down. Dragging a
+  placed part moves it; tapping it selects it for **Rotate** and **Remove**, and also flips a
+  switch. A button is pressed only while held. **Rotate** with nothing selected turns the parts
+  that come out of the tray. Undo and redo are buttons, always visible. The board keeps to the
+  height of the screen so a landscape tablet shows all of it.
 - **Touch targets:** holes at least ~9 mm apart at default zoom, forgiving snapping, and a ghost
   preview before dropping.
 - **Mistakes are simulated, not blocked.** Only physically impossible placements (two legs in one

@@ -1,0 +1,289 @@
+import { type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
+import { TERMINAL_ROWS } from '../core/breadboard';
+import {
+  type Board as BoardModel,
+  type Build,
+  type Location,
+  type PartSpec,
+  type PlacedPart,
+  toCircuit,
+} from '../core/build';
+import { bulbBrightness, solveDc } from '../core/dc';
+import type { PartAllowance } from '../core/levels';
+import { Board, type Ghost } from './Board';
+import {
+  holePosition,
+  LEG_SPAN,
+  nearestHole,
+  type Orientation,
+  orientationOf,
+  PITCH,
+  type Point,
+  secondLeg,
+  type Terminal,
+} from './geometry';
+import { strings } from './strings';
+import { Tray } from './Tray';
+import { useEditor } from './useEditor';
+
+/** Pointer travel (in board units) below which a press counts as a tap, not a drag. */
+const TAP_DISTANCE = 6;
+
+type Legs = readonly [Terminal, Terminal];
+
+type Drag =
+  | { readonly type: 'new'; readonly spec: PartSpec; readonly pointer: Point | null }
+  | { readonly type: 'move'; readonly id: string; readonly start: Point; readonly pointer: Point }
+  | { readonly type: 'wire'; readonly from: Terminal; readonly pointer: Point };
+
+interface WorkbenchProps {
+  board: BoardModel & { kind: 'breadboard' };
+  tray: readonly PartAllowance[];
+  initial: Build;
+}
+
+/** The board, the parts tray and the editing tools, wired to a BuildEditor. */
+export function Workbench({ board, tray, initial }: WorkbenchProps) {
+  const { editor, build, newId, apply, setControl, undo, redo } = useEditor(board, tray, initial);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [drag, setDrag] = useState<Drag | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [orientation, setOrientation] = useState<Orientation>('across');
+
+  const circuit = toCircuit(board, build);
+  const solution = solveDc(circuit);
+  const brightness = new Map<string, number>();
+  for (const part of circuit.parts) {
+    if (part.kind === 'bulb') {
+      brightness.set(part.id, bulbBrightness(part, solution.parts.get(part.id)!));
+    }
+  }
+
+  const find = (id: string) => build.parts.find((p) => p.id === id);
+  const selected = selectedId === null ? undefined : find(selectedId);
+
+  const toBoard = (clientX: number, clientY: number): Point | null => {
+    const matrix = svgRef.current?.getScreenCTM();
+    if (!matrix) {
+      return null;
+    }
+    const p = new DOMPoint(clientX, clientY).matrixTransform(matrix.inverse());
+    return { x: p.x, y: p.y };
+  };
+
+  /** Where a new part's legs go when the pointer holds it by its middle. */
+  const newPartLegs = (spec: PartSpec, pointer: Point): Legs | null => {
+    const half = ((LEG_SPAN[spec.kind] ?? 1) * PITCH) / 2;
+    const first = nearestHole(
+      board.layout,
+      orientation === 'across'
+        ? { x: pointer.x - half, y: pointer.y }
+        : { x: pointer.x, y: pointer.y - half },
+    );
+    const second = first && secondLeg(first, LEG_SPAN[spec.kind] ?? 1, orientation);
+    return first && second ? [first, second] : null;
+  };
+
+  /** Where a placed part's legs go when dragged from `start` to `pointer`, keeping their shape. */
+  const movedLegs = (part: PlacedPart, start: Point, pointer: Point): Legs | null => {
+    const legs = terminalLegs(part.at);
+    if (!legs) {
+      return null;
+    }
+    const [a, b] = legs;
+    const from = holePosition(a);
+    const first = nearestHole(board.layout, {
+      x: from.x + pointer.x - start.x,
+      y: from.y + pointer.y - start.y,
+    });
+    const row = first && TERMINAL_ROWS[TERMINAL_ROWS.indexOf(first.row) + rowsBetween(a, b)];
+    return first && row
+      ? [first, { kind: 'terminal', column: first.column + b.column - a.column, row }]
+      : null;
+  };
+
+  const placeAndSelect = (spec: PartSpec, at: Legs) => {
+    const id = newId(spec.kind);
+    if (apply({ kind: 'place', part: { id, spec, at, fixed: false } }).ok) {
+      setSelectedId(id);
+    }
+  };
+
+  const drop = (d: Drag) => {
+    switch (d.type) {
+      case 'new': {
+        const legs = d.pointer && newPartLegs(d.spec, d.pointer);
+        if (legs) {
+          placeAndSelect(d.spec, legs);
+        }
+        return;
+      }
+      case 'move': {
+        const part = find(d.id);
+        if (!part) {
+          return;
+        }
+        if (Math.hypot(d.pointer.x - d.start.x, d.pointer.y - d.start.y) < TAP_DISTANCE) {
+          // A tap flips a switch and selects the part for rotating or removing.
+          if (part.spec.kind === 'switch') {
+            setControl(part.id, !part.spec.closed);
+          }
+          setSelectedId(part.id);
+          return;
+        }
+        const legs = movedLegs(part, d.start, d.pointer);
+        if (legs) {
+          apply({ kind: 'move', id: d.id, at: legs });
+        }
+        return;
+      }
+      case 'wire': {
+        const to = nearestHole(board.layout, d.pointer);
+        if (to && (to.column !== d.from.column || to.row !== d.from.row)) {
+          placeAndSelect({ kind: 'wire' }, [d.from, to]);
+        }
+        return;
+      }
+    }
+  };
+
+  // While dragging, follow the pointer anywhere on the page and drop where it is released. A
+  // button is pressed only while it is held, so every release lets go of it too.
+  useEffect(() => {
+    const onMove = (event: PointerEvent) => {
+      const pointer = toBoard(event.clientX, event.clientY);
+      if (pointer) {
+        setDrag((d) => (d ? { ...d, pointer } : d));
+      }
+    };
+    const onUp = () => {
+      for (const part of editor.build.parts) {
+        if (part.spec.kind === 'button' && part.spec.pressed) {
+          setControl(part.id, false);
+        }
+      }
+      if (drag) {
+        drop(drag);
+        setDrag(null);
+      }
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+    };
+  });
+
+  const ghost = ((): Ghost | null => {
+    if (drag?.type === 'wire') {
+      return { spec: { kind: 'wire' }, from: holePosition(drag.from), to: drag.pointer };
+    }
+    let spec: PartSpec | undefined;
+    let legs: Legs | null = null;
+    if (drag?.type === 'new' && drag.pointer) {
+      spec = drag.spec;
+      legs = newPartLegs(drag.spec, drag.pointer);
+    } else if (drag?.type === 'move') {
+      const part = find(drag.id);
+      spec = part?.spec;
+      legs = part ? movedLegs(part, drag.start, drag.pointer) : null;
+    }
+    return spec && legs ? { spec, from: holePosition(legs[0]), to: holePosition(legs[1]) } : null;
+  })();
+
+  const rotate = () => {
+    if (!selected) {
+      setOrientation((o) => (o === 'across' ? 'down' : 'across'));
+      return;
+    }
+    const legs = terminalLegs(selected.at);
+    if (!legs || selected.spec.kind === 'wire') {
+      return;
+    }
+    const turned = orientationOf(legs[0], legs[1]) === 'across' ? 'down' : 'across';
+    const second = secondLeg(legs[0], LEG_SPAN[selected.spec.kind] ?? 1, turned);
+    if (second) {
+      apply({ kind: 'move', id: selected.id, at: [legs[0], second] });
+    }
+  };
+
+  const onPickUp = (spec: PartSpec, event: ReactPointerEvent) => {
+    event.preventDefault();
+    setSelectedId(null);
+    setDrag({ type: 'new', spec, pointer: toBoard(event.clientX, event.clientY) });
+  };
+
+  const onHolePointerDown = (hole: Terminal, event: ReactPointerEvent) => {
+    const pointer = toBoard(event.clientX, event.clientY);
+    if (pointer && editor.remaining('wire') > 0) {
+      setDrag({ type: 'wire', from: hole, pointer });
+    }
+  };
+
+  const onPartPointerDown = (id: string, event: ReactPointerEvent) => {
+    event.stopPropagation();
+    const part = find(id);
+    const pointer = toBoard(event.clientX, event.clientY);
+    if (!part || !pointer) {
+      return;
+    }
+    if (part.spec.kind === 'button') {
+      setControl(id, true);
+    }
+    if (!part.fixed) {
+      setDrag({ type: 'move', id, start: pointer, pointer });
+    } else if (part.spec.kind === 'switch') {
+      setControl(id, !part.spec.closed);
+    }
+  };
+
+  return (
+    <div className="workbench">
+      <Tray tray={tray} remaining={(kind) => editor.remaining(kind)} onPickUp={onPickUp} />
+      <Board
+        ref={svgRef}
+        board={board}
+        build={build}
+        brightness={brightness}
+        selectedId={selectedId}
+        ghost={ghost}
+        onHolePointerDown={onHolePointerDown}
+        onPartPointerDown={onPartPointerDown}
+      />
+      <div className="tools" role="toolbar" aria-label={strings.toolsLabel}>
+        <button type="button" onClick={undo} disabled={!editor.canUndo}>
+          {strings.undo}
+        </button>
+        <button type="button" onClick={redo} disabled={!editor.canRedo}>
+          {strings.redo}
+        </button>
+        <button type="button" onClick={rotate}>
+          {strings.rotate}
+        </button>
+        <button
+          type="button"
+          disabled={!selected || selected.fixed}
+          onClick={() => {
+            if (selected && apply({ kind: 'remove', id: selected.id }).ok) {
+              setSelectedId(null);
+            }
+          }}
+        >
+          {strings.remove}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function terminalLegs(at: readonly [Location, Location]): Legs | null {
+  const [a, b] = at;
+  return a.kind === 'terminal' && b.kind === 'terminal' ? [a, b] : null;
+}
+
+function rowsBetween(a: Terminal, b: Terminal): number {
+  return TERMINAL_ROWS.indexOf(b.row) - TERMINAL_ROWS.indexOf(a.row);
+}
