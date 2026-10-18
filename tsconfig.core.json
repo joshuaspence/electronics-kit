@@ -1,0 +1,9 @@
+{
+  // Core is checked on its own without DOM types, so a DOM reference there fails typecheck.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": []
+  },
+  "include": ["src/core"]
+}

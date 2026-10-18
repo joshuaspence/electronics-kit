@@ -1,0 +1,42 @@
+:root {
+  --bg: #f4efe6;
+  --ink: #2b2a28;
+  --board: #fbfaf7;
+  --board-edge: #d8d2c6;
+  --hole: #5c5a55;
+  --hole-active: #f28c28;
+  color-scheme: light;
+  font-family: system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.board {
+  width: 100%;
+  height: auto;
+  touch-action: none;
+}
+
+.board-body {
+  fill: var(--board);
+  stroke: var(--board-edge);
+  stroke-width: 2;
+}
+
+.hole {
+  fill: var(--hole);
+}
+
+.hole-active {
+  fill: var(--hole-active);
+}

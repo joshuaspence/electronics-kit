@@ -31,3 +31,19 @@ changes.
 - Player-facing text lives in string files, in **Australian English**.
 - No analytics, ads or third-party scripts, and no network calls other than to the game's own site
   (loading and service-worker updates): the game collects nothing.
+
+## Before pushing
+
+```sh
+pnpm install
+pnpm lint         # ESLint + Prettier check (pnpm format fixes formatting)
+pnpm typecheck    # whole project, then src/core alone without DOM types
+pnpm test         # Vitest unit tests
+pnpm test:e2e     # Playwright: builds, serves the preview and runs tests/e2e
+```
+
+- Outside CI, run the e2e tests against a preinstalled Chromium with
+  `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm test:e2e`
+  (only the Chromium project runs). Don't run `playwright install` in cloud sessions.
+- Markdown is formatted by hand (Prettier skips it); wrap at 100 columns.
+- TypeScript is pinned to 6.x until typescript-eslint supports 7.
