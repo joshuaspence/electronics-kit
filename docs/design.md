@@ -60,16 +60,19 @@ models.**
 1. **DC operating point**, solved immediately whenever the circuit is edited (capacitors open). Gives
    instant feedback while editing, is the starting state for the transient run, and is what most
    chapter 1–5 win checks evaluate.
-2. **Transient run** from that operating point at a **fixed Δt = 1 ms**, using backward-Euler
-   companion models for capacitors. Fixed steps make it **deterministic**: tests can assert "the LED
-   is on at t = 2.0 s". It runs in **real time** by default with **slow motion (¼×, ⅒×)**. When
-   the circuit has nothing time-dependent, steps just repeat the DC answer. If a circuit is too
-   large, the step count adapts down rather than dropping frames.
+2. **Transient run** at a **fixed Δt = 1 ms**, using backward-Euler companion models for
+   capacitors. It starts at t = 0 with **every capacitor discharged**: an uncharged capacitor
+   conducts like a wire for that instant, so the child sees the inrush and then watches it charge.
+   Without capacitors the run starts from, and stays at, the DC operating point. Fixed steps make
+   it **deterministic**: tests can assert "the LED is on at t = 2.0 s". It runs in **real time** by
+   default with **slow motion (¼×, ⅒×)**. If a circuit is too large, the step count adapts down
+   rather than dropping frames.
 
-**Edits vs inputs.** An **edit** — adding, moving, rotating or removing a part or wire — re-solves
-the DC point and restarts the transient run from it. An **input** — flipping a switch, pressing or
-releasing a button, moving a light-sensor slider — changes a part's value inside the running
-transient and keeps capacitor and timer state, so timers and capacitors behave like the real thing.
+**Edits vs inputs.** An **edit** — adding, moving, rotating or removing a part or wire —
+re-solves the DC point and restarts the transient run from t = 0 (`new TransientSimulation`). An
+**input** — flipping a switch, pressing or releasing a button, moving a light-sensor slider —
+changes a part's value inside the running transient (`applyInput`) and keeps capacitor and timer
+state, so timers and capacitors behave like the real thing.
 
 | Part | Model |
 |---|---|
@@ -83,13 +86,15 @@ transient and keeps capacitor and timer state, so timers and capacitors behave l
 | Capacitor | Backward-Euler companion model (transient only) |
 | Blinker chip | 555-style behavioural block: output switches when its timing capacitor crosses thresholds |
 
-**Solver details** (`src/core/dc.ts`, `src/core/linear.ts`). Every part has two pins on *points* (a
-breadboard strip, a snap terminal); pins on the same point are connected. Batteries are stamped as
-their Norton equivalent, so the system is pure nodal analysis with no extra unknowns, solved by
-dense Gaussian elimination with partial pivoting. A 10⁻⁹ S conductance from every point to an
-implicit ground keeps loose parts and separate circuits solvable. A battery counts as **shorted**
-when it delivers more than half its short-circuit current, that is, when its load has less
-resistance than the battery itself. Bulb brightness is power over rated power, capped at 1.
+**Solver details** (`src/core/mna.ts`, `dc.ts`, `transient.ts`, `linear.ts`). Every part has two
+pins on *points* (a breadboard strip, a snap terminal); pins on the same point are connected. Every
+part is stamped as a Norton equivalent (a conductance in parallel with a current source): a
+resistor has no source, a battery is its source and internal resistance, and a capacitor in a time
+step is its backward-Euler companion. So the system is pure nodal analysis with no extra unknowns,
+solved by dense Gaussian elimination with partial pivoting. A 10⁻⁹ S conductance from every point
+to an implicit ground keeps loose parts and separate circuits solvable. A battery counts as
+**shorted** when it delivers more than half its short-circuit current, that is, when its load has
+less resistance than the battery itself. Bulb brightness is power over rated power, capped at 1.
 
 **Presentation: no numbers by default.** Current is shown as **flowing dots** whose speed follows
 the current. An unlockable **multimeter** shows volts and milliamps for older children.

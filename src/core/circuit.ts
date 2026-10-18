@@ -52,7 +52,13 @@ export interface PushButton extends PartBase {
   readonly pressed: boolean;
 }
 
-export type Part = Battery | Resistor | Bulb | Wire | Switch | PushButton;
+/** Open in the DC operating point; charges and discharges in the transient run. */
+export interface Capacitor extends PartBase {
+  readonly kind: 'capacitor';
+  readonly farads: number;
+}
+
+export type Part = Battery | Resistor | Bulb | Wire | Switch | PushButton | Capacitor;
 export type PartKind = Part['kind'];
 
 export interface Circuit {
@@ -85,6 +91,9 @@ export function validateCircuit(circuit: Circuit): void {
       case 'bulb':
         requirePositive(part, 'ohms', part.ohms);
         requirePositive(part, 'ratedWatts', part.ratedWatts);
+        break;
+      case 'capacitor':
+        requirePositive(part, 'farads', part.farads);
         break;
       case 'wire':
       case 'switch':
