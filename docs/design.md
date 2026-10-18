@@ -24,7 +24,9 @@ the decision and the main reason for it. When the design changes, update this fi
   under-13s (COPPA, GDPR-K) the simplest compliance is collecting nothing.
 - Progress is stored locally in **IndexedDB**. The app calls `navigator.storage.persist()`.
 - Saved data carries a **schema version**; migrations live in `core/` and are unit-tested so that
-  an update never wipes progress.
+  an update never wipes progress (`src/core/progress.ts`). Progress is the best stars per level.
+  Data that can't be read (corrupt, or written by a newer version) loads as no progress and is
+  only overwritten once the child finishes a level; unreadable entries are dropped one by one.
 - **M1:** one implicit profile. **M3:** several local profiles (name + avatar, no passwords) for
   shared family and classroom devices, and **share links** that encode a circuit in the URL
   fragment (`#c=<compressed>`), which never reaches a server.
