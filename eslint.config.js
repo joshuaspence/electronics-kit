@@ -12,6 +12,11 @@ export default tseslint.config(
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
+    rules: {
+      // With noUncheckedIndexedAccess every array read is `T | undefined`; `!` is how numeric code
+      // asserts an index it has already bounded.
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
   },
   {
     files: ['tools/**/*.mjs'],

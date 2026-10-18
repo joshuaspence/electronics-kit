@@ -63,8 +63,8 @@ models.**
 2. **Transient run** from that operating point at a **fixed Δt = 1 ms**, using backward-Euler
    companion models for capacitors. Fixed steps make it **deterministic**: tests can assert "the LED
    is on at t = 2.0 s". It runs in **real time** by default with **slow motion (¼×, ⅒×)**. When
-   the circuit has nothing time-dependent, steps just repeat the DC answer. If a circuit is too large, the step count adapts
-   down rather than dropping frames.
+   the circuit has nothing time-dependent, steps just repeat the DC answer. If a circuit is too
+   large, the step count adapts down rather than dropping frames.
 
 **Edits vs inputs.** An **edit** — adding, moving, rotating or removing a part or wire — re-solves
 the DC point and restarts the transient run from it. An **input** — flipping a switch, pressing or
@@ -74,7 +74,7 @@ transient and keeps capacitor and timer state, so timers and capacitors behave l
 | Part | Model |
 |---|---|
 | Battery | Ideal voltage source + small internal resistance (a short gives a large, finite current). **Never drains.** |
-| Wire, closed switch, pressed button | ≈ 0 Ω; open = disconnected |
+| Wire, closed switch, pressed button | 1 mΩ resistor (not merged into one node, so every wire's current is known for the flowing dots and parallel wires share it); open = disconnected |
 | Bulb | Resistor; brightness from power |
 | Resistor | Resistor |
 | LED | Piecewise-linear diode: conducts forward above Vf ≈ 2 V with a small series resistance; state found by a few fixed-point iterations; brightness from current; pops above ~30 mA |
@@ -82,6 +82,14 @@ transient and keeps capacitor and timer state, so timers and capacitors behave l
 | Light sensor (LDR) | Variable resistance from a slider or ambient light |
 | Capacitor | Backward-Euler companion model (transient only) |
 | Blinker chip | 555-style behavioural block: output switches when its timing capacitor crosses thresholds |
+
+**Solver details** (`src/core/dc.ts`, `src/core/linear.ts`). Every part has two pins on *points* (a
+breadboard strip, a snap terminal); pins on the same point are connected. Batteries are stamped as
+their Norton equivalent, so the system is pure nodal analysis with no extra unknowns, solved by
+dense Gaussian elimination with partial pivoting. A 10⁻⁹ S conductance from every point to an
+implicit ground keeps loose parts and separate circuits solvable. A battery counts as **shorted**
+when it delivers more than half its short-circuit current, that is, when its load has less
+resistance than the battery itself. Bulb brightness is power over rated power, capped at 1.
 
 **Presentation: no numbers by default.** Current is shown as **flowing dots** whose speed follows
 the current. An unlockable **multimeter** shows volts and milliamps for older children.
