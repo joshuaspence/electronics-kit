@@ -122,7 +122,13 @@ the current. An unlockable **multimeter** shows volts and milliamps for older ch
 - **Touch targets:** holes at least ~9 mm apart at default zoom, forgiving snapping, and a ghost
   preview before dropping.
 - **Mistakes are simulated, not blocked.** Only physically impossible placements (two legs in one
-  hole) are refused.
+  hole, a part's two legs in the same hole, a leg off the board) are refused, along with placing
+  more of a part than the tray holds or moving a part the level placed. A snap terminal takes any
+  number of parts.
+- **Build model** (`src/core/build.ts`). A build is placed parts at board locations; `toCircuit`
+  maps each location to a simulator point (a breadboard strip, or a snap terminal). `BuildEditor`
+  keeps undo and redo: every place, move (rotation included) or removal is one undo step, while
+  flipping a switch or pressing a button is not, and stays as the child left it across undo.
 
 ## 6. Text, hints and language
 
