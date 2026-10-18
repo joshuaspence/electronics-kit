@@ -127,9 +127,12 @@ describe('starsFor', () => {
   const level: Level = {
     id: 'loop-1',
     chapter: 1,
+    board: { kind: 'snap', rows: 2, columns: 2 },
+    parts: [],
     goal: { kind: 'light-bulbs', bulbs: 1 },
     tray: [{ kind: 'wire', count: 4 }],
     par: 2,
+    solution: { place: [] },
   };
 
   it('gives three stars at par with no hints', () => {
