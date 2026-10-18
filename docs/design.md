@@ -57,15 +57,19 @@ the decision and the main reason for it. When the design changes, update this fi
 **One modified nodal analysis (MNA) engine in `core/`, with two solve modes sharing all component
 models.**
 
-1. **DC operating point**, solved immediately whenever the circuit changes (capacitors open). Gives
+1. **DC operating point**, solved immediately whenever the circuit is edited (capacitors open). Gives
    instant feedback while editing, is the starting state for the transient run, and is what most
    chapter 1–5 win checks evaluate.
 2. **Transient run** from that operating point at a **fixed Δt = 1 ms**, using backward-Euler
    companion models for capacitors. Fixed steps make it **deterministic**: tests can assert "the LED
-   is on at t = 2.0 s". It runs in **real time** by default with **slow motion (¼×, ⅒×)**, and
-   restarts from the DC point whenever the circuit is edited. When the circuit has nothing
-   time-dependent, steps just repeat the DC answer. If a circuit is too large, the step count adapts
+   is on at t = 2.0 s". It runs in **real time** by default with **slow motion (¼×, ⅒×)**. When
+   the circuit has nothing time-dependent, steps just repeat the DC answer. If a circuit is too large, the step count adapts
    down rather than dropping frames.
+
+**Edits vs inputs.** An **edit** — adding, moving, rotating or removing a part or wire — re-solves
+the DC point and restarts the transient run from it. An **input** — flipping a switch, pressing or
+releasing a button, moving a light-sensor slider — changes a part's value inside the running
+transient and keeps capacitor and timer state, so timers and capacitors behave like the real thing.
 
 | Part | Model |
 |---|---|

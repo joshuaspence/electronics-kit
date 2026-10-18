@@ -29,4 +29,5 @@ changes.
 - **`src/ui`** — React + SVG: board, parts tray, hints, screens. Keep it thin.
 - **`src/levels`** — level data.
 - Player-facing text lives in string files, in **Australian English**.
-- No analytics, ads, third-party scripts or network calls: the game collects nothing.
+- No analytics, ads or third-party scripts, and no network calls other than to the game's own site
+  (loading and service-worker updates): the game collects nothing.
