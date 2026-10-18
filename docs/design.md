@@ -144,7 +144,7 @@ the current. An unlockable **multimeter** shows volts and milliamps for older ch
 | Lint/format | ESLint (typescript-eslint) + Prettier; a lint rule bans `core/` from importing `ui/` or React |
 | Package manager | pnpm, Node version pinned |
 | Deploy | `actions/deploy-pages` on push to `master` |
-| PR previews | The built site uploaded as a workflow artifact |
+| PR previews | The built site uploaded as the `site` artifact of the CI run |
 | Dependency updates | Dependabot (npm and GitHub Actions, weekly, minor/patch grouped) |
 
 Layout:
@@ -165,8 +165,9 @@ tests/e2e/   Playwright
 - **Low-end baseline:** an **iPad 9th gen (A13)** and a **4 GB Intel Celeron Chromebook**.
   - **60 fps** while dragging; simulation plus rendering under 8 ms per frame for a 30-part circuit.
   - **First load under 1 MB** gzipped JS+CSS, interactive in under 3 s on school Wi-Fi.
-- **Enforced in CI** by a bundle-size budget and a `core/` solver benchmark (a 50-node circuit for
-  1,000 steps), plus a manual check on a real device before each release.
+- **Enforced in CI** by a bundle-size budget (`pnpm size`, `tools/check-bundle-size.mjs`) and a
+  `core/` solver benchmark (a 50-node circuit for 1,000 steps, added with the solver in M1), plus a
+  manual check on a real device before each release.
 
 ## 10. Releases
 
