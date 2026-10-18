@@ -272,3 +272,9 @@ button:disabled {
   align-items: center;
   text-align: left;
 }
+
+.version {
+  margin-top: 32px;
+  font-size: 0.85em;
+  opacity: 0.6;
+}

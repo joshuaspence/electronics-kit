@@ -79,3 +79,43 @@ test('controls a bulb with a switch on the breadboard', async ({ page }) => {
   await expect(page.locator('.part-bulb .flow')).toHaveCount(1);
   await expect(page.getByText('You did it!')).toBeVisible();
 });
+
+test('keeps stars after a reload', async ({ page }) => {
+  await page.locator('[data-level="loop-3"]').click();
+  await wire(page, 'p1-1', 'p2-4');
+  await expect(page.getByText('You did it!')).toBeVisible();
+
+  // Saving is asynchronous: wait until the stars are in IndexedDB before reloading.
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          new Promise<unknown>((resolve) => {
+            const open = indexedDB.open('electronics-kit');
+            open.onerror = () => resolve(null);
+            open.onsuccess = () => {
+              const db = open.result;
+              if (!db.objectStoreNames.contains('progress')) {
+                db.close();
+                resolve(null);
+                return;
+              }
+              const get = db.transaction('progress').objectStore('progress').get('progress');
+              get.onsuccess = () => {
+                db.close();
+                resolve(get.result);
+              };
+              get.onerror = () => resolve(null);
+            };
+          }),
+      ),
+    )
+    .toMatchObject({ stars: { 'loop-3': 3 } });
+
+  await page.reload();
+  await expect(page.locator('[data-level="loop-3"]').getByLabel('3 of 3 stars')).toBeVisible();
+});
+
+test('shows the version', async ({ page }) => {
+  await expect(page.getByText(/^Version \d+\.\d+\.\d+ \(\w+\)$/)).toBeVisible();
+});
