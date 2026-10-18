@@ -1,3 +1,4 @@
+import type { Board, PlacedPart } from './build';
 import { type Circuit, type Part, type PartKind } from './circuit';
 import { bulbBrightness, isShorted, solveDc } from './dc';
 
@@ -25,11 +26,28 @@ export interface PartAllowance {
 export interface Level {
   readonly id: string;
   readonly chapter: number;
+  readonly board: Board;
+  /**
+   * Parts on the board when the level starts: fixed ones (usually the battery) can't be moved, and
+   * others count against the tray as if the child had placed them.
+   */
+  readonly parts: readonly PlacedPart[];
   readonly goal: Goal;
   /** The parts the child may place, on top of any the level places for them. */
   readonly tray: readonly PartAllowance[];
   /** The fewest parts the child needs to place; placing no more earns a star. */
   readonly par: number;
+  /**
+   * One way to finish at par: the parts the child places, on top of the starting ones they keep.
+   * Tests check that every level can be finished this way; hints can show its parts.
+   */
+  readonly solution: Solution;
+}
+
+export interface Solution {
+  /** Ids of starting parts the child removes. */
+  readonly remove?: readonly string[];
+  readonly place: readonly PlacedPart[];
 }
 
 export type GoalResult =

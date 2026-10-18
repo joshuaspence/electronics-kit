@@ -38,11 +38,14 @@ interface WorkbenchProps {
   board: BoardModel;
   tray: readonly PartAllowance[];
   initial: Build;
+  /** Called with the build after every change, edits and flipped switches alike. */
+  onChange?: (build: Build) => void;
 }
 
 /** The board, the parts tray and the editing tools, wired to a BuildEditor. */
-export function Workbench({ board, tray, initial }: WorkbenchProps) {
+export function Workbench({ board, tray, initial, onChange }: WorkbenchProps) {
   const { editor, build, newId, apply, setControl, undo, redo } = useEditor(board, tray, initial);
+  useEffect(() => onChange?.(build), [build, onChange]);
   const geometry = useMemo(() => geometryFor(board), [board]);
   const svgRef = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<Drag | null>(null);

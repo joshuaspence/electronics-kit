@@ -25,7 +25,7 @@ async function between(page: Page, a: string, b: string) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('./');
+  await page.goto('./?sandbox=breadboard');
   await expect(page.getByRole('heading', { name: 'Electronics Kit' })).toBeVisible();
 });
 
@@ -126,7 +126,7 @@ test('warns about a short circuit across the battery', async ({ page }) => {
 
 test.describe('snap board', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('./?board=snap');
+    await page.goto('./?sandbox=snap');
   });
 
   test('lights a bulb wired to the battery post to post', async ({ page }) => {
