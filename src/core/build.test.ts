@@ -8,10 +8,10 @@ const hole = (row: 'a' | 'b' | 'e' | 'f' | 'j', column: number): Hole => ({
   row,
   column,
 });
-const snap = (terminal: string): Location => ({ kind: 'snap', terminal });
+const snap = (row: number, column: number): Location => ({ kind: 'snap', row, column });
 
 const mini: Board = { kind: 'breadboard', layout: { columns: 10, centreGap: false, rails: false } };
-const snapBoard: Board = { kind: 'snap', terminals: ['t1', 't2', 't3', 't4'] };
+const snapBoard: Board = { kind: 'snap', rows: 2, columns: 3 };
 
 const battery = (at: readonly [Location, Location]): PlacedPart => ({
   id: 'battery',
@@ -45,11 +45,11 @@ describe('toCircuit', () => {
     expect(solveDc(circuit).parts.get('b')!.current).toBeGreaterThan(0.2);
   });
 
-  it('keeps snap terminals apart from each other', () => {
+  it('keeps snap posts apart from each other', () => {
     const build = {
-      parts: [battery([snap('t1'), snap('t2')]), bulb('b', [snap('t2'), snap('t3')])],
+      parts: [battery([snap(1, 1), snap(1, 2)]), bulb('b', [snap(1, 2), snap(2, 2)])],
     };
-    expect(toCircuit(snapBoard, build).parts[1]!.pins).toEqual(['snap:t2', 'snap:t3']);
+    expect(toCircuit(snapBoard, build).parts[1]!.pins).toEqual(['snap:1:2', 'snap:2:2']);
   });
 });
 
@@ -85,14 +85,18 @@ describe('BuildEditor', () => {
     expect(place([hole('a', 1), hole('b', 1)])).toEqual({ ok: false, reason: 'hole-taken' });
     expect(place([hole('b', 3), hole('b', 3)])).toEqual({ ok: false, reason: 'same-hole' });
     expect(place([hole('b', 3), hole('b', 11)])).toEqual({ ok: false, reason: 'off-board' });
-    expect(place([snap('t1'), hole('b', 3)])).toEqual({ ok: false, reason: 'off-board' });
+    expect(place([snap(1, 1), hole('b', 3)])).toEqual({ ok: false, reason: 'off-board' });
     // Both legs in one strip is allowed: it just shorts the part out (docs/design.md §5).
     expect(place([hole('b', 3), hole('j', 3)])).toEqual({ ok: true });
   });
 
-  it('lets several parts share a snap terminal', () => {
-    const editor = new BuildEditor(snapBoard, tray, { parts: [battery([snap('t1'), snap('t2')])] });
-    expect(editor.apply({ kind: 'place', part: bulb('b', [snap('t1'), snap('t2')]) })).toEqual({
+  it('lets several parts share a snap post', () => {
+    const editor = new BuildEditor(snapBoard, tray, { parts: [battery([snap(1, 1), snap(1, 2)])] });
+    expect(editor.apply({ kind: 'place', part: bulb('x', [snap(2, 3), snap(3, 3)]) })).toEqual({
+      ok: false,
+      reason: 'off-board',
+    });
+    expect(editor.apply({ kind: 'place', part: bulb('b', [snap(1, 1), snap(1, 2)]) })).toEqual({
       ok: true,
     });
   });

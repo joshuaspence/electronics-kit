@@ -40,7 +40,14 @@ main {
   fill: var(--hole);
 }
 
-.hole-active {
+.board-snap .hole {
+  fill: #c9c4b8;
+  stroke: #8a8780;
+  stroke-width: 4;
+}
+
+.hole-active,
+.board-snap .hole-active {
   fill: var(--hole-active);
 }
 

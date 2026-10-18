@@ -8,7 +8,10 @@ export const strings = {
   toolsLabel: 'Tools',
   helloBoard:
     'Drag a bulb onto the board, then draw wires from hole to hole to make it glow. Holes in the same column are joined.',
+  helloSnap:
+    'Snap a bulb between two posts, then draw wires from post to post so the electricity can get from the battery, through the bulb and back.',
   wireHint: 'Wires: drag from hole to hole',
+  wireHintSnap: 'Wires: drag from post to post',
   hot: 'Hot!',
   shortCircuit:
     'Whoa, short circuit! The electricity is rushing straight back to the battery without going through anything, so the battery is getting hot.',

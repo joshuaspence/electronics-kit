@@ -123,3 +123,30 @@ test('warns about a short circuit across the battery', async ({ page }) => {
   await expect(page.locator('.part-hot')).toHaveCount(0);
   await expect(page.getByRole('status')).toHaveText('');
 });
+
+test.describe('snap board', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('./?board=snap');
+  });
+
+  test('lights a bulb wired to the battery post to post', async ({ page }) => {
+    // The battery sits between posts 1-1 and 1-2; the bulb goes on the row below.
+    await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'p2-1', 'p2-2'));
+    await expect(page.locator('.part-bulb:not(.part-ghost)')).toHaveCount(1);
+    await expect(page.locator('.part-bulb .flow')).toHaveCount(0);
+
+    // A post takes any number of parts, so wires can share the battery's and the bulb's posts.
+    await drag(
+      page,
+      page.locator('[data-hole="p1-1"]'),
+      await centre(page.locator('[data-hole="p2-1"]')),
+    );
+    await drag(
+      page,
+      page.locator('[data-hole="p1-2"]'),
+      await centre(page.locator('[data-hole="p2-2"]')),
+    );
+    await expect(page.locator('.part-wire:not(.part-ghost)')).toHaveCount(2);
+    await expect(page.locator('.part-bulb .flow')).toHaveCount(1);
+  });
+});

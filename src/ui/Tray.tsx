@@ -8,10 +8,12 @@ interface TrayProps {
   tray: readonly PartAllowance[];
   remaining: (kind: PartAllowance['kind']) => number;
   onPickUp: (spec: PartSpec, event: ReactPointerEvent) => void;
+  /** On a snap board wires go between posts rather than holes. */
+  snap: boolean;
 }
 
 /** The parts the child can still place. Wires are drawn on the board, so they aren't picked up. */
-export function Tray({ tray, remaining, onPickUp }: TrayProps) {
+export function Tray({ tray, remaining, onPickUp, snap }: TrayProps) {
   return (
     <ul className="tray" aria-label={strings.trayLabel}>
       {tray.map(({ kind }) => {
@@ -19,7 +21,8 @@ export function Tray({ tray, remaining, onPickUp }: TrayProps) {
         if (kind === 'wire') {
           return (
             <li key={kind} className="tray-info" data-tray={kind}>
-              {strings.wireHint} <span className="tray-count">×{left}</span>
+              {snap ? strings.wireHintSnap : strings.wireHint}{' '}
+              <span className="tray-count">×{left}</span>
             </li>
           );
         }

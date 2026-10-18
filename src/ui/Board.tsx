@@ -1,7 +1,6 @@
 import { type PointerEvent as ReactPointerEvent, type Ref, useState } from 'react';
-import { holeName, holesOf, stripOf } from '../core/breadboard';
-import type { Board as BoardModel, Build, PartSpec } from '../core/build';
-import { boardSize, HOLE_RADIUS, holePosition, type Point, type Terminal } from './geometry';
+import type { Build, Location, PartSpec } from '../core/build';
+import type { BoardGeometry, Point } from './geometry';
 import { PartShape } from './PartShape';
 import { strings } from './strings';
 
@@ -13,21 +12,27 @@ export interface Ghost {
 
 interface BoardProps {
   ref?: Ref<SVGSVGElement>;
-  board: BoardModel & { kind: 'breadboard' };
+  geometry: BoardGeometry;
+  /** A snap board (chapter 1) rather than a breadboard. */
+  snap: boolean;
   build: Build;
   brightness: ReadonlyMap<string, number>;
   flows: ReadonlyMap<string, number>;
   hot: ReadonlySet<string>;
   selectedId: string | null;
   ghost: Ghost | null;
-  onHolePointerDown: (hole: Terminal, event: ReactPointerEvent) => void;
+  onHolePointerDown: (location: Location, event: ReactPointerEvent) => void;
   onPartPointerDown: (id: string, event: ReactPointerEvent) => void;
 }
 
-/** A breadboard with the child's parts on it. The strip under the pointer is highlighted. */
+/**
+ * A board with the child's parts on it. The strip under the pointer is highlighted, so a child can
+ * see which breadboard holes are joined.
+ */
 export function Board({
   ref,
-  board,
+  geometry,
+  snap,
   build,
   brightness,
   flows,
@@ -37,45 +42,41 @@ export function Board({
   onHolePointerDown,
   onPartPointerDown,
 }: BoardProps) {
-  const { layout } = board;
   const [activeStrip, setActiveStrip] = useState<string | null>(null);
-  const terminals = holesOf(layout).filter((hole): hole is Terminal => hole.kind === 'terminal');
-  const { width, height } = boardSize(layout);
+  const { width, height } = geometry;
+  const holes = geometry.locations.map((location) => {
+    const strip = geometry.stripKey(location);
+    const { x, y } = geometry.position(location);
+    return (
+      <circle
+        key={geometry.name(location)}
+        data-hole={geometry.name(location)}
+        className={strip === activeStrip ? 'hole hole-active' : 'hole'}
+        cx={x}
+        cy={y}
+        r={geometry.radius}
+        onPointerEnter={() => setActiveStrip(strip)}
+        onPointerDown={(event) => {
+          setActiveStrip(strip);
+          onHolePointerDown(location, event);
+        }}
+      />
+    );
+  });
 
   return (
     <svg
       ref={ref}
-      className="board"
+      className={snap ? 'board board-snap' : 'board'}
       viewBox={`0 0 ${width} ${height}`}
       role="img"
       aria-label={strings.boardLabel}
       onPointerLeave={() => setActiveStrip(null)}
     >
       <rect className="board-body" x={0} y={0} width={width} height={height} rx={16} />
-      {terminals.map((hole) => {
-        const strip = stripOf(layout, hole);
-        const { x, y } = holePosition(hole);
-        return (
-          <circle
-            key={holeName(hole)}
-            data-hole={holeName(hole)}
-            className={strip === activeStrip ? 'hole hole-active' : 'hole'}
-            cx={x}
-            cy={y}
-            r={HOLE_RADIUS}
-            onPointerEnter={() => setActiveStrip(strip)}
-            onPointerDown={(event) => {
-              setActiveStrip(strip);
-              onHolePointerDown(hole, event);
-            }}
-          />
-        );
-      })}
+      {!snap && holes}
       {build.parts.map((part) => {
         const [a, b] = part.at;
-        if (a.kind !== 'terminal' || b.kind !== 'terminal') {
-          return null;
-        }
         return (
           <g
             key={part.id}
@@ -84,8 +85,8 @@ export function Board({
           >
             <PartShape
               spec={part.spec}
-              from={holePosition(a)}
-              to={holePosition(b)}
+              from={geometry.position(a)}
+              to={geometry.position(b)}
               brightness={brightness.get(part.id) ?? 0}
               flow={flows.get(part.id) ?? 0}
               hot={hot.has(part.id)}
@@ -94,6 +95,8 @@ export function Board({
           </g>
         );
       })}
+      {/* A snap post takes any number of parts, so it stays on top where a wire can start from it. */}
+      {snap && holes}
       {ghost && <PartShape spec={ghost.spec} from={ghost.from} to={ghost.to} ghost />}
     </svg>
   );
