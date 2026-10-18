@@ -26,6 +26,21 @@ export const strings = {
   version: (version: string, commit: string) => `Version ${version} (${commit})`,
   updateReady: 'A new version of Electronics Kit is ready.',
   update: 'Update',
+  askVolty: 'Ask Volty for a hint',
+  hint: 'Hint',
+  stuck: 'Stuck? Tap me for a hint!',
+  hints: {
+    'too-few-lit':
+      'Electricity needs a complete loop: out of one end of the battery, through the bulb and back into the other end.',
+    'short-circuit':
+      'Uh oh, a shortcut! Electricity is rushing straight back to the battery without going through a bulb.',
+    'not-controlled':
+      'The bulb stays on even when the switch is off. Put the switch in the loop so it can make a gap.',
+    'no-control': 'This one needs a switch or a button in the loop.',
+    'switch-off': 'Your circuit looks ready. Try switching it on!',
+  },
+  hintPlace: (part: string) => `Try putting a ${part} where I’ve shown it.`,
+  hintRemove: (part: string) => `That ${part} is getting in the way. Try removing it.`,
   undo: 'Undo',
   redo: 'Redo',
   rotate: 'Rotate',

@@ -21,6 +21,10 @@ interface BoardProps {
   hot: ReadonlySet<string>;
   selectedId: string | null;
   ghost: Ghost | null;
+  /** A part one of Volty's hints suggests placing, drawn faintly where it goes. */
+  hintGhost: Ghost | null;
+  /** A placed part one of Volty's hints points at. */
+  hintedId: string | null;
   onHolePointerDown: (location: Location, event: ReactPointerEvent) => void;
   onPartPointerDown: (id: string, event: ReactPointerEvent) => void;
 }
@@ -39,6 +43,8 @@ export function Board({
   hot,
   selectedId,
   ghost,
+  hintGhost,
+  hintedId,
   onHolePointerDown,
   onPartPointerDown,
 }: BoardProps) {
@@ -91,12 +97,16 @@ export function Board({
               flow={flows.get(part.id) ?? 0}
               hot={hot.has(part.id)}
               selected={part.id === selectedId}
+              hinted={part.id === hintedId}
             />
           </g>
         );
       })}
       {/* A snap post takes any number of parts, so it stays on top where a wire can start from it. */}
       {snap && holes}
+      {hintGhost && (
+        <PartShape spec={hintGhost.spec} from={hintGhost.from} to={hintGhost.to} ghost hinted />
+      )}
       {ghost && <PartShape spec={ghost.spec} from={ghost.from} to={ghost.to} ghost />}
     </svg>
   );

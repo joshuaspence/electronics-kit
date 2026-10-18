@@ -15,6 +15,8 @@ interface PartShapeProps {
   flow?: number;
   /** A shorted battery. */
   hot?: boolean;
+  /** Pointed out by one of Volty's hints. */
+  hinted?: boolean;
   ghost?: boolean;
   selected?: boolean;
 }
@@ -30,6 +32,7 @@ export function PartShape({
   brightness = 0,
   flow = 0,
   hot = false,
+  hinted = false,
   ghost,
   selected,
 }: PartShapeProps) {
@@ -40,6 +43,7 @@ export function PartShape({
     ghost && 'part-ghost',
     selected && 'part-selected',
     hot && 'part-hot',
+    hinted && 'part-hinted',
   ]
     .filter(Boolean)
     .join(' ');

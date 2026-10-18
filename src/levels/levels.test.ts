@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BuildEditor, toCircuit } from '../core/build';
+import { hintFor } from '../core/hints';
 import { checkGoal } from '../core/levels';
 import { levels } from './index';
 import { chapterTitles, levelText } from './strings';
@@ -20,6 +21,25 @@ describe('levels', () => {
       it('starts unsolved', () => {
         const editor = start();
         expect(checkGoal(level.goal, toCircuit(level.board, editor.build)).met).toBe(false);
+      });
+
+      it('can be finished by following Volty’s hints', () => {
+        const editor = start();
+        for (let step = 1; step <= 20; step++) {
+          if (checkGoal(level.goal, toCircuit(level.board, editor.build)).met) {
+            return;
+          }
+          const hint = hintFor(level, editor.build, step);
+          if (hint.kind === 'remove-part') {
+            expect(editor.apply({ kind: 'remove', id: hint.part.id })).toEqual({ ok: true });
+          } else if (hint.kind === 'show-part') {
+            const part = { ...hint.part, id: `hinted-${step}` };
+            expect(editor.apply({ kind: 'place', part })).toEqual({ ok: true });
+          } else {
+            throw new Error(`Hint ${step} was a nudge before the level was finished`);
+          }
+        }
+        throw new Error('Hints did not finish the level');
       });
 
       it('can be finished at par with its tray', () => {
