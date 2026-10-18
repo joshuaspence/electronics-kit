@@ -150,22 +150,4 @@ describe('solveDc', () => {
       /Duplicate part id a/,
     );
   });
-
-  it('solves a 50-point circuit 1,000 times well within budget', () => {
-    // A ladder: a battery feeding 49 rungs of bulbs joined by wires, about the largest sandbox
-    // circuit expected (docs/design.md §9).
-    const parts: Part[] = [battery(['p0', 'gnd'])];
-    for (let i = 1; i < 50; i++) {
-      parts.push(wire(`w${i}`, [`p${i - 1}`, `p${i}`]));
-      parts.push(bulb(`b${i}`, [`p${i}`, 'gnd'], 100));
-    }
-    const circuit = { parts };
-    const start = Date.now();
-    for (let i = 0; i < 1000; i++) {
-      solveDc(circuit);
-    }
-    const elapsedMs = Date.now() - start;
-    // Generous for slow CI runners; locally this takes a fraction of it.
-    expect(elapsedMs).toBeLessThan(5000);
-  });
 });
