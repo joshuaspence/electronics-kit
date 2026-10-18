@@ -1,11 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Board, Build } from '../core/build';
 import { newSpec } from '../core/catalogue';
 import type { PartAllowance } from '../core/levels';
-import { NO_PROGRESS, type Progress, recordStars } from '../core/progress';
+import {
+  mergeProgress,
+  NO_PROGRESS,
+  type Progress,
+  recordStars,
+  type Stars,
+} from '../core/progress';
 import { levels } from '../levels';
 import { LevelList } from './LevelList';
 import { LevelScreen } from './LevelScreen';
+import { loadSavedProgress, saveProgress } from './progressStore';
 import { strings } from './strings';
 import { Workbench } from './Workbench';
 
@@ -61,6 +68,29 @@ export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: 'levels' });
   const [progress, setProgress] = useState<Progress>(NO_PROGRESS);
 
+  // Saved progress arrives a moment after the first render; keep anything earned in between, and
+  // save only once it has arrived so a quick finish can't overwrite it.
+  const [loaded, setLoaded] = useState(false);
+  const unsaved = useRef(false);
+  useEffect(() => {
+    void loadSavedProgress().then((saved) => {
+      setProgress((p) => mergeProgress(saved, p));
+      setLoaded(true);
+    });
+  }, []);
+  useEffect(() => {
+    if (loaded && unsaved.current) {
+      unsaved.current = false;
+      void saveProgress(progress);
+    }
+  }, [loaded, progress]);
+
+  const finish = (levelId: string, stars: Stars) => {
+    // Only earning stars saves, so saved data this version can't read survives until then.
+    unsaved.current = true;
+    setProgress((p) => recordStars(p, levelId, stars));
+  };
+
   if (sandbox) {
     return (
       <main>
@@ -78,7 +108,7 @@ export function App() {
       <LevelScreen
         key={level.id}
         level={level}
-        onFinish={(stars) => setProgress((p) => recordStars(p, level.id, stars))}
+        onFinish={(stars) => finish(level.id, stars)}
         onNext={next === null ? null : () => setScreen({ kind: 'level', index: next })}
         onBack={() => setScreen({ kind: 'levels' })}
       />

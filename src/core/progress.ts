@@ -40,6 +40,15 @@ export function recordStars(progress: Progress, levelId: string, stars: Stars): 
   return { ...progress, stars: { ...progress.stars, [levelId]: stars } };
 }
 
+/** The best stars from either, level by level: for progress earned before saved progress loaded. */
+export function mergeProgress(a: Progress, b: Progress): Progress {
+  let merged = a;
+  for (const [id, stars] of Object.entries(b.stars)) {
+    merged = recordStars(merged, id, stars);
+  }
+  return merged;
+}
+
 export function totalStars(progress: Progress): number {
   return Object.values(progress.stars).reduce((sum, stars) => sum + stars, 0);
 }

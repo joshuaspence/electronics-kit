@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadProgress, NO_PROGRESS, recordStars, totalStars } from './progress';
+import { loadProgress, mergeProgress, NO_PROGRESS, recordStars, totalStars } from './progress';
 
 describe('loadProgress', () => {
   it('round-trips saved progress through JSON', () => {
@@ -45,5 +45,14 @@ describe('recordStars', () => {
   it('totals stars across levels', () => {
     const progress = recordStars(recordStars(NO_PROGRESS, 'a', 3), 'b', 2);
     expect(totalStars(progress)).toBe(5);
+  });
+});
+
+describe('mergeProgress', () => {
+  it('keeps the best stars from both, level by level', () => {
+    const saved = recordStars(recordStars(NO_PROGRESS, 'a', 3), 'b', 1);
+    const earned = recordStars(recordStars(NO_PROGRESS, 'b', 2), 'c', 1);
+    expect(mergeProgress(saved, earned).stars).toEqual({ a: 3, b: 2, c: 1 });
+    expect(mergeProgress(earned, saved).stars).toEqual({ a: 3, b: 2, c: 1 });
   });
 });

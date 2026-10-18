@@ -23,6 +23,7 @@ export const strings = {
   nextLevel: 'Next level',
   starsLabel: (stars: number) => `${stars} of 3 stars`,
   chapter: (n: number, title: string) => `Chapter ${n}: ${title}`,
+  version: (version: string, commit: string) => `Version ${version} (${commit})`,
   undo: 'Undo',
   redo: 'Redo',
   rotate: 'Rotate',

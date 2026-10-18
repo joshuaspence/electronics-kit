@@ -79,3 +79,16 @@ test('controls a bulb with a switch on the breadboard', async ({ page }) => {
   await expect(page.locator('.part-bulb .flow')).toHaveCount(1);
   await expect(page.getByText('You did it!')).toBeVisible();
 });
+
+test('keeps stars after a reload', async ({ page }) => {
+  await page.locator('[data-level="loop-3"]').click();
+  await wire(page, 'p1-1', 'p2-4');
+  await expect(page.getByText('You did it!')).toBeVisible();
+
+  await page.reload();
+  await expect(page.locator('[data-level="loop-3"]').getByLabel('3 of 3 stars')).toBeVisible();
+});
+
+test('shows the version', async ({ page }) => {
+  await expect(page.getByText(/^Version \d+\.\d+\.\d+ \(\w+\)$/)).toBeVisible();
+});

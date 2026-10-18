@@ -22,7 +22,10 @@ the decision and the main reason for it. When the design changes, update this fi
 
 - **Single-player. No accounts, no backend, no analytics, no ads, no third-party scripts.** For
   under-13s (COPPA, GDPR-K) the simplest compliance is collecting nothing.
-- Progress is stored locally in **IndexedDB**. The app calls `navigator.storage.persist()`.
+- Progress is stored locally in **IndexedDB** (`src/ui/progressStore.ts`). The app calls
+  `navigator.storage.persist()`. It saves only when the child earns stars, and only after saved
+  progress has loaded, merging in anything earned in the meantime. If storage is refused (private
+  windows, locked-down devices) the game plays on without saving.
 - Saved data carries a **schema version**; migrations live in `core/` and are unit-tested so that
   an update never wipes progress (`src/core/progress.ts`). Progress is the best stars per level.
   Data that can't be read (corrupt, or written by a newer version) loads as no progress and is
@@ -73,8 +76,7 @@ the decision and the main reason for it. When the design changes, update this fi
   the child left them (so a switch level finishes when they switch it on), a card floats over the
   bottom of the screen with the stars and the "Why?" text, leaving the working circuit in view, and
   offers the next level. Parts the level started with don't count towards par. The level list shows
-  the best stars; every level is open from the start. Progress is kept in memory until saving lands
-  with the menus.
+  the best stars; every level is open from the start.
 
 ## 4. Circuit simulation
 
@@ -231,7 +233,8 @@ tests/e2e/   Playwright
 ## 10. Releases
 
 - **Every merge to `master` deploys** to GitHub Pages. No tagged releases.
-- The settings screen shows the `package.json` version and short git SHA.
+- The level list's footer shows the `package.json` version and short git SHA (a settings screen
+  later).
 - A new service worker shows **"New version available — tap to update"**; it never reloads silently
   in the middle of a level.
 

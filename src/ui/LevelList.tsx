@@ -38,6 +38,7 @@ export function LevelList({ levels, progress, onPlay }: LevelListProps) {
           </ol>
         </section>
       ))}
+      <footer className="version">{strings.version(__APP_VERSION__, __APP_COMMIT__)}</footer>
     </main>
   );
 }
