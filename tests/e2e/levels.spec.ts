@@ -85,6 +85,33 @@ test('keeps stars after a reload', async ({ page }) => {
   await wire(page, 'p1-1', 'p2-4');
   await expect(page.getByText('You did it!')).toBeVisible();
 
+  // Saving is asynchronous: wait until the stars are in IndexedDB before reloading.
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          new Promise<unknown>((resolve) => {
+            const open = indexedDB.open('electronics-kit');
+            open.onerror = () => resolve(null);
+            open.onsuccess = () => {
+              const db = open.result;
+              if (!db.objectStoreNames.contains('progress')) {
+                db.close();
+                resolve(null);
+                return;
+              }
+              const get = db.transaction('progress').objectStore('progress').get('progress');
+              get.onsuccess = () => {
+                db.close();
+                resolve(get.result);
+              };
+              get.onerror = () => resolve(null);
+            };
+          }),
+      ),
+    )
+    .toMatchObject({ stars: { 'loop-3': 3 } });
+
   await page.reload();
   await expect(page.locator('[data-level="loop-3"]').getByLabel('3 of 3 stars')).toBeVisible();
 });
