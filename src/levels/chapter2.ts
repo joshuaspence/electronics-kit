@@ -44,9 +44,9 @@ export const chapter2: readonly Level[] = [
     id: 'strips-2',
     chapter: 2,
     board,
-    // Both legs in column 6: the strip joins them, so electricity goes around the bulb, not
-    // through it.
-    parts: [battery, part('bulb', 'bulb', hole('d', 6), hole('f', 6))],
+    // Both legs in column 1, the battery's + column: they are joined to the same end of the
+    // battery, so there is nothing to push electricity through the bulb.
+    parts: [battery, part('bulb', 'bulb', hole('d', 1), hole('f', 1))],
     goal: { kind: 'light-bulbs', bulbs: 1 },
     tray: [
       { kind: 'bulb', count: 1 },

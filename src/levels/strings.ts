@@ -46,7 +46,7 @@ export const levelText: Readonly<Record<string, LevelText>> = {
   'strips-2': {
     title: 'Sneaky strip',
     goal: 'This bulb won’t light. Work out why, then fix it.',
-    why: 'Both legs of the bulb were in the same column, so the strip joined them. Electricity took the easy path along the strip instead of going through the bulb.',
+    why: 'Both legs of the bulb were in the same column, so the strip joined them both to the same end of the battery. A bulb only lights when its legs join different ends of the loop.',
   },
   'switch-1': {
     title: 'Flick the switch',
