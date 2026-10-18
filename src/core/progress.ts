@@ -1,0 +1,62 @@
+/**
+ * A child's saved progress: the best stars earned on each level.
+ *
+ * Saved data carries a schema version. `loadProgress` accepts any version this code has ever
+ * written and migrates it forward, so an update never wipes progress (docs/design.md §2). Data it
+ * can't read (corrupt, or from a newer version after a downgrade) loads as no progress rather than
+ * throwing, and is never written back over until the child earns something.
+ */
+
+export const PROGRESS_VERSION = 1;
+
+export type Stars = 1 | 2 | 3;
+
+export interface Progress {
+  readonly version: typeof PROGRESS_VERSION;
+  /** Best stars per level id; a level absent here hasn't been finished. */
+  readonly stars: Readonly<Record<string, Stars>>;
+}
+
+export const NO_PROGRESS: Progress = { version: PROGRESS_VERSION, stars: {} };
+
+export function loadProgress(saved: unknown): Progress {
+  if (!isRecord(saved) || typeof saved['version'] !== 'number') {
+    return NO_PROGRESS;
+  }
+  switch (saved['version']) {
+    case 1:
+      return readV1(saved);
+    default:
+      return NO_PROGRESS;
+  }
+}
+
+/** Records a finished level, keeping the best stars ever earned on it. */
+export function recordStars(progress: Progress, levelId: string, stars: Stars): Progress {
+  const best = progress.stars[levelId];
+  if (best !== undefined && best >= stars) {
+    return progress;
+  }
+  return { ...progress, stars: { ...progress.stars, [levelId]: stars } };
+}
+
+export function totalStars(progress: Progress): number {
+  return Object.values(progress.stars).reduce((sum, stars) => sum + stars, 0);
+}
+
+function readV1(saved: Record<string, unknown>): Progress {
+  const stars: Record<string, Stars> = {};
+  const raw = saved['stars'];
+  if (isRecord(raw)) {
+    for (const [id, value] of Object.entries(raw)) {
+      if (value === 1 || value === 2 || value === 3) {
+        stars[id] = value;
+      }
+    }
+  }
+  return { version: 1, stars };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
