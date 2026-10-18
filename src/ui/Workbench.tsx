@@ -156,14 +156,17 @@ export function Workbench({ board, tray, initial }: WorkbenchProps) {
         setDrag((d) => (d ? { ...d, pointer } : d));
       }
     };
-    const onUp = () => {
+    const onUp = (event: PointerEvent) => {
       for (const part of editor.build.parts) {
         if (part.spec.kind === 'button' && part.spec.pressed) {
           setControl(part.id, false);
         }
       }
       if (drag) {
-        drop(drag);
+        // Drop where the pointer is released, not where the last render saw it: a fast drag can
+        // be released before the final move has re-rendered.
+        const pointer = toBoard(event.clientX, event.clientY) ?? drag.pointer;
+        drop(pointer ? { ...drag, pointer } : drag);
         setDrag(null);
       }
     };

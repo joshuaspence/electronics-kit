@@ -75,3 +75,23 @@ test('flips a switch with a tap', async ({ page }) => {
   await page.locator('.part-switch:not(.part-ghost) .switch-body').click();
   await expect(knob).not.toHaveAttribute('cx', before ?? '');
 });
+
+test('drops where the pointer is released, even before the last move re-renders', async ({
+  page,
+}) => {
+  const start = await centre(page.locator('[data-tray="bulb"]'));
+  const target = await between(page, 'e1', 'e3');
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(start.x + 5, start.y + 5);
+  // The final move and the release in one task, so React can't re-render between them; WebKit
+  // can deliver a fast drag like this.
+  await page.evaluate(({ x, y }) => {
+    const init = { clientX: x, clientY: y, bubbles: true, pointerId: 1, isPrimary: true };
+    window.dispatchEvent(new PointerEvent('pointermove', init));
+    window.dispatchEvent(new PointerEvent('pointerup', init));
+  }, target);
+  await page.mouse.up();
+
+  await expect(page.locator('.part-bulb:not(.part-ghost)')).toHaveCount(1);
+});
