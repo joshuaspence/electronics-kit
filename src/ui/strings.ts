@@ -24,6 +24,8 @@ export const strings = {
   starsLabel: (stars: number) => `${stars} of 3 stars`,
   chapter: (n: number, title: string) => `Chapter ${n}: ${title}`,
   version: (version: string, commit: string) => `Version ${version} (${commit})`,
+  updateReady: 'A new version of Electronics Kit is ready.',
+  update: 'Update',
   undo: 'Undo',
   redo: 'Redo',
   rotate: 'Rotate',
