@@ -7,6 +7,7 @@ import {
   stripOf,
   TERMINAL_ROWS,
 } from '../core/breadboard';
+import { strings } from './strings';
 
 const PITCH = 40;
 const MARGIN = 30;
@@ -28,7 +29,7 @@ export function Board({ layout }: BoardProps) {
       className="board"
       viewBox={`0 0 ${width} ${height}`}
       role="img"
-      aria-label="Breadboard"
+      aria-label={strings.boardLabel}
       onPointerLeave={() => setActiveStrip(null)}
     >
       <rect className="board-body" x={0} y={0} width={width} height={height} rx={16} />
