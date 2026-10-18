@@ -26,9 +26,10 @@ test.beforeEach(async ({ page }) => {
   await page.goto('./');
 });
 
-test('lists chapter 1’s levels', async ({ page }) => {
+test('lists the levels by chapter', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Chapter 1: Make a loop' })).toBeVisible();
-  await expect(page.locator('[data-level]')).toHaveCount(5);
+  await expect(page.getByRole('heading', { name: 'Chapter 2: On and off' })).toBeVisible();
+  await expect(page.locator('[data-level]')).toHaveCount(10);
 });
 
 test('finishes a level, earns stars and moves on', async ({ page }) => {
@@ -57,4 +58,24 @@ test('does not count a short circuit as a win', async ({ page }) => {
   await wire(page, 'p2-1', 'p3-3');
   await wire(page, 'p1-2', 'p3-4');
   await expect(page.getByText('You did it!')).toHaveCount(0);
+});
+
+test('controls a bulb with a switch on the breadboard', async ({ page }) => {
+  await page.locator('[data-level="switch-1"]').click();
+  const between = async (a: string, b: string) => {
+    const p = await centre(post(page, a));
+    const q = await centre(post(page, b));
+    return { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
+  };
+
+  // Switch from the battery's column 3 to column 5, bulb from 5 to 7, wire from 7 back to 1.
+  await drag(page, page.locator('[data-tray="switch"]'), await between('e3', 'e5'));
+  await drag(page, page.locator('[data-tray="bulb"]'), await between('f5', 'f7'));
+  await wire(page, 'j7', 'j1');
+  await expect(page.locator('.part-bulb .flow')).toHaveCount(0);
+  // The circuit is right, but the level finishes only when the child switches the bulb on.
+  await expect(page.getByText('You did it!')).toHaveCount(0);
+  await page.locator('.part-switch:not(.part-ghost) .switch-body').click();
+  await expect(page.locator('.part-bulb .flow')).toHaveCount(1);
+  await expect(page.getByText('You did it!')).toBeVisible();
 });

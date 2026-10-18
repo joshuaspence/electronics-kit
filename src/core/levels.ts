@@ -83,6 +83,15 @@ export function checkGoal(goal: Goal, circuit: Circuit): GoalResult {
 }
 
 /**
+ * How many bulbs are lit with every switch and button as the child left them. A level finishes only
+ * when its goal is met and this many bulbs are glowing, so the child sees the light come on.
+ */
+export function litNow(circuit: Circuit): number {
+  const { lit, shorted } = litBulbs(circuit);
+  return shorted ? 0 : lit;
+}
+
+/**
  * Stars for a finished level, 1 to 3: one for finishing, one for placing no more than par parts
  * and one for using no hints. Speed never counts.
  */

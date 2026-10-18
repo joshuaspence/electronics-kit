@@ -36,3 +36,13 @@ describe('levels', () => {
     });
   }
 });
+
+describe('strips-2', () => {
+  it('starts with a bulb whose legs share the battery’s + strip, not one off in the corner', () => {
+    const level = levels.find((l) => l.id === 'strips-2')!;
+    const circuit = toCircuit(level.board, { parts: level.parts });
+    const battery = circuit.parts.find((p) => p.kind === 'battery')!;
+    const bulb = circuit.parts.find((p) => p.kind === 'bulb')!;
+    expect(bulb.pins).toEqual([battery.pins[0], battery.pins[0]]);
+  });
+});

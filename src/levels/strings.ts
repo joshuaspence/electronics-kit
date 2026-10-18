@@ -9,6 +9,7 @@ export interface LevelText {
 
 export const chapterTitles: Readonly<Record<number, string>> = {
   1: 'Make a loop',
+  2: 'On and off',
 };
 
 export const levelText: Readonly<Record<string, LevelText>> = {
@@ -36,5 +37,30 @@ export const levelText: Readonly<Record<string, LevelText>> = {
     title: 'Shortcut!',
     goal: 'Someone wired a shortcut. Fix it so the bulb lights instead.',
     why: 'Electricity takes the easiest path. A wire straight from one end of the battery to the other is a short circuit: it skips the bulb and makes the battery hot.',
+  },
+  'strips-1': {
+    title: 'Hidden wires',
+    goal: 'This is a breadboard. Holes in the same column are joined underneath. Light the bulb.',
+    why: 'Metal strips inside the breadboard join each column of holes, so parts in the same column are connected without any wires.',
+  },
+  'strips-2': {
+    title: 'Sneaky strip',
+    goal: 'This bulb won’t light. Work out why, then fix it.',
+    why: 'Both legs of the bulb were in the same column, so the strip joined them both to the same end of the battery. A bulb only lights when its legs join different ends of the loop.',
+  },
+  'switch-1': {
+    title: 'Flick the switch',
+    goal: 'Add a switch so you can turn the bulb on and off. Tap the switch to flick it.',
+    why: 'A switch makes a gap in the loop when it is off. No complete loop, no electricity, no light.',
+  },
+  'switch-2': {
+    title: 'All together',
+    goal: 'Make one switch turn two bulbs on and off.',
+    why: 'When everything is in one loop, one gap stops it all. That’s how one switch can control lots of lights.',
+  },
+  'button-1': {
+    title: 'Press to glow',
+    goal: 'Use a button so the bulb only glows while you hold it down.',
+    why: 'A button closes the gap only while you press it. Doorbells and keyboards work like this.',
   },
 };
