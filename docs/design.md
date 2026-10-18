@@ -133,7 +133,7 @@ the current. An unlockable **multimeter** shows volts and milliamps for older ch
 
 | Layer | Choice |
 |---|---|
-| Language | TypeScript, `strict` |
+| Language | TypeScript 6, `strict` (7 once typescript-eslint supports it) |
 | Build | Vite, `build.target: 'es2022'`; `vite-plugin-pwa` for the service worker |
 | UI | React 19 |
 | Board rendering | SVG via React components (Canvas only if profiling demands it) |
