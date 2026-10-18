@@ -22,8 +22,11 @@ main {
 }
 
 .board {
+  display: block;
   width: 100%;
   height: auto;
+  /* Keep the whole board on screen on a landscape tablet (docs/design.md §9). */
+  max-height: calc(100vh - 240px);
   touch-action: none;
 }
 
@@ -39,4 +42,109 @@ main {
 
 .hole-active {
   fill: var(--hole-active);
+}
+
+button {
+  font: inherit;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: 2px solid var(--board-edge);
+  background: var(--board);
+  color: var(--ink);
+}
+
+button:disabled {
+  opacity: 0.4;
+}
+
+.tray,
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tray-item {
+  touch-action: none;
+}
+
+.tray-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  min-height: 44px;
+  padding: 0 8px;
+}
+
+.tray-count {
+  opacity: 0.7;
+}
+
+.leg {
+  stroke: #8a8780;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.wire {
+  stroke: #d64545;
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+.body {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.battery-body {
+  fill: #2b2a28;
+}
+
+.body-label {
+  fill: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.bulb-body {
+  fill: #fff6d6;
+}
+
+.bulb-glow {
+  fill: #ffd84d;
+}
+
+.resistor-body {
+  fill: #d9b98c;
+}
+
+.capacitor-body {
+  fill: #5b8bd6;
+}
+
+.switch-body,
+.button-body {
+  fill: #e6e1d6;
+}
+
+.switch-knob,
+.button-cap {
+  fill: #f28c28;
+}
+
+.part-ghost {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.part-selected .body,
+.part-selected .wire {
+  stroke: #2f7de1;
+  stroke-width: 4;
 }
