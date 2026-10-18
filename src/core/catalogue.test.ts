@@ -5,10 +5,10 @@ import { bulbBrightness, solveDc } from './dc';
 
 describe('newSpec', () => {
   it('lights one kit bulb at full brightness from one kit battery', () => {
-    const board = { kind: 'snap', terminals: ['+', '-'] } as const;
+    const board = { kind: 'snap', rows: 1, columns: 2 } as const;
     const at = [
-      { kind: 'snap', terminal: '+' },
-      { kind: 'snap', terminal: '-' },
+      { kind: 'snap', row: 1, column: 1 },
+      { kind: 'snap', row: 1, column: 2 },
     ] as const;
     const circuit = toCircuit(board, {
       parts: [

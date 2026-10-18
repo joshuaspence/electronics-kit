@@ -118,6 +118,10 @@ the current. An unlockable **multimeter** shows volts and milliamps for older ch
 - Size by chapter: **chapter 1** has no breadboard (parts snap onto big terminals, Snap Circuits
   style); **chapter 2** a ~10-column mini board; later chapters a half-size board with rails; the
   sandbox a full-size board with pan and zoom.
+- **Snap board** (chapter 1): a grid of big metal posts (`{ kind: 'snap', rows, columns }`), 110
+  board units apart against the breadboard's 40. Every part reaches the next post; wires go from any
+  post to any other. A post takes any number of parts and is drawn above them, so a wire can always
+  start from it. Each post is its own point: nothing is joined underneath.
 - **Placement:** drag a part from the tray and its legs snap to the nearest valid holes (fixed leg
   spacing per part); rotate with a button; draw wires by dragging hole to hole. Battery packs sit
   off the board with leads into the rails.

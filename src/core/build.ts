@@ -6,15 +6,22 @@ import type { PartAllowance } from './levels';
  * What the child has built: parts placed at locations on a board, with undo and redo.
  *
  * A board is either a breadboard, whose holes are joined in strips, or a snap board (chapter 1),
- * whose terminals each stand alone. `toCircuit` turns a build into the circuit the simulator
+ * whose posts each stand alone. `toCircuit` turns a build into the circuit the simulator
  * solves, so pins in the same strip end up on the same point.
  */
 
 export type Board =
   | { readonly kind: 'breadboard'; readonly layout: BoardLayout }
-  | { readonly kind: 'snap'; readonly terminals: readonly string[] };
+  | { readonly kind: 'snap'; readonly rows: number; readonly columns: number };
 
-export type Location = Hole | { readonly kind: 'snap'; readonly terminal: string };
+/** A post on a snap board, numbered from 1 like breadboard columns. */
+export interface SnapPost {
+  readonly kind: 'snap';
+  readonly row: number;
+  readonly column: number;
+}
+
+export type Location = Hole | SnapPost;
 
 /** A part as the tray offers it: everything but its id and where its pins are. */
 export type PartSpec = WithoutPlacement<Part>;
@@ -53,7 +60,7 @@ export type EditResult =
 
 export function pointOf(board: Board, location: Location): PointId {
   if (location.kind === 'snap') {
-    return `snap:${location.terminal}`;
+    return locationKey(location);
   }
   if (board.kind !== 'breadboard') {
     throw new RangeError(`Hole ${holeName(location)} is not on a snap board`);
@@ -215,7 +222,7 @@ export class BuildEditor {
     if (locationKey(at[0]) === locationKey(at[1])) {
       return 'same-hole';
     }
-    // A breadboard hole holds one leg; a snap terminal takes any number of parts.
+    // A breadboard hole holds one leg; a snap post takes any number of parts.
     const taken = new Set(
       others.flatMap((p) => p.at.filter((l) => l.kind !== 'snap').map(locationKey)),
     );
@@ -227,12 +234,20 @@ export class BuildEditor {
 
   private isOnBoard(location: Location): boolean {
     if (location.kind === 'snap') {
-      return this.board.kind === 'snap' && this.board.terminals.includes(location.terminal);
+      return (
+        this.board.kind === 'snap' &&
+        isWithin(location.row, this.board.rows) &&
+        isWithin(location.column, this.board.columns)
+      );
     }
     return this.board.kind === 'breadboard' && isValidHole(this.board.layout, location);
   }
 }
 
 function locationKey(location: Location): string {
-  return location.kind === 'snap' ? `snap:${location.terminal}` : holeName(location);
+  return location.kind === 'snap' ? `snap:${location.row}:${location.column}` : holeName(location);
+}
+
+function isWithin(index: number, count: number): boolean {
+  return Number.isInteger(index) && index >= 1 && index <= count;
 }

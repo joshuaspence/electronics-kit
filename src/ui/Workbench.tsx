@@ -1,5 +1,10 @@
-import { type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
-import { TERMINAL_ROWS } from '../core/breadboard';
+import {
+  type PointerEvent as ReactPointerEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   type Board as BoardModel,
   type Build,
@@ -13,17 +18,7 @@ import { bulbBrightness, isShorted, solveDc } from '../core/dc';
 import { flowSpeed } from '../core/flow';
 import type { PartAllowance } from '../core/levels';
 import { Board, type Ghost } from './Board';
-import {
-  holePosition,
-  LEG_SPAN,
-  nearestHole,
-  type Orientation,
-  orientationOf,
-  PITCH,
-  type Point,
-  secondLeg,
-  type Terminal,
-} from './geometry';
+import { geometryFor, type Orientation, orientationOf, type Point, secondLeg } from './geometry';
 import { strings } from './strings';
 import { playSnap, playWarning } from './sound';
 import { Tray } from './Tray';
@@ -32,15 +27,15 @@ import { useEditor } from './useEditor';
 /** Pointer travel (in board units) below which a press counts as a tap, not a drag. */
 const TAP_DISTANCE = 6;
 
-type Legs = readonly [Terminal, Terminal];
+type Legs = readonly [Location, Location];
 
 type Drag =
   | { readonly type: 'new'; readonly spec: PartSpec; readonly pointer: Point | null }
   | { readonly type: 'move'; readonly id: string; readonly start: Point; readonly pointer: Point }
-  | { readonly type: 'wire'; readonly from: Terminal; readonly pointer: Point };
+  | { readonly type: 'wire'; readonly from: Location; readonly pointer: Point };
 
 interface WorkbenchProps {
-  board: BoardModel & { kind: 'breadboard' };
+  board: BoardModel;
   tray: readonly PartAllowance[];
   initial: Build;
 }
@@ -48,6 +43,7 @@ interface WorkbenchProps {
 /** The board, the parts tray and the editing tools, wired to a BuildEditor. */
 export function Workbench({ board, tray, initial }: WorkbenchProps) {
   const { editor, build, newId, apply, setControl, undo, redo } = useEditor(board, tray, initial);
+  const geometry = useMemo(() => geometryFor(board), [board]);
   const svgRef = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -102,33 +98,27 @@ export function Workbench({ board, tray, initial }: WorkbenchProps) {
 
   /** Where a new part's legs go when the pointer holds it by its middle. */
   const newPartLegs = (spec: PartSpec, pointer: Point): Legs | null => {
-    const half = ((LEG_SPAN[spec.kind] ?? 1) * PITCH) / 2;
-    const first = nearestHole(
-      board.layout,
+    const half = (geometry.legSpan(spec.kind) * geometry.pitch) / 2;
+    const first = geometry.nearest(
       orientation === 'across'
         ? { x: pointer.x - half, y: pointer.y }
         : { x: pointer.x, y: pointer.y - half },
     );
-    const second = first && secondLeg(first, LEG_SPAN[spec.kind] ?? 1, orientation);
+    const second = first && secondLeg(geometry, first, spec.kind, orientation);
     return first && second ? [first, second] : null;
   };
 
   /** Where a placed part's legs go when dragged from `start` to `pointer`, keeping their shape. */
   const movedLegs = (part: PlacedPart, start: Point, pointer: Point): Legs | null => {
-    const legs = terminalLegs(part.at);
-    if (!legs) {
-      return null;
-    }
-    const [a, b] = legs;
-    const from = holePosition(a);
-    const first = nearestHole(board.layout, {
+    const [a, b] = part.at;
+    const from = geometry.position(a);
+    const first = geometry.nearest({
       x: from.x + pointer.x - start.x,
       y: from.y + pointer.y - start.y,
     });
-    const row = first && TERMINAL_ROWS[TERMINAL_ROWS.indexOf(first.row) + rowsBetween(a, b)];
-    return first && row
-      ? [first, { kind: 'terminal', column: first.column + b.column - a.column, row }]
-      : null;
+    const { rows, columns } = geometry.delta(a, b);
+    const second = first && geometry.offset(first, rows, columns);
+    return first && second ? [first, second] : null;
   };
 
   const placeAndSelect = (spec: PartSpec, at: Legs) => {
@@ -167,8 +157,8 @@ export function Workbench({ board, tray, initial }: WorkbenchProps) {
         return;
       }
       case 'wire': {
-        const to = nearestHole(board.layout, d.pointer);
-        if (to && (to.column !== d.from.column || to.row !== d.from.row)) {
+        const to = geometry.nearest(d.pointer);
+        if (to && geometry.name(to) !== geometry.name(d.from)) {
           placeAndSelect({ kind: 'wire' }, [d.from, to]);
         }
         return;
@@ -211,7 +201,7 @@ export function Workbench({ board, tray, initial }: WorkbenchProps) {
 
   const ghost = ((): Ghost | null => {
     if (drag?.type === 'wire') {
-      return { spec: { kind: 'wire' }, from: holePosition(drag.from), to: drag.pointer };
+      return { spec: { kind: 'wire' }, from: geometry.position(drag.from), to: drag.pointer };
     }
     let spec: PartSpec | undefined;
     let legs: Legs | null = null;
@@ -223,7 +213,9 @@ export function Workbench({ board, tray, initial }: WorkbenchProps) {
       spec = part?.spec;
       legs = part ? movedLegs(part, drag.start, drag.pointer) : null;
     }
-    return spec && legs ? { spec, from: holePosition(legs[0]), to: holePosition(legs[1]) } : null;
+    return spec && legs
+      ? { spec, from: geometry.position(legs[0]), to: geometry.position(legs[1]) }
+      : null;
   })();
 
   const rotate = () => {
@@ -231,14 +223,14 @@ export function Workbench({ board, tray, initial }: WorkbenchProps) {
       setOrientation((o) => (o === 'across' ? 'down' : 'across'));
       return;
     }
-    const legs = terminalLegs(selected.at);
-    if (!legs || selected.spec.kind === 'wire') {
+    if (selected.spec.kind === 'wire') {
       return;
     }
-    const turned = orientationOf(legs[0], legs[1]) === 'across' ? 'down' : 'across';
-    const second = secondLeg(legs[0], LEG_SPAN[selected.spec.kind] ?? 1, turned);
+    const [first, current] = selected.at;
+    const turned = orientationOf(geometry, first, current) === 'across' ? 'down' : 'across';
+    const second = secondLeg(geometry, first, selected.spec.kind, turned);
     if (second) {
-      edit({ kind: 'move', id: selected.id, at: [legs[0], second] });
+      edit({ kind: 'move', id: selected.id, at: [first, second] });
     }
   };
 
@@ -248,7 +240,7 @@ export function Workbench({ board, tray, initial }: WorkbenchProps) {
     setDrag({ type: 'new', spec, pointer: toBoard(event.clientX, event.clientY) });
   };
 
-  const onHolePointerDown = (hole: Terminal, event: ReactPointerEvent) => {
+  const onHolePointerDown = (hole: Location, event: ReactPointerEvent) => {
     const pointer = toBoard(event.clientX, event.clientY);
     if (pointer && editor.remaining('wire') > 0) {
       setDrag({ type: 'wire', from: hole, pointer });
@@ -274,13 +266,19 @@ export function Workbench({ board, tray, initial }: WorkbenchProps) {
 
   return (
     <div className="workbench">
-      <Tray tray={tray} remaining={(kind) => editor.remaining(kind)} onPickUp={onPickUp} />
+      <Tray
+        tray={tray}
+        remaining={(kind) => editor.remaining(kind)}
+        onPickUp={onPickUp}
+        snap={board.kind === 'snap'}
+      />
       <p className="warning" role="status">
         {shorted ? strings.shortCircuit : ''}
       </p>
       <Board
         ref={svgRef}
-        board={board}
+        geometry={geometry}
+        snap={board.kind === 'snap'}
         build={build}
         brightness={brightness}
         flows={flows}
@@ -317,13 +315,4 @@ export function Workbench({ board, tray, initial }: WorkbenchProps) {
       </div>
     </div>
   );
-}
-
-function terminalLegs(at: readonly [Location, Location]): Legs | null {
-  const [a, b] = at;
-  return a.kind === 'terminal' && b.kind === 'terminal' ? [a, b] : null;
-}
-
-function rowsBetween(a: Terminal, b: Terminal): number {
-  return TERMINAL_ROWS.indexOf(b.row) - TERMINAL_ROWS.indexOf(a.row);
 }
