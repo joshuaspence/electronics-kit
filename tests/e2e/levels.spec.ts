@@ -54,6 +54,10 @@ test('opens the sandbox with the parts unlocked so far', async ({ page }) => {
   await expect(page.locator('[data-tray="led"]')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Zoom in' })).toBeVisible();
 
+  // At this height the full-size board is limited by the screen's height rather than its width.
+  await page.setViewportSize({ width: 1180, height: 600 });
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(600);
+
   await page.getByRole('button', { name: 'Levels' }).click();
   await expect(page.getByRole('heading', { name: 'Chapter 1: Make a loop' })).toBeVisible();
 });

@@ -13,7 +13,7 @@ interface SandboxScreenProps {
 /** Free building on a full-size board, with no goal: the sandbox (docs/design.md §3). */
 export function SandboxScreen({ tray, meter, onBack }: SandboxScreenProps) {
   return (
-    <main className="level">
+    <main className="level fit-screen">
       <header className="level-header">
         <button type="button" onClick={onBack}>
           {strings.backToLevels}
