@@ -192,7 +192,9 @@ export class BuildEditor {
     const update = (build: Build): Build => ({
       parts: build.parts.map((p) => (p.id === id ? { ...p, spec } : p)),
     });
-    this.current = this.settle(update(this.current));
+    const before = this.current;
+    const flipped = update(before);
+    this.current = this.settle(flipped);
     // Keep the control where the child left it when they undo or redo around it.
     this.past = this.past.map((build) =>
       build.parts.some((p) => p.id === id) ? update(build) : build,
@@ -200,6 +202,12 @@ export class BuildEditor {
     this.future = this.future.map((build) =>
       build.parts.some((p) => p.id === id) ? update(build) : build,
     );
+    // An input that set something off, such as popping an LED, is an undo step after all, so one
+    // undo takes back both: the control as it was, and what it did.
+    if (this.current !== flipped) {
+      this.past.push(before);
+      this.future = [];
+    }
     return { ok: true };
   }
 

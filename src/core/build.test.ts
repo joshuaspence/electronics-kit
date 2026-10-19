@@ -11,6 +11,7 @@ import {
 } from './build';
 import { newSpec } from './catalogue';
 import { solveDc } from './dc';
+import type { PartAllowance } from './levels';
 
 const hole = (row: 'a' | 'b' | 'e' | 'f' | 'j', column: number): Hole => ({
   kind: 'terminal',
@@ -207,6 +208,17 @@ describe('blowOverdrivenLeds', () => {
   const blown = (build: Build) =>
     build.parts.filter((p) => p.spec.kind === 'led' && p.spec.blown).map((p) => p.id);
   const power = battery([snap(1, 1), snap(1, 2)]);
+  const toggle = (id: string, at: readonly [Location, Location]): PlacedPart => ({
+    id,
+    spec: newSpec('switch'),
+    at,
+    fixed: false,
+  });
+  /** An editor that blows overdriven LEDs, as the game's does, starting from just the battery. */
+  const settled = (tray: readonly PartAllowance[]) =>
+    new BuildEditor(snapBoard, tray, { parts: [power] }, (build) =>
+      blowOverdrivenLeds(snapBoard, build),
+    );
 
   it('blows an LED straight across the battery, which then stays dark', () => {
     const build = blowOverdrivenLeds(snapBoard, {
@@ -229,10 +241,7 @@ describe('blowOverdrivenLeds', () => {
   });
 
   it('pops as part of the edit that overdrove it, so one undo brings it back', () => {
-    const tray = [{ kind: 'led', count: 1 }] as const;
-    const editor = new BuildEditor(snapBoard, tray, { parts: [power] }, (build) =>
-      blowOverdrivenLeds(snapBoard, build),
-    );
+    const editor = settled([{ kind: 'led', count: 1 }]);
     editor.apply({ kind: 'place', part: led('led', [snap(1, 1), snap(1, 2)]) });
     expect(blown(editor.build)).toEqual(['led']);
 
@@ -241,5 +250,37 @@ describe('blowOverdrivenLeds', () => {
     expect(editor.canUndo).toBe(false);
     expect(editor.redo()).toBe(true);
     expect(blown(editor.build)).toEqual(['led']);
+  });
+
+  it('pops as part of the input that overdrove it, so one undo brings it back', () => {
+    const tray = [
+      { kind: 'led', count: 1 },
+      { kind: 'switch', count: 1 },
+      { kind: 'wire', count: 1 },
+    ] as const;
+    const editor = settled(tray);
+    editor.apply({ kind: 'place', part: led('led', [snap(1, 1), snap(2, 1)]) });
+    editor.apply({ kind: 'place', part: toggle('s', [snap(2, 1), snap(1, 2)]) });
+    editor.apply({ kind: 'place', part: wire('w', [snap(2, 2), snap(2, 3)]) });
+
+    // Closing the switch puts the LED straight across the battery.
+    editor.setControl('s', true);
+    expect(blown(editor.build)).toEqual(['led']);
+
+    // One undo puts the switch back open and the LED back whole, and keeps the wire placed after.
+    expect(editor.undo()).toBe(true);
+    expect(blown(editor.build)).toEqual([]);
+    expect(editor.build.parts.find((p) => p.id === 's')!.spec).toMatchObject({ closed: false });
+    expect(editor.build.parts.map((p) => p.id)).toContain('w');
+    expect(editor.redo()).toBe(true);
+    expect(blown(editor.build)).toEqual(['led']);
+  });
+
+  it('keeps an input that sets nothing off out of undo', () => {
+    const editor = settled([{ kind: 'switch', count: 1 }]);
+    editor.apply({ kind: 'place', part: toggle('s', [snap(2, 1), snap(2, 2)]) });
+    editor.setControl('s', true);
+    expect(editor.undo()).toBe(true);
+    expect(editor.canUndo).toBe(false);
   });
 });
