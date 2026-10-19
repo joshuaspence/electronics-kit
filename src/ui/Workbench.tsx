@@ -44,9 +44,11 @@ type Drag =
   | { readonly type: 'move'; readonly id: string; readonly start: Point; readonly pointer: Point }
   | { readonly type: 'wire'; readonly from: Location; readonly pointer: Point }
   // Panning a zoomed board works in screen pixels: board units shift under the pointer as it pans,
-  // so the pan keeps how many board units a pixel was worth when it started.
+  // so the pan keeps how many board units a pixel was worth when it started. It follows only the
+  // finger that started it, so a second finger can't drag the board back or end the pan.
   | {
       readonly type: 'pan';
+      readonly pointerId: number;
       readonly start: Point;
       readonly client: Point;
       readonly centre: Point;
@@ -316,7 +318,9 @@ export function Workbench({
   useEffect(() => {
     const onMove = (event: PointerEvent) => {
       if (drag?.type === 'pan') {
-        setDrag({ ...drag, client: { x: event.clientX, y: event.clientY } });
+        if (event.pointerId === drag.pointerId) {
+          setDrag({ ...drag, client: { x: event.clientX, y: event.clientY } });
+        }
         return;
       }
       const pointer = toBoard(event.clientX, event.clientY);
@@ -331,9 +335,11 @@ export function Workbench({
         }
       }
       if (drag?.type === 'pan') {
-        const centre = pannedCentre({ ...drag, client: { x: event.clientX, y: event.clientY } });
-        setView((v) => clamped(geometry, { ...v, centre }));
-        setDrag(null);
+        if (event.pointerId === drag.pointerId) {
+          const centre = pannedCentre({ ...drag, client: { x: event.clientX, y: event.clientY } });
+          setView((v) => clamped(geometry, { ...v, centre }));
+          setDrag(null);
+        }
       } else if (drag) {
         // Drop where the pointer is released, not where the last render saw it: a fast drag can
         // be released before the final move has re-rendered.
@@ -510,10 +516,20 @@ export function Workbench({
         onBackgroundPointerDown={
           zoomable
             ? (event) => {
+                if (drag) {
+                  return;
+                }
                 const client = { x: event.clientX, y: event.clientY };
                 // The board's on-screen scale, whichever of its width or height bounds it.
                 const perPixel = 1 / (svgRef.current?.getScreenCTM()?.a ?? 1);
-                setDrag({ type: 'pan', start: client, client, centre: view.centre, perPixel });
+                setDrag({
+                  type: 'pan',
+                  pointerId: event.pointerId,
+                  start: client,
+                  client,
+                  centre: view.centre,
+                  perPixel,
+                });
               }
             : undefined
         }

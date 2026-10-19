@@ -442,4 +442,46 @@ test.describe('full-size board', () => {
     await expect.poll(async () => (await viewBox(page))[2]).toBeCloseTo(oneStep!, 5);
     expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
   });
+
+  test('follows only the finger that started a pan', async ({ page }) => {
+    const board = (await page.locator('svg.board').boundingBox())!;
+    const x = board.x + board.width / 2;
+    const y = (await centre(page.locator('[data-hole="e1"]'))).y + 20;
+    const perPixel = await page
+      .locator('svg.board')
+      .evaluate((svg: SVGSVGElement) => 1 / svg.getScreenCTM()!.a);
+
+    /** Sends a touch pointer event to the bare board (a press) or the window (a move or lift). */
+    const touch = (type: string, pointerId: number, dx: number) =>
+      page.evaluate(
+        ({ type, pointerId, clientX, clientY }) => {
+          const init = { bubbles: true, pointerId, pointerType: 'touch', clientX, clientY };
+          const target = type === 'pointerdown' ? document.querySelector('.board-body')! : window;
+          target.dispatchEvent(new PointerEvent(type, { ...init, isPrimary: pointerId === 1 }));
+        },
+        { type, pointerId, clientX: x + dx, clientY: y },
+      );
+    const left = async () => (await viewBox(page))[0]!;
+    /** Lets React render what the events so far did. */
+    const rendered = () =>
+      page.evaluate(
+        () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
+      );
+
+    await touch('pointerdown', 1, 0);
+    await touch('pointermove', 1, -100);
+    await expect.poll(left).toBeCloseTo(100 * perPixel, 0);
+
+    // A second finger pressing, moving and lifting neither drags the board nor ends the pan.
+    await touch('pointerdown', 2, 50);
+    await touch('pointermove', 2, 150);
+    await rendered();
+    expect(await left()).toBeCloseTo(100 * perPixel, 0);
+    await touch('pointermove', 1, -150);
+    await expect.poll(left).toBeCloseTo(150 * perPixel, 0);
+    await touch('pointerup', 2, 150);
+    await touch('pointermove', 1, -200);
+    await expect.poll(left).toBeCloseTo(200 * perPixel, 0);
+    await touch('pointerup', 1, -200);
+  });
 });
