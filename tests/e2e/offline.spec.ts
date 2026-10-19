@@ -21,6 +21,15 @@ test('works offline once loaded', async ({ page, context }) => {
   await context.setOffline(true);
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Chapter 1: Make a loop' })).toBeVisible();
+  // The font is precached too, rather than silently falling back to the system one.
+  const fonts = await page.evaluate(async () => {
+    await document.fonts.ready;
+    return [...document.fonts]
+      .filter((font) => font.family.includes('Atkinson Hyperlegible'))
+      .map((font) => font.status);
+  });
+  expect(fonts).toContain('loaded');
+  expect(fonts).not.toContain('error');
   await page.locator('[data-level="loop-1"]').click();
   await expect(page.getByRole('heading', { name: 'Light it up' })).toBeVisible();
 });
