@@ -1,8 +1,8 @@
 import type { Board, PlacedPart } from './build';
 import { type Circuit, type Part, type PartKind } from './circuit';
-import { bulbBrightness, isShorted, solveDc } from './dc';
+import { bulbBrightness, isShorted, ledBrightness, solveDc } from './dc';
 
-/** A bulb counts as lit at a quarter of full brightness or more. */
+/** A light (a bulb or an LED) counts as lit at a quarter of full brightness or more. */
 export const LIT_BRIGHTNESS = 0.25;
 
 /**
@@ -10,18 +10,18 @@ export const LIT_BRIGHTNESS = 0.25;
  * so any correct circuit wins (docs/design.md §3). No goal is met while a battery is shorted.
  */
 export type Goal =
-  /** At least `bulbs` bulbs are lit with every switch closed and every button pressed. */
-  | { readonly kind: 'light-bulbs'; readonly bulbs: number }
+  /** At least `lights` lights are lit with every switch closed and every button pressed. */
+  | { readonly kind: 'light-up'; readonly lights: number }
   /**
-   * At least `bulbs` bulbs are lit with every switch closed and every button pressed, and none is
-   * lit with every switch open and every button released. The circuit needs a switch or button.
+   * At least `lights` lights are lit with every switch closed and every button pressed, and none
+   * is lit with every switch open and every button released. The circuit needs a switch or button.
    */
-  | { readonly kind: 'control-bulbs'; readonly bulbs: number }
+  | { readonly kind: 'control-lights'; readonly lights: number }
   /**
-   * As `control-bulbs`, and also none is lit with any one switch open or button released and the
-   * rest on: the bulbs need every control at once.
+   * As `control-lights`, and also none is lit with any one switch open or button released and the
+   * rest on: the lights need every control at once.
    */
-  | { readonly kind: 'every-control'; readonly bulbs: number };
+  | { readonly kind: 'every-control'; readonly lights: number };
 
 export interface PartAllowance {
   readonly kind: PartKind;
@@ -60,22 +60,34 @@ export type GoalResult =
 
 /** Why a goal is not met, so hints can say something useful. */
 export type GoalFailure =
-  'short-circuit' | 'too-few-lit' | 'not-controlled' | 'no-control' | 'not-every-control';
+  | 'short-circuit'
+  | 'too-few-lit'
+  | 'led-blown'
+  | 'led-backwards'
+  | 'not-controlled'
+  | 'no-control'
+  | 'not-every-control';
 
 export function checkGoal(goal: Goal, circuit: Circuit): GoalResult {
   const on = withControls(circuit, true);
-  const onResult = litBulbs(on);
+  const onResult = litLights(on);
   if (onResult.shorted) {
     return { met: false, reason: 'short-circuit' };
   }
-  if (onResult.lit < goal.bulbs) {
-    return { met: false, reason: 'too-few-lit' };
+  if (onResult.lit < goal.lights) {
+    // Say why an LED is dark when its own wiring is the reason, not just that too few are lit.
+    const reason = onResult.blown
+      ? 'led-blown'
+      : onResult.backwards
+        ? 'led-backwards'
+        : 'too-few-lit';
+    return { met: false, reason };
   }
 
   switch (goal.kind) {
-    case 'light-bulbs':
+    case 'light-up':
       return { met: true };
-    case 'control-bulbs':
+    case 'control-lights':
     case 'every-control': {
       const controls = circuit.parts.filter(isControl);
       if (controls.length === 0) {
@@ -88,7 +100,7 @@ export function checkGoal(goal: Goal, circuit: Circuit): GoalResult {
         }
       }
       for (const [off, failure] of offs) {
-        const offResult = litBulbs(off);
+        const offResult = litLights(off);
         if (offResult.shorted) {
           return { met: false, reason: 'short-circuit' };
         }
@@ -106,11 +118,11 @@ function isControl(part: Part): boolean {
 }
 
 /**
- * How many bulbs are lit with every switch and button as the child left them. A level finishes only
- * when its goal is met and this many bulbs are glowing, so the child sees the light come on.
+ * How many lights are lit with every switch and button as the child left them. A level finishes
+ * only when its goal is met and this many lights are glowing, so the child sees the light come on.
  */
 export function litNow(circuit: Circuit): number {
-  const { lit, shorted } = litBulbs(circuit);
+  const { lit, shorted } = litLights(circuit);
   return shorted ? 0 : lit;
 }
 
@@ -143,17 +155,38 @@ function withControls(circuit: Circuit, on: boolean, except?: string): Circuit {
   };
 }
 
-function litBulbs(circuit: Circuit): { lit: number; shorted: boolean } {
+interface Lights {
+  readonly lit: number;
+  readonly shorted: boolean;
+  /** An LED has popped, so it stays dark however it is wired. */
+  readonly blown: boolean;
+  /** A dark LED has more than its forward voltage across it the wrong way: turned round, it lights. */
+  readonly backwards: boolean;
+}
+
+function litLights(circuit: Circuit): Lights {
   const solution = solveDc(circuit);
   let lit = 0;
   let shorted = false;
+  let blown = false;
+  let backwards = false;
   for (const part of circuit.parts) {
     const reading = solution.parts.get(part.id)!;
-    if (part.kind === 'bulb' && bulbBrightness(part, reading) >= LIT_BRIGHTNESS) {
-      lit++;
-    } else if (part.kind === 'battery' && isShorted(part, reading)) {
-      shorted = true;
+    switch (part.kind) {
+      case 'bulb':
+        lit += bulbBrightness(part, reading) >= LIT_BRIGHTNESS ? 1 : 0;
+        break;
+      case 'led':
+        lit += ledBrightness(part, reading) >= LIT_BRIGHTNESS ? 1 : 0;
+        blown ||= part.blown;
+        backwards ||= !part.blown && reading.voltage < -part.forwardVolts;
+        break;
+      case 'battery':
+        shorted ||= isShorted(part, reading);
+        break;
+      default:
+        break;
     }
   }
-  return { lit, shorted };
+  return { lit, shorted, blown, backwards };
 }

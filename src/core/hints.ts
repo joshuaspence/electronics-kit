@@ -48,7 +48,7 @@ export function hintFor(level: Level, build: Build, step: number): Hint {
   }
   return {
     kind: 'nudge',
-    reason: litNow(circuit) < level.goal.bulbs ? 'switch-off' : 'too-few-lit',
+    reason: litNow(circuit) < level.goal.lights ? 'switch-off' : 'too-few-lit',
   };
 }
 

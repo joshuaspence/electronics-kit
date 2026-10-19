@@ -31,7 +31,7 @@ export const chapter2: readonly Level[] = [
     chapter: 2,
     board,
     parts: [battery],
-    goal: { kind: 'light-bulbs', bulbs: 1 },
+    goal: { kind: 'light-up', lights: 1 },
     tray: [
       { kind: 'bulb', count: 1 },
       { kind: 'wire', count: 2 },
@@ -47,7 +47,7 @@ export const chapter2: readonly Level[] = [
     // Both legs in column 1, the battery's + column: they are joined to the same end of the
     // battery, so there is nothing to push electricity through the bulb.
     parts: [battery, part('bulb', 'bulb', hole('d', 1), hole('f', 1))],
-    goal: { kind: 'light-bulbs', bulbs: 1 },
+    goal: { kind: 'light-up', lights: 1 },
     tray: [
       { kind: 'bulb', count: 1 },
       { kind: 'wire', count: 3 },
@@ -66,7 +66,7 @@ export const chapter2: readonly Level[] = [
       part('back', 'wire', hole('j', 7), hole('j', 3), true),
       part('off', 'wire', hole('h', 1), hole('h', 4)),
     ],
-    goal: { kind: 'light-bulbs', bulbs: 1 },
+    goal: { kind: 'light-up', lights: 1 },
     tray: [{ kind: 'wire', count: 1 }],
     par: 1,
     solution: { remove: ['off'], place: [part('w', 'wire', hole('h', 1), hole('h', 5))] },
@@ -76,7 +76,7 @@ export const chapter2: readonly Level[] = [
     chapter: 2,
     board,
     parts: [battery],
-    goal: { kind: 'control-bulbs', bulbs: 1 },
+    goal: { kind: 'control-lights', lights: 1 },
     tray: [
       { kind: 'bulb', count: 1 },
       { kind: 'switch', count: 1 },
@@ -96,7 +96,7 @@ export const chapter2: readonly Level[] = [
     chapter: 2,
     board,
     parts: [battery],
-    goal: { kind: 'control-bulbs', bulbs: 1 },
+    goal: { kind: 'control-lights', lights: 1 },
     tray: [
       { kind: 'bulb', count: 1 },
       { kind: 'button', count: 1 },
@@ -116,7 +116,7 @@ export const chapter2: readonly Level[] = [
     chapter: 2,
     board,
     parts: [battery],
-    goal: { kind: 'control-bulbs', bulbs: 2 },
+    goal: { kind: 'control-lights', lights: 2 },
     tray: [
       { kind: 'bulb', count: 2 },
       { kind: 'switch', count: 1 },
@@ -145,7 +145,7 @@ export const chapter2: readonly Level[] = [
       part('wire', 'wire', hole('j', 5), hole('j', 1)),
       part('switch', 'switch', hole('e', 7), hole('e', 9)),
     ],
-    goal: { kind: 'control-bulbs', bulbs: 1 },
+    goal: { kind: 'control-lights', lights: 1 },
     tray: [
       { kind: 'switch', count: 1 },
       { kind: 'wire', count: 1 },
@@ -161,7 +161,7 @@ export const chapter2: readonly Level[] = [
     chapter: 2,
     board,
     parts: [battery],
-    goal: { kind: 'every-control', bulbs: 1 },
+    goal: { kind: 'every-control', lights: 1 },
     tray: [
       { kind: 'bulb', count: 1 },
       { kind: 'switch', count: 2 },

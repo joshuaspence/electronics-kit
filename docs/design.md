@@ -60,12 +60,13 @@ the decision and the main reason for it. When the design changes, update this fi
   pressing a button is what pops it, that input becomes an undo step, for the same reason.
 - **Stars (1–3)** reward fewer parts and no hints, **never speed**: one for finishing, one for
   placing no more than the level's par, one for using no hints. No level has time pressure.
-- **Goals** (`src/core/levels.ts`) are evaluated on the DC solution. A bulb is *lit* at a quarter
-  of full brightness or more. `light-bulbs` needs N lit bulbs with every switch closed and button
-  pressed; `control-bulbs` also needs every bulb dark with every switch open and button released;
-  `every-control` also needs them dark with any one switch open or button released and the rest
-  on. No goal is met while a battery is shorted, and a failed check says why (short circuit, too
-  few lit, not controlled, no switch, not every control) so hints can respond to it.
+- **Goals** (`src/core/levels.ts`) are evaluated on the DC solution. A light, a bulb or an LED, is
+  *lit* at a quarter of full brightness or more. `light-up` needs N lit lights with every switch
+  closed and button pressed; `control-lights` also needs every light dark with every switch open
+  and button released; `every-control` also needs them dark with any one switch open or button
+  released and the rest on. No goal is met while a battery is shorted, and a failed check says
+  why (short circuit, too few lit, an LED popped or the wrong way round, not controlled, no
+  switch, not every control) so hints can respond to it.
 - **No level needs two buttons held at once:** a mouse or touchpad has one pointer, and Chromebooks
   are a primary target (§9). Levels about needing several controls use switches.
 - **Level data** (`src/levels/`): each level has a board, its starting parts (fixed, or movable

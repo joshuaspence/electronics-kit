@@ -27,7 +27,7 @@ const level: Level = {
   chapter: 1,
   board: { kind: 'snap', rows: 2, columns: 3 },
   parts: [battery, shortWire],
-  goal: { kind: 'light-bulbs', bulbs: 1 },
+  goal: { kind: 'light-up', lights: 1 },
   tray: [
     { kind: 'bulb', count: 1 },
     { kind: 'wire', count: 3 },
@@ -96,7 +96,7 @@ describe('hintFor', () => {
     const switchLevel: Level = {
       ...level,
       parts: build.parts,
-      goal: { kind: 'control-bulbs', bulbs: 1 },
+      goal: { kind: 'control-lights', lights: 1 },
       solution: { place: [] },
     };
     expect(hintFor(switchLevel, build, 0)).toEqual({ kind: 'nudge', reason: 'switch-off' });
