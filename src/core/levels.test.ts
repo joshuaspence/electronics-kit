@@ -248,6 +248,10 @@ describe('meterUnlocked', () => {
     expect(meterUnlocked(levels, { early: 3 })).toBe(false);
     expect(meterUnlocked(levels, { meter: 1 })).toBe(true);
   });
+
+  it('unlocks with nothing finished once a teacher unlocks everything', () => {
+    expect(meterUnlocked(levels, {}, true)).toBe(true);
+  });
 });
 
 describe('sandboxTray', () => {
@@ -271,6 +275,16 @@ describe('sandboxTray', () => {
 
   it('grows with the parts of each level finished, wires last', () => {
     expect(kinds({ leds: 1 })).toEqual(['bulb', 'led', 'resistor', 'wire']);
+  });
+
+  it('offers every part any level offers once a teacher unlocks everything', () => {
+    expect(kinds({})).toEqual(['bulb', 'wire']);
+    expect(sandboxTray(levels, {}, true).map((allowance) => allowance.kind)).toEqual([
+      'bulb',
+      'led',
+      'resistor',
+      'wire',
+    ]);
   });
 
   it('offers plenty of each', () => {

@@ -467,7 +467,7 @@ test('keeps stars after a reload', async ({ page }) => {
   // Saving is asynchronous: wait until the stars are in IndexedDB before reloading.
   await expect
     .poll(() => saved(page))
-    .toMatchObject({ version: 2, profiles: [{ stars: { 'loop-3': 3 } }] });
+    .toMatchObject({ version: 3, profiles: [{ stars: { 'loop-3': 3 } }] });
 
   await page.reload();
   await expect(page.locator('[data-level="loop-3"]').getByLabel('3 of 3 stars')).toBeVisible();
@@ -622,4 +622,36 @@ test('asks to turn a phone held upright sideways, and only then', async ({ page 
   await page.setViewportSize({ width: 844, height: 390 });
   await expect(prompt).toBeHidden();
   await expect(note).toBeVisible();
+});
+
+test('lets a grown-up unlock everything, behind the sum, for good', async ({ page }) => {
+  await page.getByRole('button', { name: 'For grown-ups' }).click();
+  const question = page.getByText(/What is \d+ \+ \d+\?/);
+  const sum = async () => {
+    const [, a, b] = /What is (\d+) \+ (\d+)\?/.exec((await question.textContent())!)!;
+    return Number(a) + Number(b);
+  };
+  const answer = page.getByRole('textbox');
+
+  // A wrong answer asks another sum, and opens nothing.
+  await answer.fill(String((await sum()) + 1));
+  await page.getByRole('button', { name: 'Check' }).click();
+  await expect(page.getByText('That’s not it.')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Unlock everything/ })).toHaveCount(0);
+
+  await answer.fill(String(await sum()));
+  await page.getByRole('button', { name: 'Check' }).click();
+  const unlock = page.getByRole('button', { name: 'Unlock everything: off' });
+  await unlock.click();
+  await expect(page.getByRole('button', { name: 'Unlock everything: on' })).toBeVisible();
+
+  // Kept on this device: after a reload, the sandbox has every part and a level has the meter.
+  await expect.poll(() => saved(page)).toMatchObject({ version: 3, unlockAll: true });
+  await page.reload();
+  await page.getByRole('button', { name: 'Sandbox' }).click();
+  await expect(page.locator('[data-tray="blinker"]')).toBeVisible();
+  await expect(page.locator('[data-tray="led"]')).toBeVisible();
+  await page.getByRole('button', { name: 'Levels' }).click();
+  await page.locator('[data-level="loop-1"]').click();
+  await expect(page.getByRole('button', { name: 'Meter' })).toBeVisible();
 });

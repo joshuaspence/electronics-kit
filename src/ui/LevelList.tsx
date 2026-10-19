@@ -15,6 +15,8 @@ interface LevelListProps {
   onSandbox: () => void;
   /** Null until saved players arrive, which would undo a change made before them. */
   onPlayers: (() => void) | null;
+  /** The grown-ups' settings; null until saved players arrive, like `onPlayers`. */
+  onGrownUps: (() => void) | null;
 }
 
 /**
@@ -28,6 +30,7 @@ export function LevelList({
   onPlay,
   onSandbox,
   onPlayers,
+  onGrownUps,
 }: LevelListProps) {
   const chapters = [...new Set(levels.map((level) => level.chapter))];
   return (
@@ -73,7 +76,12 @@ export function LevelList({
           </ol>
         </section>
       ))}
-      <footer className="version">{strings.version(__APP_VERSION__, __APP_COMMIT__)}</footer>
+      <footer className="version">
+        <span className="version-text">{strings.version(__APP_VERSION__, __APP_COMMIT__)}</span>
+        <button type="button" onClick={onGrownUps ?? undefined} disabled={!onGrownUps}>
+          {strings.forGrownUps}
+        </button>
+      </footer>
     </main>
   );
 }
