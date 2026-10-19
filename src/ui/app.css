@@ -127,6 +127,25 @@ button:disabled {
   fill: #ffd84d;
 }
 
+.led-body {
+  fill: #e5484d;
+}
+
+.led-glow {
+  fill: #ff8a8d;
+}
+
+.led-cathode {
+  stroke: #7a1d20;
+  stroke-width: 3;
+}
+
+.led-anode {
+  font-weight: 700;
+  text-anchor: middle;
+  fill: #7a1d20;
+}
+
 .resistor-body {
   fill: #d9b98c;
 }

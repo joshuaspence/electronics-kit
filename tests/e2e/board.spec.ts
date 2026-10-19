@@ -96,6 +96,13 @@ test('drops where the pointer is released, even before the last move re-renders'
   await expect(page.locator('.part-bulb:not(.part-ghost)')).toHaveCount(1);
 });
 
+test('lights an LED with its long leg on the battery’s + column', async ({ page }) => {
+  // A part from the tray lands with its first leg, the LED's anode, on the left: column 1 is +.
+  await drag(page, page.locator('[data-tray="led"]'), await between(page, 'e1', 'e3'));
+  await expect(page.locator('.part-led .led-glow')).toHaveAttribute('opacity', '0.9');
+  await expect(page.locator('.part-led .flow')).toHaveCount(1);
+});
+
 test('shows current flowing through a lit bulb, and none through a loose one', async ({ page }) => {
   await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'e5', 'e7'));
   await expect(page.locator('.part-bulb:not(.part-ghost)')).toHaveCount(1);

@@ -61,7 +61,7 @@ export function PartShape({
     <g className={className}>
       <line className="leg" x1={from.x} y1={from.y} x2={to.x} y2={to.y} />
       <Flow from={from} to={to} speed={flow} />
-      {body(spec, mid, brightness)}
+      {body(spec, from, to, brightness)}
       {hot && (
         <text className="hot-label" x={mid.x} y={mid.y + 36}>
           {strings.hot}
@@ -71,8 +71,31 @@ export function PartShape({
   );
 }
 
-function body(spec: PartSpec, { x, y }: Point, brightness: number) {
+function body(spec: PartSpec, from: Point, to: Point, brightness: number) {
+  const x = (from.x + to.x) / 2;
+  const y = (from.y + to.y) / 2;
   switch (spec.kind) {
+    case 'led': {
+      // A dome with a flat edge and a bar on the cathode (−) side, and a + by the anode's long
+      // leg, so a child can see which way round it goes.
+      const angle = (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI;
+      const plus = { x: from.x * 0.7 + to.x * 0.3, y: from.y * 0.7 + to.y * 0.3 - 14 };
+      return (
+        <g>
+          <g transform={`rotate(${angle} ${x} ${y})`}>
+            <circle className="led-glow" cx={x} cy={y} r={22} opacity={brightness * 0.9} />
+            <path
+              className="body led-body"
+              d={`M ${x + 6} ${y - 12} A 12 12 0 1 0 ${x + 6} ${y + 12} Z`}
+            />
+            <line className="led-cathode" x1={x + 6} y1={y - 12} x2={x + 6} y2={y + 12} />
+          </g>
+          <text className="led-anode" x={plus.x} y={plus.y}>
+            +
+          </text>
+        </g>
+      );
+    }
     case 'battery':
       return (
         <g>
