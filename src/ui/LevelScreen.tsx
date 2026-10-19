@@ -85,6 +85,10 @@ export function LevelScreen({ level, onFinish, onNext, onBack }: LevelScreenProp
           <p>
             <strong>{strings.why}</strong> {text.why}
           </p>
+          <details className="more">
+            <summary>{strings.tellMore}</summary>
+            <p>{text.more}</p>
+          </details>
           {onNext ? (
             <button type="button" className="primary" onClick={onNext}>
               {strings.nextLevel}
