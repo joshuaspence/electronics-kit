@@ -55,6 +55,15 @@ describe('levels', () => {
         followHints(editor);
       });
 
+      const kept = level.parts.filter((p) => !p.fixed && !level.solution.remove?.includes(p.id));
+      for (const part of kept) {
+        it(`can be finished by following Volty’s hints after ${part.id} is taken away`, () => {
+          const editor = start();
+          expect(editor.apply({ kind: 'remove', id: part.id })).toEqual({ ok: true });
+          followHints(editor);
+        });
+      }
+
       function followHints(editor: BuildEditor) {
         for (let step = 1; step <= 20; step++) {
           if (checkGoal(level.goal, toCircuit(level.board, editor.build)).met) {
