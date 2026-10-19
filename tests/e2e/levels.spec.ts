@@ -34,6 +34,38 @@ async function wire(page: Page, from: string, to: string) {
   await drag(page, post(page, from), await centre(post(page, to)));
 }
 
+/** What the game has saved in IndexedDB, or null if nothing yet. */
+function saved(page: Page): Promise<unknown> {
+  return page.evaluate(
+    () =>
+      new Promise<unknown>((resolve) => {
+        const open = indexedDB.open('electronics-kit');
+        open.onerror = () => resolve(null);
+        open.onsuccess = () => {
+          const db = open.result;
+          if (!db.objectStoreNames.contains('progress')) {
+            db.close();
+            resolve(null);
+            return;
+          }
+          const get = db.transaction('progress').objectStore('progress').get('progress');
+          get.onsuccess = () => {
+            db.close();
+            resolve(get.result);
+          };
+          get.onerror = () => resolve(null);
+        };
+      }),
+  );
+}
+
+/** Finishes *Mind the gap*, with three stars, by adding its one missing wire. */
+async function finishMindTheGap(page: Page) {
+  await page.locator('[data-level="loop-3"]').click();
+  await wire(page, 'p1-1', 'p2-4');
+  await expect(page.getByText('You did it!')).toBeVisible();
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto('./');
 });
@@ -346,38 +378,58 @@ test('needs both switches on, one click at a time', async ({ page }) => {
 });
 
 test('keeps stars after a reload', async ({ page }) => {
-  await page.locator('[data-level="loop-3"]').click();
-  await wire(page, 'p1-1', 'p2-4');
-  await expect(page.getByText('You did it!')).toBeVisible();
+  await finishMindTheGap(page);
 
   // Saving is asynchronous: wait until the stars are in IndexedDB before reloading.
   await expect
-    .poll(() =>
-      page.evaluate(
-        () =>
-          new Promise<unknown>((resolve) => {
-            const open = indexedDB.open('electronics-kit');
-            open.onerror = () => resolve(null);
-            open.onsuccess = () => {
-              const db = open.result;
-              if (!db.objectStoreNames.contains('progress')) {
-                db.close();
-                resolve(null);
-                return;
-              }
-              const get = db.transaction('progress').objectStore('progress').get('progress');
-              get.onsuccess = () => {
-                db.close();
-                resolve(get.result);
-              };
-              get.onerror = () => resolve(null);
-            };
-          }),
-      ),
-    )
-    .toMatchObject({ stars: { 'loop-3': 3 } });
+    .poll(() => saved(page))
+    .toMatchObject({ version: 2, profiles: [{ stars: { 'loop-3': 3 } }] });
 
   await page.reload();
+  await expect(page.locator('[data-level="loop-3"]').getByLabel('3 of 3 stars')).toBeVisible();
+});
+
+test('keeps the stars a version 1 save had, as the first player', async ({ page }) => {
+  // Once the page has made its store (empty: `undefined`, not `null`), put one child's progress
+  // there as version 1 saved it.
+  await expect.poll(() => saved(page)).not.toBeNull();
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        const open = indexedDB.open('electronics-kit');
+        open.onsuccess = () => {
+          const db = open.result;
+          const put = db
+            .transaction('progress', 'readwrite')
+            .objectStore('progress')
+            .put({ version: 1, stars: { 'loop-3': 3 } }, 'progress');
+          put.onsuccess = () => {
+            db.close();
+            resolve();
+          };
+        };
+      }),
+  );
+
+  await page.reload();
+  await expect(page.getByText('Playing as Player 1')).toBeVisible();
+  await expect(page.locator('[data-level="loop-3"]').getByLabel('3 of 3 stars')).toBeVisible();
+});
+
+test('adds a player with their own progress, and switches back', async ({ page }) => {
+  await finishMindTheGap(page);
+  await page.getByRole('button', { name: 'Levels' }).click();
+
+  await page.getByRole('button', { name: 'Change player' }).click();
+  await page.getByLabel('Name').fill('Mia');
+  await page.getByRole('button', { name: 'Picture 🚀' }).click();
+  await page.getByRole('button', { name: 'Add player' }).click();
+  await expect(page.getByText('Playing as Mia')).toBeVisible();
+  await expect(page.locator('[data-level="loop-3"]').getByLabel('0 of 3 stars')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Change player' }).click();
+  await page.getByRole('button', { name: /Player 1/ }).click();
+  await expect(page.getByText('Playing as Player 1')).toBeVisible();
   await expect(page.locator('[data-level="loop-3"]').getByLabel('3 of 3 stars')).toBeVisible();
 });
 

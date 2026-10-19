@@ -1,10 +1,11 @@
 /**
- * A child's saved progress: the best stars earned on each level.
+ * A child's progress: the best stars earned on each level. Each player profile keeps its own
+ * (`profiles.ts`), and the profiles are what's saved.
  *
- * Saved data carries a schema version. `loadProgress` accepts any version this code has ever
- * written and migrates it forward, so an update never wipes progress (docs/design.md §2). Data it
- * can't read (corrupt, or from a newer version after a downgrade) loads as no progress rather than
- * throwing, and is never written back over until the child earns something.
+ * Saved data carries a schema version, migrated forward on loading, so an update never wipes
+ * progress (docs/design.md §2): version 1 was this record alone. Data that can't be read (corrupt,
+ * or from a newer version after a downgrade) loads as no progress rather than throwing, and is
+ * never written back over until the child earns something or changes players.
  */
 
 export const PROGRESS_VERSION = 1;

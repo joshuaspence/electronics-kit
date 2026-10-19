@@ -4,18 +4,22 @@ import { newSpec } from '../core/catalogue';
 import { meterUnlocked, type PartAllowance, sandboxTray } from '../core/levels';
 import { decodeCircuit, encodeCircuit } from '../core/share';
 import {
-  mergeProgress,
-  NO_PROGRESS,
-  type Progress,
-  recordStars,
-  type Stars,
-} from '../core/progress';
+  addProfile,
+  currentProfile,
+  mergePlayers,
+  NO_PLAYERS,
+  type Players,
+  switchProfile,
+  updateProgress,
+} from '../core/profiles';
+import { recordStars, type Stars } from '../core/progress';
 import { levels } from '../levels';
 import { sandbox as fullBoard } from '../levels/sandbox';
 import { LevelList } from './LevelList';
 import { LevelScreen } from './LevelScreen';
 import { SandboxScreen } from './SandboxScreen';
-import { loadSavedProgress, saveProgress } from './progressStore';
+import { PlayersScreen } from './PlayersScreen';
+import { loadSavedPlayers, saveSavedPlayers } from './progressStore';
 import { strings } from './strings';
 import { Workbench } from './Workbench';
 
@@ -103,7 +107,8 @@ type Screen =
       readonly tray: readonly PartAllowance[];
       readonly initial: Build;
       readonly badLink?: boolean;
-    };
+    }
+  | { readonly kind: 'players' };
 
 /**
  * The sandbox a share link's fragment (`#c=…`, docs/design.md §2) opens, offering the parts
@@ -130,20 +135,22 @@ const shareLink = () => (window.location.hash.startsWith('#c=') ? window.locatio
 
 export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: 'levels' });
-  const [progress, setProgress] = useState<Progress>(NO_PROGRESS);
+  const [players, setPlayers] = useState<Players>(NO_PLAYERS);
+  const profile = currentProfile(players);
+  const { progress } = profile;
 
-  // Saved progress arrives a moment after the first render; keep anything earned in between, and
-  // save only once it has arrived so a quick finish can't overwrite it.
+  // Saved players arrive a moment after the first render; keep anything earned in between, and
+  // save only once they have arrived so a quick finish can't overwrite them.
   const [loaded, setLoaded] = useState(false);
   const unsaved = useRef(false);
   useEffect(() => {
-    void loadSavedProgress().then((saved) => {
-      setProgress((p) => mergeProgress(saved, p));
+    void loadSavedPlayers().then((saved) => {
+      setPlayers((p) => mergePlayers(saved, currentProfile(p).progress));
       setLoaded(true);
     });
   }, []);
 
-  // A share link opens once saved progress has arrived, so its tray offers every part unlocked so
+  // A share link opens once saved players have arrived, so its tray offers every part unlocked so
   // far. One pasted into a tab already showing the game changes only the fragment, which doesn't
   // reload the page, so listen for that from the start rather than miss one while loading.
   const [link, setLink] = useState(shareLink);
@@ -160,15 +167,18 @@ export function App() {
   useEffect(() => {
     if (loaded && unsaved.current) {
       unsaved.current = false;
-      void saveProgress(progress);
+      void saveSavedPlayers(players);
     }
-  }, [loaded, progress]);
+  }, [loaded, players]);
 
-  const finish = (levelId: string, stars: Stars) => {
-    // Only earning stars saves, so saved data this version can't read survives until then.
+  // Only earning stars or changing players saves, so saved data this version can't read survives
+  // until then.
+  const change = (update: (players: Players) => Players) => {
     unsaved.current = true;
-    setProgress((p) => recordStars(p, levelId, stars));
+    setPlayers(update);
   };
+  const finish = (levelId: string, stars: Stars) =>
+    change((p) => updateProgress(p, (progress) => recordStars(progress, levelId, stars)));
 
   if (sandbox) {
     return (
@@ -200,6 +210,23 @@ export function App() {
     );
   }
 
+  if (screen.kind === 'players') {
+    return (
+      <PlayersScreen
+        players={players}
+        onChoose={(id) => {
+          change((p) => switchProfile(p, id));
+          setScreen({ kind: 'levels' });
+        }}
+        onAdd={(name, avatar) => {
+          change((p) => addProfile(p, name, avatar));
+          setScreen({ kind: 'levels' });
+        }}
+        onBack={() => setScreen({ kind: 'levels' })}
+      />
+    );
+  }
+
   if (screen.kind === 'level') {
     const level = levels[screen.index]!;
     const next = screen.index + 1 < levels.length ? screen.index + 1 : null;
@@ -219,6 +246,7 @@ export function App() {
     <LevelList
       levels={levels}
       progress={progress}
+      profile={profile}
       onPlay={(level) => setScreen({ kind: 'level', index: levels.indexOf(level) })}
       onSandbox={() =>
         setScreen({
@@ -227,6 +255,7 @@ export function App() {
           initial: fullBoard.initial,
         })
       }
+      onPlayers={() => setScreen({ kind: 'players' })}
     />
   );
 }
