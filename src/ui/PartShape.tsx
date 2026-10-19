@@ -43,6 +43,7 @@ export function PartShape({
     ghost && 'part-ghost',
     selected && 'part-selected',
     hot && 'part-hot',
+    spec.kind === 'led' && spec.blown && 'part-blown',
     hinted && 'part-hinted',
   ]
     .filter(Boolean)
@@ -90,6 +91,7 @@ function body(spec: PartSpec, from: Point, to: Point, brightness: number) {
             />
             <line className="led-cathode" x1={x + 6} y1={y - 12} x2={x + 6} y2={y + 12} />
           </g>
+          {spec.blown && <circle className="led-puff" cx={x} cy={y} r={24} />}
           <text className="led-anode" x={plus.x} y={plus.y}>
             +
           </text>

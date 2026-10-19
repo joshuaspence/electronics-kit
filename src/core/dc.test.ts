@@ -147,6 +147,7 @@ describe('solveDc', () => {
       forwardVolts: 2,
       ohms: 10,
       ratedAmps: 0.02,
+      blown: false,
     });
     const lit = (circuit: Circuit, id: string) => {
       const part = circuit.parts.find((p) => p.id === id) as Led;
@@ -217,6 +218,7 @@ describe('solveDc', () => {
       forwardVolts: 0,
       ohms: 10,
       ratedAmps: 1,
+      blown: false,
     };
     expect(() => solveDc({ parts: [led] })).toThrow(/forwardVolts/);
     expect(() => solveDc({ parts: [bulb('a', ['x', 'y']), bulb('a', ['x', 'y'])] })).toThrow(

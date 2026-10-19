@@ -96,16 +96,41 @@ test('drops where the pointer is released, even before the last move re-renders'
   await expect(page.locator('.part-bulb:not(.part-ghost)')).toHaveCount(1);
 });
 
-test('lights an LED with its long leg on the battery’s + column', async ({ page }) => {
-  // A part from the tray lands with its first leg, the LED's anode, on the left: column 1 is +.
-  await drag(page, page.locator('[data-tray="led"]'), await between(page, 'e1', 'e3'));
-  await expect(page.locator('.part-led .led-glow')).toHaveAttribute('opacity', '0.9');
+/**
+ * A resistor from the battery's + column 1 to column 4, an LED from 4 to 6 and a wire from 6 back
+ * to the − column 3. A part from the tray lands with its first leg, the LED's anode, on the left.
+ */
+async function ledBehindResistor(page: Page) {
+  await drag(page, page.locator('[data-tray="resistor"]'), await between(page, 'e1', 'e4'));
+  await drag(page, page.locator('[data-tray="led"]'), await between(page, 'f4', 'f6'));
+  await drag(
+    page,
+    page.locator('[data-hole="j6"]'),
+    await centre(page.locator('[data-hole="j3"]')),
+  );
+}
+
+test('lights an LED with its long leg towards the battery’s +', async ({ page }) => {
+  await ledBehindResistor(page);
+  await expect(page.locator('.part-led .led-glow')).not.toHaveAttribute('opacity', '0');
   await expect(page.locator('.part-led .flow')).toHaveCount(1);
 });
 
-test('turns an LED round with two rotations, and it goes dark', async ({ page }) => {
+test('pops an LED straight across the battery, and Undo brings it back', async ({ page }) => {
   await drag(page, page.locator('[data-tray="led"]'), await between(page, 'e1', 'e3'));
-  await expect(page.locator('.part-led .led-glow')).toHaveAttribute('opacity', '0.9');
+  await expect(page.locator('.part-led.part-blown')).toHaveCount(1);
+  await expect(page.locator('.part-led .flow')).toHaveCount(0);
+  await expect(page.getByRole('status')).toContainText('Pop!');
+
+  // The pop belongs to the placing, so one Undo takes both back.
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.locator('.part-led:not(.part-ghost)')).toHaveCount(0);
+  await expect(page.getByRole('status')).toHaveText('');
+});
+
+test('turns an LED round with two rotations, and it goes dark', async ({ page }) => {
+  await ledBehindResistor(page);
+  await expect(page.locator('.part-led .led-glow')).not.toHaveAttribute('opacity', '0');
 
   // Tapping the LED selects it; each Rotate turns it a quarter about its middle.
   await page.locator('.part-led .led-body').click();

@@ -43,6 +43,12 @@ export function playWarning() {
   tone(110, 0.4, 'sawtooth', 0.1);
 }
 
+/** A comic pop when an LED takes too much current: a quick drop in pitch. */
+export function playPop() {
+  tone(900, 0.08, 'square', 0.1);
+  tone(300, 0.12, 'triangle', 0.12, 0.04);
+}
+
 /** A rising chime when a level is finished: C, E and G, a major chord played a note at a time. */
 export function playChime() {
   [523, 659, 784].forEach((frequency, i) => tone(frequency, 0.5, 'triangle', 0.12, i * 0.12));
