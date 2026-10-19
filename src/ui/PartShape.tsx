@@ -19,6 +19,8 @@ interface PartShapeProps {
   hinted?: boolean;
   ghost?: boolean;
   selected?: boolean;
+  /** A battery plugged into the rails at the board's edge: the pack sits beside the board. */
+  beside?: boolean;
 }
 
 /**
@@ -35,6 +37,7 @@ export function PartShape({
   hinted = false,
   ghost,
   selected,
+  beside = false,
 }: PartShapeProps) {
   const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
   const className = [
@@ -59,12 +62,11 @@ export function PartShape({
   }
 
   // A battery beside the board has leads instead of legs running between its holes.
-  const legs = !(spec.kind === 'battery' && from.x === to.x);
   return (
     <g className={className}>
-      {legs && <line className="leg" x1={from.x} y1={from.y} x2={to.x} y2={to.y} />}
-      {legs && <Flow from={from} to={to} speed={flow} />}
-      {body(spec, from, to, brightness)}
+      {!beside && <line className="leg" x1={from.x} y1={from.y} x2={to.x} y2={to.y} />}
+      {!beside && <Flow from={from} to={to} speed={flow} />}
+      {body(spec, from, to, brightness, beside)}
       {hot && (
         <text className="hot-label" x={mid.x} y={mid.y + 36}>
           {strings.hot}
@@ -74,7 +76,7 @@ export function PartShape({
   );
 }
 
-function body(spec: PartSpec, from: Point, to: Point, brightness: number) {
+function body(spec: PartSpec, from: Point, to: Point, brightness: number, beside: boolean) {
   const x = (from.x + to.x) / 2;
   const y = (from.y + to.y) / 2;
   switch (spec.kind) {
@@ -101,9 +103,8 @@ function body(spec: PartSpec, from: Point, to: Point, brightness: number) {
       );
     }
     case 'battery': {
-      // With its legs one above the other it is plugged into a pair of rails: the pack sits
-      // beside the board, with a lead to each rail.
-      const beside = from.x === to.x;
+      // Beside the board, the pack sits in the room left of the first column with a lead to each
+      // rail.
       const bx = beside ? from.x - BATTERY_ROOM + 20 : x;
       return (
         <g>

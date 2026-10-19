@@ -51,7 +51,8 @@ export function Board({
   const [activeStrip, setActiveStrip] = useState<string | null>(null);
   const { width, height } = geometry;
 
-  // Each power rail gets a red or blue stripe and a + or − at its left end, as on a real board.
+  // Each power rail gets a red or blue stripe and a + or − at its right end, clear of the battery's
+  // leads on the left.
   const rails = geometry.locations
     .filter((location) => location.kind === 'rail' && location.position === 1)
     .map((location) => {
@@ -61,7 +62,7 @@ export function Board({
       return (
         <g key={geometry.name(location)} className={plus ? 'rail rail-plus' : 'rail rail-minus'}>
           <line x1={x} y1={y - 16} x2={geometry.position(end).x} y2={y - 16} />
-          <text x={x - 18} y={y + 5}>
+          <text x={geometry.position(end).x + 18} y={y + 5}>
             {plus ? '+' : '−'}
           </text>
         </g>
@@ -116,6 +117,10 @@ export function Board({
               hot={hot.has(part.id)}
               selected={part.id === selectedId}
               hinted={part.id === hintedId}
+              beside={
+                part.spec.kind === 'battery' &&
+                part.at.every((l) => l.kind === 'rail' && l.position === 1)
+              }
             />
           </g>
         );
