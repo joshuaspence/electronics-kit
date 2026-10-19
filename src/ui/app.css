@@ -301,7 +301,7 @@ button:disabled {
   pointer-events: none;
 }
 
-.volty-bubble,
+/* Only the button: the bubble can cover board holes on a landscape tablet, so taps pass through it. */
 .volty-button {
   pointer-events: auto;
 }
