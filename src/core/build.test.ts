@@ -20,7 +20,10 @@ const hole = (row: 'a' | 'b' | 'e' | 'f' | 'j', column: number): Hole => ({
 });
 const snap = (row: number, column: number): Location => ({ kind: 'snap', row, column });
 
-const mini: Board = { kind: 'breadboard', layout: { columns: 10, centreGap: false, rails: false } };
+const mini: Board = {
+  kind: 'breadboard',
+  layout: { columns: 10, centreGap: false, rails: 'none' },
+};
 const snapBoard: Board = { kind: 'snap', rows: 2, columns: 3 };
 
 const battery = (at: readonly [Location, Location]): PlacedPart => ({

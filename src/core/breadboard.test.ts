@@ -10,10 +10,21 @@ import {
   type TerminalRow,
 } from './breadboard';
 
-const mini: BoardLayout = { columns: 10, centreGap: false, rails: false };
-const half: BoardLayout = { columns: 30, centreGap: true, rails: true };
+const mini: BoardLayout = { columns: 10, centreGap: false, rails: 'none' };
+const half: BoardLayout = { columns: 30, centreGap: true, rails: 'both' };
 
 const terminal = (column: number, row: TerminalRow): Hole => ({ kind: 'terminal', column, row });
+
+describe('rails', () => {
+  it('runs only along the top on a board with top rails', () => {
+    const level: BoardLayout = { ...half, rails: 'top' };
+    const rail = (name: 'top+' | 'bottom+'): Hole => ({ kind: 'rail', rail: name, position: 1 });
+    expect(isValidHole(level, rail('top+'))).toBe(true);
+    expect(isValidHole(level, rail('bottom+'))).toBe(false);
+    expect(isValidHole(mini, rail('top+'))).toBe(false);
+    expect(holesOf(level).length).toBe(holesOf(half).length - 2 * half.columns);
+  });
+});
 
 describe('stripOf', () => {
   it('joins a whole column on a board without a centre gap', () => {

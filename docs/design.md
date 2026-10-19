@@ -152,12 +152,15 @@ the current. An unlockable **multimeter** shows volts and milliamps for older ch
 - Size by chapter: **chapter 1** has no breadboard (parts snap onto big terminals, Snap Circuits
   style); **chapter 2** a ~10-column mini board; later chapters a half-size board with rails; the
   sandbox a full-size board with pan and zoom.
-- **Half-size board** (`centreGap` and `rails`): a + and a − rail above and below, then rows
-  a–e, the centre gap and f–j, each set apart by a blank row where nothing snaps. A rail hole sits
-  in the column of the terminals beside it. A battery with both legs in the rails' first column is
-  drawn beside the board with a lead to each, and the rails' + and − labels sit at the right-hand
-  end, clear of the leads. All 30 columns at once fall short of the ~9 mm touch target on a
-  tablet, so a level uses only as many columns as it needs.
+- **Half-size board** (`centreGap`, `rails: 'top'` or `'both'`): a + and a − rail above (and
+  with `both`, below), then rows a–e, the centre gap and f–j, each set apart by a blank row where
+  nothing snaps. A rail hole sits in the column of the terminals beside it. A battery with both
+  legs in the rails' first column is drawn beside the board with a lead to each, and the rails' +
+  and − labels sit at the right-hand end, clear of the leads.
+- **Hole size on a level's board:** the board fits the screen's height, so its row count sets the
+  hole size. Levels use only the top rails (14 rows rather than 17) and only the columns they
+  need; that gives 34.5 px between holes at 1180×820, up from about 29 but still short of the
+  ~9 mm target. The sandbox's half-size board keeps both rail pairs.
 - **Snap board** (chapter 1): a grid of big metal posts (`{ kind: 'snap', rows, columns }`), 110
   board units apart against the breadboard's 40. Every part reaches the next post; wires go from any
   post to any other. A post takes any number of parts and is drawn above them, so a wire can always

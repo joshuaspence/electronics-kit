@@ -4,7 +4,8 @@
  * A board has `columns` columns numbered from 1. Each column has ten terminal holes in rows
  * a–j. Rows a–e of a column form one strip and rows f–j another, split by the centre gap. A
  * mini board (chapter 2) has no centre gap, so all ten holes of a column form one strip. Boards
- * with rails add two + and two − rails, each running the full length of the board.
+ * with rails add a + and a − rail along the top, and with `both` along the bottom too, each running
+ * the full length of the board.
  */
 
 export const TERMINAL_ROWS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'] as const;
@@ -16,7 +17,16 @@ export type Rail = (typeof RAILS)[number];
 export interface BoardLayout {
   readonly columns: number;
   readonly centreGap: boolean;
-  readonly rails: boolean;
+  /**
+   * Which power rails the board has. A level's board has only the top pair, which leaves its holes
+   * bigger on a tablet (docs/design.md §5).
+   */
+  readonly rails: 'none' | 'top' | 'both';
+}
+
+/** The rails a board has, top first. */
+export function railsOf(layout: BoardLayout): readonly Rail[] {
+  return layout.rails === 'both' ? RAILS : layout.rails === 'top' ? RAILS.slice(0, 2) : [];
 }
 
 export type Hole =
@@ -28,7 +38,7 @@ export type StripId = string;
 
 export function isValidHole(layout: BoardLayout, hole: Hole): boolean {
   if (hole.kind === 'rail') {
-    return layout.rails && isWithin(hole.position, layout.columns);
+    return railsOf(layout).includes(hole.rail) && isWithin(hole.position, layout.columns);
   }
   return isWithin(hole.column, layout.columns);
 }
@@ -56,11 +66,9 @@ export function holesOf(layout: BoardLayout): Hole[] {
       holes.push({ kind: 'terminal', column, row });
     }
   }
-  if (layout.rails) {
-    for (const rail of RAILS) {
-      for (let position = 1; position <= layout.columns; position++) {
-        holes.push({ kind: 'rail', rail, position });
-      }
+  for (const rail of railsOf(layout)) {
+    for (let position = 1; position <= layout.columns; position++) {
+      holes.push({ kind: 'rail', rail, position });
     }
   }
   return holes;
