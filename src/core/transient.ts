@@ -1,7 +1,7 @@
 import type { Capacitor, Circuit, Part } from './circuit';
 import { CONDUCTOR_OHMS } from './circuit';
-import { stampResistive } from './dc';
-import { type CircuitSolution, type Norton, solveNodal } from './mna';
+import { solveWithLeds } from './dc';
+import type { CircuitSolution, Norton } from './mna';
 
 /** The fixed simulated time step, in seconds (docs/design.md §4). */
 export const TIME_STEP_SECONDS = 0.001;
@@ -106,9 +106,7 @@ export class TransientSimulation {
   }
 
   private solve(capacitor: (part: Capacitor) => Norton): CircuitSolution {
-    return solveNodal(this.circuitNow, (part) =>
-      part.kind === 'capacitor' ? capacitor(part) : stampResistive(part),
-    );
+    return solveWithLeds(this.circuitNow, capacitor);
   }
 }
 

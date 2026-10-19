@@ -3,7 +3,9 @@ import type { PartKind } from './circuit';
 
 /**
  * The parts in the kit: what each starts as when taken from the tray. A 3 V battery pack (two AA
- * cells) and small bulbs rated so that one bulb across the pack is at full brightness.
+ * cells) and small bulbs rated so that one bulb across the pack is at full brightness. An LED
+ * straight across the pack takes about 95 mA and pops; behind a 100 Ω resistor it takes about 9 mA
+ * and glows.
  */
 export function newSpec(kind: PartKind): PartSpec {
   switch (kind) {
@@ -11,6 +13,8 @@ export function newSpec(kind: PartKind): PartSpec {
       return { kind, volts: 3, internalOhms: 0.5 };
     case 'bulb':
       return { kind, ohms: 10, ratedWatts: 0.5 };
+    case 'led':
+      return { kind, forwardVolts: 2, ohms: 10, ratedAmps: 0.02 };
     case 'resistor':
       return { kind, ohms: 100 };
     case 'capacitor':

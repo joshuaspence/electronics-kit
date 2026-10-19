@@ -51,6 +51,7 @@ export const strings = {
   parts: {
     battery: 'Battery',
     bulb: 'Bulb',
+    led: 'LED',
     resistor: 'Resistor',
     capacitor: 'Capacitor',
     switch: 'Switch',

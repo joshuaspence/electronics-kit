@@ -111,7 +111,7 @@ state, so timers and capacitors behave like the real thing.
 | Wire, closed switch, pressed button | 1 mΩ resistor (not merged into one node, so every wire's current is known for the flowing dots and parallel wires share it); open = disconnected |
 | Bulb | Resistor; brightness from power |
 | Resistor | Resistor |
-| LED | Piecewise-linear diode: conducts forward above Vf ≈ 2 V with a small series resistance; state found by a few fixed-point iterations; brightness from current; pops above ~30 mA |
+| LED | Piecewise-linear diode: open when off; on, a 2 V source behind 10 Ω, anode to cathode. Starting all off, each round turns on exactly the LEDs with more than 2 V across them, until none changes (`solveWithLeds`, shared by DC and transient). Brightness from current (full at 20 mA); pops above 30 mA |
 | Buzzer, motor | Resistive load with an activation threshold |
 | Light sensor (LDR) | Variable resistance from a slider or ambient light |
 | Capacitor | Backward-Euler companion model (transient only) |

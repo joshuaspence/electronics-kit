@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { Battery, Bulb, Circuit, Part, Pins } from './circuit';
+import type { Battery, Bulb, Circuit, Led, Part, Pins } from './circuit';
 import { CONDUCTOR_OHMS } from './circuit';
-import { bulbBrightness, isShorted, solveDc } from './dc';
+import { bulbBrightness, isShorted, LED_MAX_AMPS, ledBrightness, ledPops, solveDc } from './dc';
 
 const battery = (pins: Pins, volts = 3, internalOhms = 0.5): Battery => ({
   id: 'battery',
@@ -139,6 +139,70 @@ describe('solveDc', () => {
     expect(brightness(bright)).toBe(1);
   });
 
+  describe('LEDs', () => {
+    const led = (id: string, pins: Pins): Led => ({
+      id,
+      kind: 'led',
+      pins,
+      forwardVolts: 2,
+      ohms: 10,
+      ratedAmps: 0.02,
+    });
+    const lit = (circuit: Circuit, id: string) => {
+      const part = circuit.parts.find((p) => p.id === id) as Led;
+      return ledBrightness(part, reading(circuit, id));
+    };
+
+    it('conduct forwards above their forward voltage, through their series resistance', () => {
+      const circuit = { parts: [battery(['+', '-']), led('led', ['+', '-'])] };
+      expect(reading(circuit, 'led').current).toBeCloseTo((3 - 2) / (10 + 0.5), 6);
+      expect(lit(circuit, 'led')).toBe(1);
+    });
+
+    it('stay dark the wrong way round', () => {
+      const circuit = { parts: [battery(['+', '-']), led('led', ['-', '+'])] };
+      expect(reading(circuit, 'led').current).toBeCloseTo(0, 6);
+      expect(lit(circuit, 'led')).toBe(0);
+    });
+
+    it('stay dark below their forward voltage', () => {
+      const circuit = { parts: [battery(['+', '-'], 1.5), led('led', ['+', '-'])] };
+      expect(lit(circuit, 'led')).toBe(0);
+    });
+
+    it('stay dark two in a row on 3 V, which is less than their 4 V together', () => {
+      const circuit = {
+        parts: [battery(['+', '-']), led('a', ['+', 'x']), led('b', ['x', '-'])],
+      };
+      expect(lit(circuit, 'a')).toBe(0);
+      expect(lit(circuit, 'b')).toBe(0);
+    });
+
+    it('light only the one facing the right way of two back to back', () => {
+      const circuit = {
+        parts: [battery(['+', '-']), led('forward', ['+', '-']), led('backward', ['-', '+'])],
+      };
+      expect(lit(circuit, 'forward')).toBe(1);
+      expect(lit(circuit, 'backward')).toBe(0);
+    });
+
+    it('share the battery with a bulb beside them', () => {
+      const circuit = {
+        parts: [battery(['+', '-']), led('led', ['+', '-']), bulb('bulb', ['+', '-'])],
+      };
+      // Both lit: the battery's terminals sit at the same voltage across each.
+      const volts = reading(circuit, 'led').voltage;
+      expect(reading(circuit, 'bulb').voltage).toBeCloseTo(volts, 6);
+      expect(reading(circuit, 'led').current).toBeCloseTo((volts - 2) / 10, 6);
+      expect(lit(circuit, 'led')).toBeGreaterThan(0);
+    });
+
+    it('pop above their maximum current', () => {
+      expect(ledPops({ current: LED_MAX_AMPS * 1.01, voltage: 2.3, power: 0 })).toBe(true);
+      expect(ledPops({ current: LED_MAX_AMPS * 0.99, voltage: 2.3, power: 0 })).toBe(false);
+    });
+  });
+
   it('solves an empty circuit', () => {
     expect(solveDc({ parts: [] }).parts.size).toBe(0);
   });
@@ -146,6 +210,15 @@ describe('solveDc', () => {
   it('rejects invalid parts', () => {
     expect(() => solveDc({ parts: [bulb('a', ['x', 'y'], 0)] })).toThrow(/ohms must be positive/);
     expect(() => solveDc({ parts: [battery(['x', 'y'], 3, -1)] })).toThrow(/internalOhms/);
+    const led: Part = {
+      id: 'a',
+      kind: 'led',
+      pins: ['x', 'y'],
+      forwardVolts: 0,
+      ohms: 10,
+      ratedAmps: 1,
+    };
+    expect(() => solveDc({ parts: [led] })).toThrow(/forwardVolts/);
     expect(() => solveDc({ parts: [bulb('a', ['x', 'y']), bulb('a', ['x', 'y'])] })).toThrow(
       /Duplicate part id a/,
     );

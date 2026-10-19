@@ -36,6 +36,18 @@ export interface Bulb extends PartBase {
   readonly ratedWatts: number;
 }
 
+/**
+ * A light-emitting diode: pins[0] is the anode (long leg) and pins[1] the cathode. It conducts only
+ * from anode to cathode, once the voltage across it passes `forwardVolts`, through a small series
+ * resistance. At `ratedAmps` it is at full brightness.
+ */
+export interface Led extends PartBase {
+  readonly kind: 'led';
+  readonly forwardVolts: number;
+  readonly ohms: number;
+  readonly ratedAmps: number;
+}
+
 export interface Wire extends PartBase {
   readonly kind: 'wire';
 }
@@ -58,7 +70,7 @@ export interface Capacitor extends PartBase {
   readonly farads: number;
 }
 
-export type Part = Battery | Resistor | Bulb | Wire | Switch | PushButton | Capacitor;
+export type Part = Battery | Resistor | Bulb | Led | Wire | Switch | PushButton | Capacitor;
 export type PartKind = Part['kind'];
 
 export interface Circuit {
@@ -91,6 +103,11 @@ export function validateCircuit(circuit: Circuit): void {
       case 'bulb':
         requirePositive(part, 'ohms', part.ohms);
         requirePositive(part, 'ratedWatts', part.ratedWatts);
+        break;
+      case 'led':
+        requirePositive(part, 'forwardVolts', part.forwardVolts);
+        requirePositive(part, 'ohms', part.ohms);
+        requirePositive(part, 'ratedAmps', part.ratedAmps);
         break;
       case 'capacitor':
         requirePositive(part, 'farads', part.farads);
