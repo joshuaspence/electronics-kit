@@ -1,11 +1,13 @@
 import {
   type Battery,
   type Bulb,
+  type Buzzer,
   type Capacitor,
   type Circuit,
   CONDUCTOR_OHMS,
   conducts,
   type Led,
+  type Motor,
   type Part,
 } from './circuit';
 import { type CircuitSolution, type Norton, OPEN, type PartReading, solveNodal } from './mna';
@@ -85,6 +87,8 @@ function stampResistive(part: Exclude<Part, { kind: 'capacitor' | 'led' }>): Nor
       return { conductance: 1 / part.internalOhms, amps: part.volts / part.internalOhms };
     case 'resistor':
     case 'bulb':
+    case 'buzzer':
+    case 'motor':
       return { conductance: 1 / part.ohms, amps: 0 };
     case 'wire':
     case 'switch':
@@ -110,6 +114,24 @@ export function bulbBrightness(part: Bulb, reading: PartReading): number {
 /** How bright an LED is, from 0 (dark) to 1 (its rated current or more). */
 export function ledBrightness(part: Led, reading: PartReading): number {
   return Math.max(0, Math.min(1, reading.current / part.ratedAmps));
+}
+
+/** Whether a buzzer is sounding: it has at least its `onVolts` across it, either way round. */
+export function buzzerSounds(part: Buzzer, reading: PartReading): boolean {
+  return Math.abs(reading.voltage) >= part.onVolts;
+}
+
+/**
+ * How fast a motor turns, from −1 to 1: 0 below its starting current, then rising with the current
+ * to full speed at its rated current. It is negative when current flows from pins[1] to pins[0],
+ * turning it the other way.
+ */
+export function motorSpeed(part: Motor, reading: PartReading): number {
+  const amps = Math.abs(reading.current);
+  if (amps < part.startAmps) {
+    return 0;
+  }
+  return Math.sign(reading.current) * Math.min(1, amps / part.ratedAmps);
 }
 
 /** Whether an LED has more current through it than it can take, so it pops. */

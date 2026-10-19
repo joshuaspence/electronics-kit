@@ -311,3 +311,28 @@ describe('litNow', () => {
     expect(litNow(circuit(bulb('b', ['+', '-']), wire('w', ['+', '-'])))).toBe(0);
   });
 });
+
+describe('checkGoal: buzzers and motors', () => {
+  const buzzer = (pins: Pins): Part => ({ id: 'z', kind: 'buzzer', pins, ohms: 150, onVolts: 2 });
+  const motor = (pins: Pins): Part => ({
+    id: 'm',
+    kind: 'motor',
+    pins,
+    ohms: 5,
+    startAmps: 0.15,
+    ratedAmps: 0.5,
+  });
+
+  it('counts a sounding buzzer and a turning motor as lit, and bright', () => {
+    const goal = { kind: 'light-up', lights: 2, bright: true } as const;
+    expect(checkGoal(goal, circuit(buzzer(['+', '-']), motor(['+', '-'])))).toEqual({ met: true });
+  });
+
+  it('counts neither in a broken loop', () => {
+    expect(checkGoal({ kind: 'light-up', lights: 1 }, circuit(buzzer(['+', 'x'])))).toEqual({
+      met: false,
+      reason: 'too-few-lit',
+    });
+    expect(litNow(circuit(motor(['+', 'x'])))).toBe(0);
+  });
+});

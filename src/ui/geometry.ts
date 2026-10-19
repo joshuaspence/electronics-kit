@@ -76,6 +76,8 @@ const BREADBOARD_SPANS: Partial<Record<PartKind, number>> = {
   resistor: 3,
   switch: 2,
   button: 2,
+  buzzer: 2,
+  motor: 2,
   capacitor: 1,
 };
 

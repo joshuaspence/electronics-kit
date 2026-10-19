@@ -72,7 +72,26 @@ export interface Capacitor extends PartBase {
   readonly farads: number;
 }
 
-export type Part = Battery | Resistor | Bulb | Led | Wire | Switch | PushButton | Capacitor;
+/** A buzzer: a resistor that sounds once the voltage across it, either way round, is `onVolts`. */
+export interface Buzzer extends PartBase {
+  readonly kind: 'buzzer';
+  readonly ohms: number;
+  readonly onVolts: number;
+}
+
+/**
+ * A motor: a resistor that starts turning once `startAmps` flows through it, either way, and
+ * turns at full speed at `ratedAmps`. Current from pins[1] to pins[0] turns it the other way.
+ */
+export interface Motor extends PartBase {
+  readonly kind: 'motor';
+  readonly ohms: number;
+  readonly startAmps: number;
+  readonly ratedAmps: number;
+}
+
+export type Part =
+  Battery | Resistor | Bulb | Led | Wire | Switch | PushButton | Capacitor | Buzzer | Motor;
 export type PartKind = Part['kind'];
 
 export interface Circuit {
@@ -113,6 +132,17 @@ export function validateCircuit(circuit: Circuit): void {
         break;
       case 'capacitor':
         requirePositive(part, 'farads', part.farads);
+        break;
+      case 'buzzer':
+        requirePositive(part, 'ohms', part.ohms);
+        requirePositive(part, 'onVolts', part.onVolts);
+        break;
+      case 'motor':
+        requirePositive(part, 'ohms', part.ohms);
+        requirePositive(part, 'startAmps', part.startAmps);
+        if (!(part.ratedAmps > part.startAmps)) {
+          throw new RangeError(`${part.id}: ratedAmps must be more than startAmps`);
+        }
         break;
       case 'wire':
       case 'switch':

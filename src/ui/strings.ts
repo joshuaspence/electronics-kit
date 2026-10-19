@@ -9,6 +9,8 @@ const partInSentence: Record<PartKind, { readonly noun: string; readonly a: stri
   capacitor: { noun: 'capacitor', a: 'a capacitor' },
   switch: { noun: 'switch', a: 'a switch' },
   button: { noun: 'button', a: 'a button' },
+  buzzer: { noun: 'buzzer', a: 'a buzzer' },
+  motor: { noun: 'motor', a: 'a motor' },
   wire: { noun: 'wire', a: 'a wire' },
 };
 
@@ -105,6 +107,8 @@ export const strings = {
     capacitor: 'Capacitor',
     switch: 'Switch',
     button: 'Button',
+    buzzer: 'Buzzer',
+    motor: 'Motor',
     wire: 'Wire',
   } satisfies Record<PartKind, string>,
 } as const;

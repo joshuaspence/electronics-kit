@@ -43,6 +43,33 @@ export function playWarning() {
   tone(110, 0.4, 'sawtooth', 0.1);
 }
 
+let buzz: { oscillator: OscillatorNode; gain: GainNode } | null = null;
+
+/**
+ * Starts or stops the buzzers' sound, a steady square-wave tone that lasts as long as any buzzer
+ * on the board is sounding (docs/design.md §7).
+ */
+export function setBuzzing(on: boolean) {
+  if (!on) {
+    buzz?.gain.gain.setTargetAtTime(0, buzz.oscillator.context.currentTime, 0.01);
+    buzz?.oscillator.stop(buzz.oscillator.context.currentTime + 0.05);
+    buzz = null;
+    return;
+  }
+  const ctx = audio();
+  if (buzz || !ctx) {
+    return;
+  }
+  const oscillator = ctx.createOscillator();
+  const gain = ctx.createGain();
+  oscillator.type = 'square';
+  oscillator.frequency.value = 2300;
+  gain.gain.value = 0.03;
+  oscillator.connect(gain).connect(ctx.destination);
+  oscillator.start();
+  buzz = { oscillator, gain };
+}
+
 /** A comic pop when an LED takes too much current: a quick drop in pitch. */
 export function playPop() {
   tone(900, 0.08, 'square', 0.1);

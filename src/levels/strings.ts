@@ -1,5 +1,9 @@
 // Player-facing level text, in Australian English (docs/design.md §6).
 
+import type { Hint } from '../core/hints';
+
+export type NudgeReason = Extract<Hint, { kind: 'nudge' }>['reason'];
+
 export interface LevelText {
   readonly title: string;
   readonly goal: string;
@@ -7,6 +11,8 @@ export interface LevelText {
   readonly why: string;
   /** "Tell me more" on the "Why?" card: the same idea in real terms, for older children. */
   readonly more: string;
+  /** Volty's nudges for this level, where the usual ones talk about a bulb it hasn't got. */
+  readonly hints?: Partial<Record<NudgeReason, string>>;
 }
 
 export const chapterTitles: Readonly<Record<number, string>> = {
@@ -16,6 +22,7 @@ export const chapterTitles: Readonly<Record<number, string>> = {
   4: 'One way only',
   5: 'Slow it down',
   6: 'Shortcuts',
+  7: 'Gadgets',
 };
 
 export const levelText: Readonly<Record<string, LevelText>> = {
@@ -174,5 +181,47 @@ export const levelText: Readonly<Record<string, LevelText>> = {
     goal: 'Switching this switch on makes a shortcut. Move it so it turns the bulb on and off safely.',
     why: 'Beside the bulb, the switch made a way round it when it was on. In the bulb’s path, it makes a gap when it is off instead.',
     more: 'A switch has almost no resistance when it is on, just like a wire. In parallel with the bulb it shorts the battery; in series with the bulb it controls it. Electricians always put a light switch in series with the light.',
+  },
+  'out-1': {
+    title: 'Ding dong',
+    goal: 'This is a buzzer. Make a doorbell: the buzzer sounds only while you hold the button down.',
+    why: 'A buzzer needs a complete loop, just like a bulb. The button closes the loop while you press it, so the buzzer sounds until you let go.',
+    more: 'Inside the buzzer, a thin metal disc is pulled back and forth thousands of times a second. That shakes the air, and your ears hear the shaking as sound. It needs about 2 volts to start.',
+    hints: {
+      'too-few-lit':
+        'Electricity needs a complete loop: out of one end of the battery, through the button and the buzzer, and back into the other end.',
+      'not-controlled':
+        'The buzzer sounds even without the button. Put the button in the loop so it can make a gap.',
+      'short-circuit':
+        'Uh oh, a shortcut! Electricity is rushing straight back to the battery without going through the buzzer.',
+    },
+  },
+  'out-2': {
+    title: 'Fan it',
+    goal: 'This is a motor with a fan on it. Make a switch turn the fan on and off.',
+    why: 'Electricity flowing through the motor makes it turn. The switch makes a gap in the loop to stop it.',
+    more: 'A motor has coils of wire and magnets inside. Current through the coils makes them magnetic, so the magnets push them round. Send the current through the other way and the motor turns the other way.',
+    hints: {
+      'too-few-lit':
+        'Electricity needs a complete loop: out of one end of the battery, through the switch and the motor, and back into the other end.',
+      'not-controlled':
+        'The fan keeps turning even with the switch off. Put the switch in the loop so it can make a gap.',
+      'short-circuit':
+        'Uh oh, a shortcut! Electricity is rushing straight back to the battery without going through the motor.',
+    },
+  },
+  'out-3': {
+    title: 'Lights and sound',
+    goal: 'Make one switch turn on the bulb and the buzzer together.',
+    why: 'Side by side, the bulb and the buzzer each have their own path, so each gets the battery’s whole push. The switch is in the loop before they split, so it controls them both.',
+    more: 'Current from the switch splits into two branches, one through the bulb and one through the buzzer, then joins up again. Outputs in parallel each get the full voltage, so the buzzer still has the 2 volts it needs.',
+    hints: {
+      'too-few-lit':
+        'Both need a complete loop: from the battery, through the switch, then through the bulb and the buzzer, and back.',
+      'not-controlled':
+        'They stay on even with the switch off. Put the switch in the loop before the path splits, so it can make a gap for both.',
+      'short-circuit':
+        'Uh oh, a shortcut! Electricity is rushing straight back to the battery without going through the bulb or the buzzer.',
+    },
   },
 };
