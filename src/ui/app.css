@@ -1176,3 +1176,15 @@ button[aria-pressed='true'] {
     color: var(--ink);
   }
 }
+
+/* A snap board capped below the space it has sits in the middle of it, not in a corner. */
+.board-snap {
+  margin-inline: auto;
+}
+
+@media (min-width: 761px) and (orientation: landscape) {
+  .workbench > .board-snap {
+    justify-self: center;
+    align-self: center;
+  }
+}

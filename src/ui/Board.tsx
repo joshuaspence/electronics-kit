@@ -4,6 +4,12 @@ import type { BoardGeometry, Point } from './geometry';
 import { PartShape } from './PartShape';
 import { strings } from './strings';
 
+/**
+ * The most screen pixels per board unit a snap board grows to: posts 165 px apart and about 50 px
+ * across, big targets for small fingers without a 2×3 board filling a tablet (docs/design.md §5).
+ */
+const SNAP_MAX_SCALE = 1.5;
+
 export interface Ghost {
   readonly spec: PartSpec;
   readonly from: Point;
@@ -118,6 +124,13 @@ export function Board({
         .filter(Boolean)
         .join(' ')}
       viewBox={view ? view.join(' ') : `0 0 ${width} ${height}`}
+      // A snap board has only a few posts, so filling the space would blow them up: it grows no
+      // bigger than SNAP_MAX_SCALE screen pixels per board unit.
+      style={
+        snap && !view
+          ? { maxWidth: width * SNAP_MAX_SCALE, maxHeight: height * SNAP_MAX_SCALE }
+          : undefined
+      }
       role="img"
       aria-label={strings.boardLabel}
       onPointerLeave={() => setHoverStrip(null)}
