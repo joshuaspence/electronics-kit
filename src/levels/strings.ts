@@ -93,4 +93,10 @@ export const levelText: Readonly<Record<string, LevelText>> = {
     why: 'A button closes the gap only while you press it. Doorbells and keyboards work like this.',
     more: 'A button is a momentary switch: a spring holds it open until you press it. A switch that stays where you leave it, like a light switch, is called a latching switch.',
   },
+  'switch-4': {
+    title: 'Both switches',
+    goal: 'Use two switches so the bulb only glows when both of them are on.',
+    why: 'With the switches one after the other, turning either one off makes a gap. The bulb needs this switch and that one.',
+    more: 'Switches in series make an AND: current flows only if every switch is on. Some big machines have two buttons, one for each hand, wired like this so they only start with both hands safely out of the way.',
+  },
 };

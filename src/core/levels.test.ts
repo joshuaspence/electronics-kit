@@ -123,6 +123,33 @@ describe('checkGoal: control-bulbs', () => {
   });
 });
 
+describe('checkGoal: every-control', () => {
+  const goal = { kind: 'every-control', bulbs: 1 } as const;
+  const button = (id: string, pins: Pins): Part => ({ id, kind: 'button', pins, pressed: false });
+
+  it('is met when the bulb needs both buttons in a row', () => {
+    const c = circuit(button('p', ['+', 'x']), button('q', ['x', 'y']), bulb('b', ['y', '-']));
+    expect(checkGoal(goal, c)).toEqual({ met: true });
+  });
+
+  it('is not met when either button alone lights the bulb', () => {
+    const c = circuit(button('p', ['+', 'x']), button('q', ['+', 'x']), bulb('b', ['x', '-']));
+    expect(checkGoal(goal, c)).toEqual({ met: false, reason: 'not-every-control' });
+    // The same circuit does control the bulb, which is all control-bulbs asks.
+    expect(checkGoal({ kind: 'control-bulbs', bulbs: 1 }, c)).toEqual({ met: true });
+  });
+
+  it('is not met when one of the buttons is outside the loop', () => {
+    const c = circuit(button('p', ['+', 'x']), button('q', ['y', 'z']), bulb('b', ['x', '-']));
+    expect(checkGoal(goal, c)).toEqual({ met: false, reason: 'not-every-control' });
+  });
+
+  it('still needs the bulbs dark with everything off', () => {
+    const c = circuit(button('p', ['y', 'z']), bulb('b', ['+', '-']));
+    expect(checkGoal(goal, c)).toEqual({ met: false, reason: 'not-controlled' });
+  });
+});
+
 describe('starsFor', () => {
   const level: Level = {
     id: 'loop-1',

@@ -16,7 +16,12 @@ export type Goal =
    * At least `bulbs` bulbs are lit with every switch closed and every button pressed, and none is
    * lit with every switch open and every button released. The circuit needs a switch or button.
    */
-  | { readonly kind: 'control-bulbs'; readonly bulbs: number };
+  | { readonly kind: 'control-bulbs'; readonly bulbs: number }
+  /**
+   * As `control-bulbs`, and also none is lit with any one switch open or button released and the
+   * rest on: the bulbs need every control at once.
+   */
+  | { readonly kind: 'every-control'; readonly bulbs: number };
 
 export interface PartAllowance {
   readonly kind: PartKind;
@@ -54,7 +59,8 @@ export type GoalResult =
   { readonly met: true } | { readonly met: false; readonly reason: GoalFailure };
 
 /** Why a goal is not met, so hints can say something useful. */
-export type GoalFailure = 'short-circuit' | 'too-few-lit' | 'not-controlled' | 'no-control';
+export type GoalFailure =
+  'short-circuit' | 'too-few-lit' | 'not-controlled' | 'no-control' | 'not-every-control';
 
 export function checkGoal(goal: Goal, circuit: Circuit): GoalResult {
   const on = withControls(circuit, true);
@@ -69,17 +75,34 @@ export function checkGoal(goal: Goal, circuit: Circuit): GoalResult {
   switch (goal.kind) {
     case 'light-bulbs':
       return { met: true };
-    case 'control-bulbs': {
-      if (!circuit.parts.some((part) => part.kind === 'switch' || part.kind === 'button')) {
+    case 'control-bulbs':
+    case 'every-control': {
+      const controls = circuit.parts.filter(isControl);
+      if (controls.length === 0) {
         return { met: false, reason: 'no-control' };
       }
-      const offResult = litBulbs(withControls(circuit, false));
-      if (offResult.shorted) {
-        return { met: false, reason: 'short-circuit' };
+      const offs: [Circuit, GoalFailure][] = [[withControls(circuit, false), 'not-controlled']];
+      if (goal.kind === 'every-control') {
+        for (const control of controls) {
+          offs.push([withControls(circuit, true, control.id), 'not-every-control']);
+        }
       }
-      return offResult.lit === 0 ? { met: true } : { met: false, reason: 'not-controlled' };
+      for (const [off, failure] of offs) {
+        const offResult = litBulbs(off);
+        if (offResult.shorted) {
+          return { met: false, reason: 'short-circuit' };
+        }
+        if (offResult.lit > 0) {
+          return { met: false, reason: failure };
+        }
+      }
+      return { met: true };
     }
   }
+}
+
+function isControl(part: Part): boolean {
+  return part.kind === 'switch' || part.kind === 'button';
 }
 
 /**
@@ -100,15 +123,19 @@ export function starsFor(level: Level, partsPlaced: number, hintsUsed: number): 
   return stars as 1 | 2 | 3;
 }
 
-/** Every switch closed and button pressed (`on`), or every switch open and button released. */
-function withControls(circuit: Circuit, on: boolean): Circuit {
+/**
+ * Every switch closed and button pressed (`on`), or every switch open and button released, except
+ * the control with id `except`, which is set the other way.
+ */
+function withControls(circuit: Circuit, on: boolean, except?: string): Circuit {
   return {
     parts: circuit.parts.map((part): Part => {
+      const state = part.id === except ? !on : on;
       switch (part.kind) {
         case 'switch':
-          return { ...part, closed: on };
+          return { ...part, closed: state };
         case 'button':
-          return { ...part, pressed: on };
+          return { ...part, pressed: state };
         default:
           return part;
       }

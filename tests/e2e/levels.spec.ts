@@ -19,6 +19,13 @@ async function drag(page: Page, from: Locator, to: { x: number; y: number }) {
 
 const post = (page: Page, name: string) => page.locator(`[data-hole="${name}"]`);
 
+/** Halfway between two holes or posts, where a two-legged part dropped from the tray lands. */
+async function between(page: Page, a: string, b: string) {
+  const p = await centre(post(page, a));
+  const q = await centre(post(page, b));
+  return { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
+}
+
 async function wire(page: Page, from: string, to: string) {
   await drag(page, post(page, from), await centre(post(page, to)));
 }
@@ -104,20 +111,32 @@ test('does not count a short circuit as a win', async ({ page }) => {
 
 test('controls a bulb with a switch on the breadboard', async ({ page }) => {
   await page.locator('[data-level="switch-1"]').click();
-  const between = async (a: string, b: string) => {
-    const p = await centre(post(page, a));
-    const q = await centre(post(page, b));
-    return { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
-  };
 
   // Switch from the battery's column 3 to column 5, bulb from 5 to 7, wire from 7 back to 1.
-  await drag(page, page.locator('[data-tray="switch"]'), await between('e3', 'e5'));
-  await drag(page, page.locator('[data-tray="bulb"]'), await between('f5', 'f7'));
+  await drag(page, page.locator('[data-tray="switch"]'), await between(page, 'e3', 'e5'));
+  await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'f5', 'f7'));
   await wire(page, 'j7', 'j1');
   await expect(page.locator('.part-bulb .flow')).toHaveCount(0);
   // The circuit is right, but the level finishes only when the child switches the bulb on.
   await expect(page.getByText('You did it!')).toHaveCount(0);
   await page.locator('.part-switch:not(.part-ghost) .switch-body').click();
+  await expect(page.locator('.part-bulb .flow')).toHaveCount(1);
+  await expect(page.getByText('You did it!')).toBeVisible();
+});
+
+test('needs both switches on, one click at a time', async ({ page }) => {
+  await page.locator('[data-level="switch-4"]').click();
+
+  // Two switches in a row from the battery's column 3, then the bulb, then a wire back to 1.
+  await drag(page, page.locator('[data-tray="switch"]'), await between(page, 'e3', 'e5'));
+  await drag(page, page.locator('[data-tray="switch"]'), await between(page, 'f5', 'f7'));
+  await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'g7', 'g9'));
+  await wire(page, 'j9', 'j1');
+
+  const switches = page.locator('.part-switch:not(.part-ghost) .switch-body');
+  await switches.nth(0).click();
+  await expect(page.locator('.part-bulb .flow')).toHaveCount(0);
+  await switches.nth(1).click();
   await expect(page.locator('.part-bulb .flow')).toHaveCount(1);
   await expect(page.getByText('You did it!')).toBeVisible();
 });
