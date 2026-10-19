@@ -107,7 +107,7 @@ the decision and the main reason for it. When the design changes, update this fi
 - **Chapter 3 levels** (15 columns of a half-size board, the battery in the top rails): *Side by
   side* (two bulbs bright: only parallel does it), *Three's a crowd* (three in a row are too dim
   to count as lit) and *Brighter together* (rewire two dim bulbs in a row to be side by side).
-  Chapters 3–6 share that board (`src/levels/halfBoard.ts`).
+  Chapters 3–7 share that board (`src/levels/halfBoard.ts`).
 - **Chapter 4 levels** (each LED's path already has a resistor, since without one it pops; why is
   chapter 5): *Long leg, short leg* (place an LED the right way round), *Wrong way round* (turn a
   backwards LED round) and *Bulbs don't mind* (a bulb and an LED both placed backwards: only the
@@ -123,6 +123,11 @@ the decision and the main reason for it. When the design changes, update this fi
   shorts the battery when switched on, moved into the bulb's path). The first hint says
   short circuit in every one, *Switch it safely* included, since its goal is checked with the
   switch on.
+- **Chapter 7 levels** (so far; light sensors and timers come with those parts): *Ding dong* (a
+  doorbell: a button and a buzzer), *Fan it* (a switch and a motor) and *Lights and sound* (one
+  switch before a bulb and a buzzer side by side). A goal counts buzzers and motors as lights: a
+  sounding buzzer is lit and bright, a turning motor lit from a quarter of full speed. A level's
+  text can replace Volty's nudges that talk about a bulb (`hints` in `src/levels/strings.ts`).
 - **Finishing:** the first time the goal is met *and* the goal's bulbs are lit with the switches as
   the child left them (so a switch level finishes when they switch it on), a card floats over the
   bottom of the screen with the stars and the "Why?" text, leaving the working circuit in view, and
@@ -158,7 +163,7 @@ state, so timers and capacitors behave like the real thing.
 | Bulb | Resistor; brightness from power |
 | Resistor | Resistor |
 | LED | Piecewise-linear diode: open when off; on, a 2 V source behind 10 Ω, anode to cathode. Starting all off, each round turns on exactly the LEDs with more than 2 V across them, until none changes (`solveWithLeds`, shared by DC and transient). Brightness from current (full at 20 mA); pops above 30 mA |
-| Buzzer, motor | Resistive load with an activation threshold |
+| Buzzer, motor | Resistive load with an activation threshold, either way round. A buzzer (150 Ω) sounds from 2 V across it; a motor (5 Ω) starts turning at 150 mA, is at full speed at 500 mA and turns the other way with the current reversed |
 | Light sensor (LDR) | Variable resistance from a slider or ambient light |
 | Capacitor | Backward-Euler companion model (transient only) |
 | Blinker chip | 555-style behavioural block: output switches when its timing capacitor crosses thresholds |
@@ -271,9 +276,11 @@ selected at all, so **Rotate** still turns the parts that come out of the tray.
   strips a dragged part would join light up signal yellow. Type is Atkinson Hyperlegible, designed
   for legibility and self-hosted (`@fontsource`), so it makes no network calls.
 - Feedback: bulb glow, spinning motors, wobbling buzzers, flowing current dots, a confetti burst on
-  success.
+  success. A motor's fan turns faster with the current and backwards with it reversed; a buzzer
+  wobbles and shows sound waves while it sounds. Both stop moving under reduce-motion.
 - **Sound** effects synthesised with the Web Audio API (snap, a buzzer that follows the simulation,
-  pop, chime). No music in M1. One always-visible mute button; silent until the first interaction.
+  pop, chime). The buzzer is a steady 2.3 kHz square wave for as long as any buzzer on the board is
+  sounding. No music in M1. One always-visible mute button; silent until the first interaction.
 - **Current dots** (`src/core/flow.ts`): white dots run along every part and wire carrying at least
   1 mA, in the direction of conventional current. Their speed grows with the logarithm of the
   current (20 board units/s at 1 mA, +20 per tenfold, capped at 120), so a dim LED still visibly

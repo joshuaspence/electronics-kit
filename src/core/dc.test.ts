@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import type { Battery, Bulb, Circuit, Led, Part, Pins } from './circuit';
-import { CONDUCTOR_OHMS } from './circuit';
-import { bulbBrightness, isShorted, LED_MAX_AMPS, ledBrightness, ledPops, solveDc } from './dc';
+import type { Battery, Bulb, Buzzer, Circuit, Led, Motor, Part, Pins } from './circuit';
+import { CONDUCTOR_OHMS, validateCircuit } from './circuit';
+import { newSpec } from './catalogue';
+import {
+  bulbBrightness,
+  buzzerSounds,
+  isShorted,
+  LED_MAX_AMPS,
+  ledBrightness,
+  ledPops,
+  motorSpeed,
+  solveDc,
+} from './dc';
 
 const battery = (pins: Pins, volts = 3, internalOhms = 0.5): Battery => ({
   id: 'battery',
@@ -224,5 +234,51 @@ describe('solveDc', () => {
     expect(() => solveDc({ parts: [bulb('a', ['x', 'y']), bulb('a', ['x', 'y'])] })).toThrow(
       /Duplicate part id a/,
     );
+  });
+});
+
+describe('buzzers and motors', () => {
+  const buzzer = (pins: Pins): Buzzer => ({ ...(newSpec('buzzer') as Buzzer), id: 'buzzer', pins });
+  const motor = (pins: Pins): Motor => ({ ...(newSpec('motor') as Motor), id: 'motor', pins });
+  const resistor = (pins: Pins, ohms: number): Part => ({ id: 'r', kind: 'resistor', pins, ohms });
+
+  it('sounds a buzzer across the battery, either way round, and in a row with a bulb', () => {
+    for (const pins of [['+', '-'] as const, ['-', '+'] as const]) {
+      const circuit = { parts: [battery(['+', '-']), buzzer(pins)] };
+      expect(buzzerSounds(buzzer(pins), reading(circuit, 'buzzer'))).toBe(true);
+    }
+    const withBulb = { parts: [battery(['+', '-']), buzzer(['+', 'x']), bulb('b', ['x', '-'])] };
+    expect(buzzerSounds(buzzer(['+', 'x']), reading(withBulb, 'buzzer'))).toBe(true);
+  });
+
+  it('keeps a buzzer quiet behind a 100 Ω resistor or in a broken loop', () => {
+    const behind = { parts: [battery(['+', '-']), buzzer(['+', 'x']), resistor(['x', '-'], 100)] };
+    expect(buzzerSounds(buzzer(['+', 'x']), reading(behind, 'buzzer'))).toBe(false);
+    const broken = { parts: [battery(['+', '-']), buzzer(['+', 'x'])] };
+    expect(buzzerSounds(buzzer(['+', 'x']), reading(broken, 'buzzer'))).toBe(false);
+  });
+
+  it('turns a motor at full speed across the battery, the other way when turned round', () => {
+    const forwards = { parts: [battery(['+', '-']), motor(['+', '-'])] };
+    expect(motorSpeed(motor(['+', '-']), reading(forwards, 'motor'))).toBe(1);
+    const backwards = { parts: [battery(['+', '-']), motor(['-', '+'])] };
+    expect(motorSpeed(motor(['-', '+']), reading(backwards, 'motor'))).toBe(-1);
+  });
+
+  it('turns a motor slowly in a row with a bulb, and not at all below its starting current', () => {
+    const withBulb = { parts: [battery(['+', '-']), motor(['+', 'x']), bulb('b', ['x', '-'])] };
+    const speed = motorSpeed(motor(['+', 'x']), reading(withBulb, 'motor'));
+    expect(speed).toBeGreaterThan(0.25);
+    expect(speed).toBeLessThan(0.5);
+    const behind = { parts: [battery(['+', '-']), motor(['+', 'x']), resistor(['x', '-'], 100)] };
+    expect(motorSpeed(motor(['+', 'x']), reading(behind, 'motor'))).toBe(0);
+  });
+
+  it('refuses a motor that starts at or above its full-speed current', () => {
+    const bad: Motor = { ...motor(['+', '-']), startAmps: 0.5, ratedAmps: 0.5 };
+    expect(() => validateCircuit({ parts: [battery(['+', '-']), bad] })).toThrow(RangeError);
+    expect(() =>
+      validateCircuit({ parts: [battery(['+', '-']), motor(['+', '-'])] }),
+    ).not.toThrow();
   });
 });

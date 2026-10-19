@@ -3,7 +3,7 @@ import { type Build, toCircuit } from '../core/build';
 import { type Hint, hintFor } from '../core/hints';
 import { checkGoal, type Level, litNow, starsFor } from '../core/levels';
 import type { Stars } from '../core/progress';
-import { levelText } from '../levels/strings';
+import { type LevelText, levelText } from '../levels/strings';
 import { Confetti } from './Confetti';
 import { strings } from './strings';
 import { Volty } from './Volty';
@@ -123,7 +123,7 @@ export function LevelScreen({ level, onFinish, onNext, onBack, meter }: LevelScr
         aside={
           stars === null && (
             <Volty
-              says={hint ? hintText(hint) : idle ? strings.stuck : null}
+              says={hint ? hintText(hint, text) : idle ? strings.stuck : null}
               offering={idle}
               onAsk={askVolty}
             />
@@ -134,10 +134,10 @@ export function LevelScreen({ level, onFinish, onNext, onBack, meter }: LevelScr
   );
 }
 
-function hintText(hint: Hint): string {
+function hintText(hint: Hint, text: LevelText): string {
   switch (hint.kind) {
     case 'nudge':
-      return strings.hints[hint.reason];
+      return text.hints?.[hint.reason] ?? strings.hints[hint.reason];
     case 'show-part':
       return strings.hintPlace(hint.part.spec.kind);
     case 'remove-part':

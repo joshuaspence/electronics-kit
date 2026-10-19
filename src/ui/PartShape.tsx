@@ -28,7 +28,10 @@ interface PartShapeProps {
   spec: PartSpec;
   from: Point;
   to: Point;
-  /** 0 to 1, for bulbs. */
+  /**
+   * How hard the part is working: a light's brightness, 0 to 1; a buzzer's 1 while it sounds; a
+   * motor's speed, −1 to 1, negative turning the other way.
+   */
   brightness?: number;
   /** Speed of the flowing dots in board units per second, signed like the current. */
   flow?: number;
@@ -192,6 +195,43 @@ function body(spec: PartSpec, from: Point, to: Point, brightness: number, beside
           <circle className="button-cap" cx={x} cy={y} r={spec.pressed ? 9 : 12} />
         </g>
       );
+    case 'buzzer':
+      // A round black buzzer with a sound hole, which wobbles while it sounds.
+      return (
+        <g className={brightness > 0 ? 'buzzer-on' : undefined}>
+          <g className="buzzer-shake" style={{ transformOrigin: `${x}px ${y}px` }}>
+            <circle className="body buzzer-body" cx={x} cy={y} r={17} />
+            <circle className="buzzer-hole" cx={x} cy={y} r={4} />
+          </g>
+          {brightness > 0 && (
+            <path
+              className="buzzer-waves"
+              d={`M ${x + 22} ${y - 9} q 6 9 0 18 M ${x + 28} ${y - 15} q 10 15 0 30`}
+            />
+          )}
+        </g>
+      );
+    case 'motor': {
+      // A can with a fan on its shaft, turning faster with the current, and backwards with it.
+      const speed = Math.abs(brightness);
+      return (
+        <g>
+          <rect className="body motor-body" x={x - 18} y={y - 15} width={36} height={30} rx={8} />
+          <g
+            className={speed > 0 ? 'motor-fan motor-on' : 'motor-fan'}
+            style={{
+              transformOrigin: `${x}px ${y}px`,
+              animationDuration: speed > 0 ? `${0.6 / speed}s` : undefined,
+              animationDirection: brightness < 0 ? 'reverse' : 'normal',
+            }}
+          >
+            <ellipse className="motor-blade" cx={x} cy={y - 8} rx={4} ry={8} />
+            <ellipse className="motor-blade" cx={x} cy={y + 8} rx={4} ry={8} />
+            <circle className="motor-hub" cx={x} cy={y} r={3} />
+          </g>
+        </g>
+      );
+    }
     case 'wire':
       return null;
   }

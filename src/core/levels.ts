@@ -1,8 +1,20 @@
 import type { Board, PlacedPart } from './build';
 import { type Circuit, type Part, type PartKind } from './circuit';
-import { bulbBrightness, isShorted, ledBrightness, ledPops, solveDc } from './dc';
+import {
+  bulbBrightness,
+  buzzerSounds,
+  isShorted,
+  ledBrightness,
+  ledPops,
+  motorSpeed,
+  solveDc,
+} from './dc';
 
-/** A light (a bulb or an LED) counts as lit at a quarter of full brightness or more. */
+/**
+ * A light (a bulb or an LED) counts as lit at a quarter of full brightness or more. Goals count
+ * buzzers and motors as lights too: a sounding buzzer is lit and bright, and a turning motor is lit
+ * at a quarter of full speed or more, so `lights` is how many outputs are working.
+ */
 export const LIT_BRIGHTNESS = 0.25;
 
 /**
@@ -171,7 +183,16 @@ export function sandboxTray(
       level.tray.forEach(({ kind }) => unlocked.add(kind));
     }
   }
-  const order: readonly PartKind[] = ['bulb', 'led', 'resistor', 'switch', 'button', 'capacitor'];
+  const order: readonly PartKind[] = [
+    'bulb',
+    'led',
+    'resistor',
+    'switch',
+    'button',
+    'buzzer',
+    'motor',
+    'capacitor',
+  ];
   return [
     ...order.filter((kind) => unlocked.has(kind)).map((kind) => ({ kind, count: SANDBOX_PARTS })),
     { kind: 'wire', count: SANDBOX_WIRES },
@@ -260,6 +281,13 @@ function litLights(circuit: Circuit): Lights {
         }
         break;
       }
+      case 'buzzer':
+        // Sounding or silent: there is no quiet buzz to count as too dim.
+        count(buzzerSounds(part, reading) ? 1 : 0);
+        break;
+      case 'motor':
+        count(Math.abs(motorSpeed(part, reading)));
+        break;
       case 'battery':
         shorted ||= isShorted(part, reading);
         break;

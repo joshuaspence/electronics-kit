@@ -15,7 +15,15 @@ import {
   type PlacedPart,
   toCircuit,
 } from '../core/build';
-import { bulbBrightness, isShorted, ledBrightness, type PartReading, solveDc } from '../core/dc';
+import {
+  bulbBrightness,
+  buzzerSounds,
+  isShorted,
+  ledBrightness,
+  motorSpeed,
+  type PartReading,
+  solveDc,
+} from '../core/dc';
 import { flowSpeed } from '../core/flow';
 import type { PartAllowance } from '../core/levels';
 import { Board, type Ghost } from './Board';
@@ -30,7 +38,7 @@ import {
   turned,
 } from './geometry';
 import { strings } from './strings';
-import { playChime, playPop, playSnap, playWarning } from './sound';
+import { playChime, playPop, playSnap, playWarning, setBuzzing } from './sound';
 import { Tray } from './Tray';
 import { useEditor } from './useEditor';
 
@@ -205,6 +213,10 @@ export function Workbench({
       brightness.set(part.id, bulbBrightness(part, reading));
     } else if (part.kind === 'led') {
       brightness.set(part.id, ledBrightness(part, reading));
+    } else if (part.kind === 'buzzer') {
+      brightness.set(part.id, buzzerSounds(part, reading) ? 1 : 0);
+    } else if (part.kind === 'motor') {
+      brightness.set(part.id, motorSpeed(part, reading));
     } else if (part.kind === 'battery' && isShorted(part, reading)) {
       hot.add(part.id);
     }
@@ -229,6 +241,11 @@ export function Workbench({
     }
     wasBlown.current = blown;
   }, [blown, muted]);
+
+  // A buzzer sounds for as long as the circuit makes it, and stops when the bench goes away.
+  const buzzing = !muted && circuit.parts.some((p) => p.kind === 'buzzer' && brightness.get(p.id));
+  useEffect(() => setBuzzing(buzzing), [buzzing]);
+  useEffect(() => () => setBuzzing(false), []);
 
   // Chime once as the level is finished, the same way.
   const wasFinished = useRef(false);

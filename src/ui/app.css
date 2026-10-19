@@ -482,6 +482,58 @@ button[aria-pressed='true'] {
   fill: #5b8bd6;
 }
 
+.buzzer-body {
+  fill: #2b2b2b;
+}
+
+.buzzer-hole {
+  fill: #6b6b6b;
+}
+
+.buzzer-on .buzzer-shake {
+  animation: buzz 0.08s linear infinite alternate;
+}
+
+@keyframes buzz {
+  from {
+    transform: rotate(-6deg);
+  }
+  to {
+    transform: rotate(6deg);
+  }
+}
+
+.buzzer-waves {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.motor-body {
+  fill: #b8bcc2;
+}
+
+.motor-blade {
+  fill: #f28c28;
+}
+
+.motor-hub {
+  fill: var(--ink);
+}
+
+.motor-on {
+  animation-name: spin;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .switch-body,
 .button-body {
   fill: #e6e1d6;
@@ -557,7 +609,9 @@ button[aria-pressed='true'] {
 @media (prefers-reduced-motion: reduce) {
   .flow,
   .part-hot .battery-body,
-  .led-puff {
+  .led-puff,
+  .buzzer-on .buzzer-shake,
+  .motor-on {
     animation: none;
   }
 }
