@@ -139,6 +139,20 @@ test('saves an LED with a resistor', async ({ page }) => {
   await expect(page.getByText('You did it!')).toBeVisible();
 });
 
+test('unlocks the multimeter once a chapter 3 level is finished', async ({ page }) => {
+  await page.locator('[data-level="pair-1"]').click();
+  await expect(page.getByRole('button', { name: 'Meter' })).toHaveCount(0);
+
+  await wire(page, 'top+3', 'a3');
+  await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'b3', 'b5'));
+  await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'd3', 'd5'));
+  await wire(page, 'e5', 'top-5');
+  await expect(page.getByText('You did it!')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Next level' }).click();
+  await expect(page.getByRole('button', { name: 'Meter' })).toBeVisible();
+});
+
 test('turns a backwards LED round to finish the level', async ({ page }) => {
   await page.locator('[data-level="led-2"]').click();
   await expect(page.locator('.board .part-led .led-glow')).toHaveAttribute('opacity', '0');

@@ -152,6 +152,24 @@ async function ledBehindResistor(page: Page) {
   );
 }
 
+test('measures a part with the multimeter', async ({ page }) => {
+  await page.getByRole('button', { name: 'Meter' }).click();
+  const meter = page.getByRole('status', { name: 'Multimeter' });
+  await expect(meter).toContainText('Tap a part to measure it.');
+
+  // A part just placed is selected, so the meter reads it at once. A 10 Ω bulb across 3 V behind
+  // the pack's 0.5 Ω: 2.86 V across it and 286 mA through it.
+  await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'e1', 'e3'));
+  await expect(meter).toContainText('Bulb:');
+  await expect(meter).toContainText('2.86 V');
+  await expect(meter).toContainText('286 mA');
+
+  // The level's own battery can be measured too, though it can't be moved.
+  await page.locator('.board .part-battery .battery-body').click();
+  await expect(meter).toContainText('Battery:');
+  await expect(meter).toContainText('286 mA');
+});
+
 test('shows a resistor’s value in its colour bands', async ({ page }) => {
   await drag(page, page.locator('[data-tray="resistor"]'), await between(page, 'e5', 'e8'));
   // The kit's 100 Ω: brown, black, brown, then a gold tolerance band.

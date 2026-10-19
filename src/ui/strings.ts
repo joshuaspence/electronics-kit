@@ -71,6 +71,13 @@ export const strings = {
   redo: 'Redo',
   rotate: 'Rotate',
   remove: 'Remove',
+  meter: 'Meter',
+  meterLabel: 'Multimeter',
+  meterPrompt: 'Tap a part to measure it.',
+  meterPart: (part: string) => `${part}:`,
+  volts: (volts: number) => `${volts.toFixed(2)} V`,
+  // Small currents keep a decimal place so a dim LED doesn't read as nothing.
+  milliamps: (milliamps: number) => `${milliamps.toFixed(milliamps < 10 ? 1 : 0)} mA`,
   parts: {
     battery: 'Battery',
     bulb: 'Bulb',

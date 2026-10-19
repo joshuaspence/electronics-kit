@@ -17,10 +17,12 @@ interface LevelScreenProps {
   onFinish: (stars: Stars) => void;
   onNext: (() => void) | null;
   onBack: () => void;
+  /** The multimeter is unlocked. */
+  meter: boolean;
 }
 
 /** One level: its goal, the workbench, and a success panel once the goal is met. */
-export function LevelScreen({ level, onFinish, onNext, onBack }: LevelScreenProps) {
+export function LevelScreen({ level, onFinish, onNext, onBack, meter }: LevelScreenProps) {
   const text = levelText[level.id]!;
   const initial = useMemo<Build>(() => ({ parts: level.parts }), [level]);
   const [stars, setStars] = useState<Stars | null>(null);
@@ -110,6 +112,7 @@ export function LevelScreen({ level, onFinish, onNext, onBack }: LevelScreenProp
         initial={initial}
         onChange={onChange}
         finished={stars !== null}
+        meter={meter}
         hint={
           hint?.kind === 'show-part'
             ? { place: hint.part }

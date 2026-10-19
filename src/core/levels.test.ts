@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Circuit, Part, Pins } from './circuit';
-import { checkGoal, type Level, litNow, starsFor } from './levels';
+import { checkGoal, type Level, litNow, METER_CHAPTER, meterUnlocked, starsFor } from './levels';
 
 const battery: Part = {
   id: 'battery',
@@ -216,6 +216,26 @@ describe('checkGoal: LEDs', () => {
   it('asks for a resistor before turning round a backwards LED that turned round would pop', () => {
     const c = circuit(led('led', ['-', '+']));
     expect(checkGoal(goal, c)).toEqual({ met: false, reason: 'led-overdriven' });
+  });
+});
+
+describe('meterUnlocked', () => {
+  const level = (id: string, chapter: number): Level => ({
+    id,
+    chapter,
+    board: { kind: 'snap', rows: 2, columns: 2 },
+    parts: [],
+    goal: { kind: 'light-up', lights: 1 },
+    tray: [],
+    par: 0,
+    solution: { place: [] },
+  });
+  const levels = [level('early', METER_CHAPTER - 1), level('meter', METER_CHAPTER)];
+
+  it('unlocks once a level of the meter chapter or later is finished, and not before', () => {
+    expect(meterUnlocked(levels, {})).toBe(false);
+    expect(meterUnlocked(levels, { early: 3 })).toBe(false);
+    expect(meterUnlocked(levels, { meter: 1 })).toBe(true);
   });
 });
 

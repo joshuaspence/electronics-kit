@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Board, Build } from '../core/build';
 import { newSpec } from '../core/catalogue';
-import type { PartAllowance } from '../core/levels';
+import { meterUnlocked, type PartAllowance } from '../core/levels';
 import {
   mergeProgress,
   NO_PROGRESS,
@@ -124,7 +124,7 @@ export function App() {
       <main className="fit-screen">
         <h1>{strings.title}</h1>
         <p>{sandbox === snapBoard ? strings.helloSnap : strings.helloBoard}</p>
-        <Workbench board={sandbox.board} tray={tray} initial={sandbox.initial} />
+        <Workbench board={sandbox.board} tray={tray} initial={sandbox.initial} meter />
       </main>
     );
   }
@@ -139,6 +139,7 @@ export function App() {
         onFinish={(stars) => finish(level.id, stars)}
         onNext={next === null ? null : () => setScreen({ kind: 'level', index: next })}
         onBack={() => setScreen({ kind: 'levels' })}
+        meter={meterUnlocked(levels, progress.stars)}
       />
     );
   }

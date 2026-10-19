@@ -15,7 +15,7 @@ import {
   type PlacedPart,
   toCircuit,
 } from '../core/build';
-import { bulbBrightness, isShorted, ledBrightness, solveDc } from '../core/dc';
+import { bulbBrightness, isShorted, ledBrightness, type PartReading, solveDc } from '../core/dc';
 import { flowSpeed } from '../core/flow';
 import type { PartAllowance } from '../core/levels';
 import { Board, type Ghost } from './Board';
@@ -58,6 +58,8 @@ interface WorkbenchProps {
    * it rather than letting it cover the tools.
    */
   aside?: ReactNode;
+  /** The multimeter is unlocked, so it can be switched on (docs/design.md §4). */
+  meter?: boolean;
 }
 
 /** The board, the parts tray and the editing tools, wired to a BuildEditor. */
@@ -69,6 +71,7 @@ export function Workbench({
   hint,
   finished,
   aside,
+  meter = false,
 }: WorkbenchProps) {
   const { editor, build, newId, apply, setControl, undo, redo } = useEditor(board, tray, initial);
   // Report only real changes to the build, not a parent passing a new callback.
@@ -83,6 +86,7 @@ export function Workbench({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [orientation, setOrientation] = useState<Orientation>('right');
   const [muted, setMuted] = useState(false);
+  const [meterOn, setMeterOn] = useState(false);
 
   /** Applies an edit, with a snap when a part lands in the board. */
   const edit = (change: Edit) => {
@@ -354,9 +358,13 @@ export function Workbench({
     }
     if (!part.fixed) {
       setDrag({ type: 'move', id, start: pointer, pointer });
-    } else if (part.spec.kind === 'switch') {
+      return;
+    }
+    if (part.spec.kind === 'switch') {
       setControl(id, !part.spec.closed);
     }
+    // A level's own parts can't be moved, but tapping selects them so the meter can measure them.
+    setSelectedId(id);
   };
 
   return (
@@ -420,8 +428,39 @@ export function Workbench({
         <button type="button" aria-pressed={muted} onClick={() => setMuted((m) => !m)}>
           {muted ? strings.soundOff : strings.soundOn}
         </button>
+        {meter && (
+          <button type="button" aria-pressed={meterOn} onClick={() => setMeterOn((on) => !on)}>
+            {strings.meter}
+          </button>
+        )}
       </div>
+      {meter && meterOn && (
+        <Meter part={selected} reading={selected && solution.parts.get(selected.id)} />
+      )}
       {aside && <div className="workbench-aside">{aside}</div>}
     </div>
+  );
+}
+
+/** The multimeter's display: the selected part's volts across it and current through it. */
+function Meter({
+  part,
+  reading,
+}: {
+  part: PlacedPart | undefined;
+  reading: PartReading | undefined;
+}) {
+  return (
+    <output className="meter" aria-label={strings.meterLabel}>
+      {part && reading ? (
+        <>
+          <span className="meter-part">{strings.meterPart(strings.parts[part.spec.kind])}</span>
+          <span className="meter-value">{strings.volts(Math.abs(reading.voltage))}</span>
+          <span className="meter-value">{strings.milliamps(Math.abs(reading.current) * 1000)}</span>
+        </>
+      ) : (
+        <span className="meter-part">{strings.meterPrompt}</span>
+      )}
+    </output>
   );
 }
