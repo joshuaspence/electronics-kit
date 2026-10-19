@@ -169,6 +169,11 @@ test('measures a part with the multimeter', async ({ page }) => {
   await expect(meter).toContainText('Battery:');
   await expect(meter).toContainText('286 mA');
   await expect(page.getByRole('button', { name: 'Rotate' })).toBeDisabled();
+
+  // Switching the meter off lets go of the battery, so Rotate is back for the tray's parts.
+  await page.getByRole('button', { name: 'Meter' }).click();
+  await expect(page.locator('.board .part-selected')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Rotate' })).toBeEnabled();
 });
 
 test('shows a resistor’s value in its colour bands', async ({ page }) => {

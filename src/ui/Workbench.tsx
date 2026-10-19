@@ -431,7 +431,17 @@ export function Workbench({
           {muted ? strings.soundOff : strings.soundOn}
         </button>
         {meter && (
-          <button type="button" aria-pressed={meterOn} onClick={() => setMeterOn((on) => !on)}>
+          <button
+            type="button"
+            aria-pressed={meterOn}
+            onClick={() => {
+              setMeterOn((on) => !on);
+              // A fixed part is selected only for the meter, so let go of it as the meter goes off.
+              if (selected?.fixed) {
+                setSelectedId(null);
+              }
+            }}
+          >
             {strings.meter}
           </button>
         )}
