@@ -88,6 +88,11 @@ the decision and the main reason for it. When the design changes, update this fi
 - **Chapter 3 levels** (15 columns of a half-size board, the battery in the top rails): *Side by
   side* (two bulbs bright: only parallel does it), *Three's a crowd* (three in a row are too dim
   to count as lit) and *Brighter together* (rewire two dim bulbs in a row to be side by side).
+  Chapters 3–5 share that board (`src/levels/halfBoard.ts`).
+- **Chapter 4 levels** (each LED's path already has a resistor, since without one it pops; why is
+  chapter 5): *Long leg, short leg* (place an LED the right way round), *Wrong way round* (turn a
+  backwards LED round) and *Bulbs don't mind* (a bulb and an LED both placed backwards: only the
+  LED needs turning). Hints compare an LED or battery with the solution the same way round only.
 - **Finishing:** the first time the goal is met *and* the goal's bulbs are lit with the switches as
   the child left them (so a switch level finishes when they switch it on), a card floats over the
   bottom of the screen with the stars and the "Why?" text, leaving the working circuit in view, and
