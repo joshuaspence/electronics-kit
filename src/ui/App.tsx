@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Board, Build } from '../core/build';
 import { newSpec } from '../core/catalogue';
-import { meterUnlocked, type PartAllowance } from '../core/levels';
+import { meterUnlocked, type PartAllowance, sandboxTray } from '../core/levels';
 import {
   mergeProgress,
   NO_PROGRESS,
@@ -10,8 +10,10 @@ import {
   type Stars,
 } from '../core/progress';
 import { levels } from '../levels';
+import { sandbox as fullBoard } from '../levels/sandbox';
 import { LevelList } from './LevelList';
 import { LevelScreen } from './LevelScreen';
+import { SandboxScreen } from './SandboxScreen';
 import { loadSavedProgress, saveProgress } from './progressStore';
 import { strings } from './strings';
 import { Workbench } from './Workbench';
@@ -78,12 +80,6 @@ const halfBoard: { board: Board; initial: Build } = {
   },
 };
 
-// A full-size board, 63 columns with both rail pairs: too big to show whole, so it pans and zooms.
-const fullBoard: { board: Board; initial: Build } = {
-  board: { kind: 'breadboard', layout: { columns: 63, centreGap: true, rails: 'both' } },
-  initial: halfBoard.initial,
-};
-
 /**
  * `?sandbox=breadboard`, `?sandbox=half`, `?sandbox=full` or `?sandbox=snap` opens a free-build
  * board, for development and tests.
@@ -97,7 +93,10 @@ const sandboxes: Readonly<Record<string, { board: Board; initial: Build }>> = {
 const sandboxParam = new URLSearchParams(window.location.search).get('sandbox');
 const sandbox = sandboxParam === null ? null : (sandboxes[sandboxParam] ?? breadboard);
 
-type Screen = { readonly kind: 'levels' } | { readonly kind: 'level'; readonly index: number };
+type Screen =
+  | { readonly kind: 'levels' }
+  | { readonly kind: 'level'; readonly index: number }
+  | { readonly kind: 'sandbox' };
 
 export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: 'levels' });
@@ -142,6 +141,16 @@ export function App() {
     );
   }
 
+  if (screen.kind === 'sandbox') {
+    return (
+      <SandboxScreen
+        tray={sandboxTray(levels, progress.stars)}
+        meter
+        onBack={() => setScreen({ kind: 'levels' })}
+      />
+    );
+  }
+
   if (screen.kind === 'level') {
     const level = levels[screen.index]!;
     const next = screen.index + 1 < levels.length ? screen.index + 1 : null;
@@ -162,6 +171,7 @@ export function App() {
       levels={levels}
       progress={progress}
       onPlay={(level) => setScreen({ kind: 'level', index: levels.indexOf(level) })}
+      onSandbox={() => setScreen({ kind: 'sandbox' })}
     />
   );
 }

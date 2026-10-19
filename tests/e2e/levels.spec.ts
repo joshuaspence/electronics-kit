@@ -44,6 +44,20 @@ test('lists the levels by chapter', async ({ page }) => {
   await expect(page.locator('[data-level]')).toHaveCount(levels.length);
 });
 
+test('opens the sandbox with the parts unlocked so far', async ({ page }) => {
+  await page.getByRole('button', { name: 'Sandbox' }).click();
+  await expect(page.getByRole('heading', { name: 'Sandbox' })).toBeVisible();
+
+  // Nothing finished yet: bulbs and wires, chapter 1's parts, and a board that zooms.
+  await expect(page.locator('[data-tray]')).toHaveCount(2);
+  await expect(page.locator('[data-tray="bulb"]')).toBeVisible();
+  await expect(page.locator('[data-tray="led"]')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Zoom in' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Levels' }).click();
+  await expect(page.getByRole('heading', { name: 'Chapter 1: Make a loop' })).toBeVisible();
+});
+
 test('finishes a level, earns stars and moves on', async ({ page }) => {
   await page.locator('[data-level="loop-3"]').click();
   await expect(page.getByRole('heading', { name: 'Mind the gap' })).toBeVisible();

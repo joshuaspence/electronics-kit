@@ -8,14 +8,23 @@ interface LevelListProps {
   levels: readonly Level[];
   progress: Progress;
   onPlay: (level: Level) => void;
+  onSandbox: () => void;
 }
 
-/** Every level by chapter, with the best stars earned on each. All are open from the start. */
-export function LevelList({ levels, progress, onPlay }: LevelListProps) {
+/**
+ * Every level by chapter, with the best stars earned on each, and the sandbox. All are open from
+ * the start.
+ */
+export function LevelList({ levels, progress, onPlay, onSandbox }: LevelListProps) {
   const chapters = [...new Set(levels.map((level) => level.chapter))];
   return (
     <main>
-      <h1>{strings.title}</h1>
+      <header className="list-header">
+        <h1>{strings.title}</h1>
+        <button type="button" className="primary" onClick={onSandbox}>
+          {strings.sandbox}
+        </button>
+      </header>
       {/* Offered only between levels, never in the middle of one. */}
       <UpdatePrompt />
       {chapters.map((chapter) => (

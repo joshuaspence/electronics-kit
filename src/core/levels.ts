@@ -153,6 +153,31 @@ export function meterUnlocked(
   return levels.some((level) => level.chapter >= METER_CHAPTER && (stars[level.id] ?? 0) > 0);
 }
 
+/** How many of each part, and of wires, the sandbox offers: plenty, but a bin, not a warehouse. */
+const SANDBOX_PARTS = 8;
+const SANDBOX_WIRES = 40;
+
+/**
+ * The sandbox's tray: every kind of part a finished level offered, so it grows with the child
+ * (docs/design.md §3). Bulbs and wires, chapter 1's parts, are always there to start with.
+ */
+export function sandboxTray(
+  levels: readonly Level[],
+  stars: Readonly<Record<string, number>>,
+): readonly PartAllowance[] {
+  const unlocked = new Set<PartKind>(['bulb', 'wire']);
+  for (const level of levels) {
+    if ((stars[level.id] ?? 0) > 0) {
+      level.tray.forEach(({ kind }) => unlocked.add(kind));
+    }
+  }
+  const order: readonly PartKind[] = ['bulb', 'led', 'resistor', 'switch', 'button', 'capacitor'];
+  return [
+    ...order.filter((kind) => unlocked.has(kind)).map((kind) => ({ kind, count: SANDBOX_PARTS })),
+    { kind: 'wire', count: SANDBOX_WIRES },
+  ];
+}
+
 /**
  * Stars for a finished level, 1 to 3: one for finishing, one for placing no more than par parts
  * and one for using no hints. Speed never counts.
