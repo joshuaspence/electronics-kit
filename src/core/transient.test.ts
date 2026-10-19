@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Circuit, Part } from './circuit';
+import { CAPACITOR_SERIES_OHMS, type Circuit, type Part } from './circuit';
 import { solveDc } from './dc';
 import { inputsBetween, TIME_STEP_SECONDS, TransientSimulation } from './transient';
 
@@ -8,7 +8,7 @@ const VOLTS = 3;
 const INTERNAL_OHMS = 0.5;
 const OHMS = 1000;
 const FARADS = 0.001;
-const TAU = (OHMS + INTERNAL_OHMS) * FARADS;
+const TAU = (OHMS + INTERNAL_OHMS + CAPACITOR_SERIES_OHMS) * FARADS;
 
 const rc = (closed = true): Circuit => ({
   parts: [
@@ -26,7 +26,10 @@ describe('TransientSimulation', () => {
     const sim = new TransientSimulation(rc());
     expect(sim.time).toBe(0);
     expect(sim.capacitorVoltage('cap')).toBe(0);
-    expect(sim.solution.parts.get('r')!.current).toBeCloseTo(VOLTS / (OHMS + INTERNAL_OHMS), 5);
+    expect(sim.solution.parts.get('r')!.current).toBeCloseTo(
+      VOLTS / (OHMS + INTERNAL_OHMS + CAPACITOR_SERIES_OHMS),
+      6,
+    );
   });
 
   it('charges a capacitor along the RC curve', () => {

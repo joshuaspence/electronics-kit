@@ -127,6 +127,13 @@ export interface Circuit {
  */
 export const CONDUCTOR_OHMS = 0.001;
 
+/**
+ * Every capacitor's resistance in series with it, as a real one has. It keeps an empty capacitor's
+ * inrush below a short circuit: across the kit battery (0.5 Ω inside), 3 V through 1.5 Ω is 2 A,
+ * under the 3 A at which the battery counts as shorted.
+ */
+export const CAPACITOR_SERIES_OHMS = 1;
+
 /** Throws a RangeError describing the first problem that would make the circuit unsolvable. */
 export function validateCircuit(circuit: Circuit): void {
   const ids = new Set<string>();

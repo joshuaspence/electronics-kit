@@ -154,8 +154,10 @@ models.**
    Gives instant feedback while editing, is the starting state for the transient run, and is what
    most chapter 1–5 win checks evaluate.
 2. **Transient run** at a **fixed Δt = 1 ms**, using backward-Euler companion models for
-   capacitors. It starts at t = 0 with **every capacitor discharged**: an uncharged capacitor
-   conducts like a wire for that instant, so the child sees the inrush and then watches it charge.
+   capacitors, each in series with 1 Ω as a real one has (`CAPACITOR_SERIES_OHMS`). It starts at
+   t = 0 with **every capacitor discharged**: an uncharged capacitor conducts like that 1 Ω for
+   that instant, so the child sees the inrush and then watches it charge. The 1 Ω keeps the inrush
+   from the kit battery at 2 A, under the 3 A at which the battery would count as shorted.
    Without capacitors the run starts from, and stays at, the DC operating point. Fixed steps make
    it **deterministic**: tests can assert "the LED is on at t = 2.0 s". It runs in **real time** by
    default with **slow motion (¼×, ⅒×)**. If a circuit is too large, the step count adapts down
@@ -185,7 +187,7 @@ state, so timers and capacitors behave like the real thing.
 | LED | Piecewise-linear diode: open when off; on, a 2 V source behind 10 Ω, anode to cathode. Starting all off, each round turns on exactly the LEDs with more than 2 V across them, until none changes (`solveWithLeds`, shared by DC and transient). Brightness from current (full at 20 mA); pops above 30 mA |
 | Buzzer, motor | Resistive load with an activation threshold, either way round. A buzzer (150 Ω) sounds from 2 V across it; a motor (5 Ω) starts turning at 150 mA, is at full speed at 500 mA and turns the other way with the current reversed |
 | Light sensor (LDR) | Variable resistance from a slider: 10 kΩ in the dark falling to 5 Ω in full light, by equal factors (`lightSensorOhms`). It starts at half light, where a bulb or buzzer in a row with it doesn't work; tapping one shows its Dark–Light slider, an input like a switch |
-| Capacitor | Backward-Euler companion model (transient only). The kit's is a big 0.2 F one, so beside a bulb (a time constant of 2 s) it keeps the bulb lit for over a second once the battery is cut off. Drawn filling with yellow as it charges |
+| Capacitor | Backward-Euler companion model (transient only). The kit's is a big 0.2 F one, so beside a bulb (a time constant of 2.2 s with its 1 Ω) it keeps the bulb lit for over a second once the battery is cut off. Drawn filling with yellow as it charges |
 | Blinker chip | 555-style behavioural block: output switches when its timing capacitor crosses thresholds |
 
 **Solver details** (`src/core/mna.ts`, `dc.ts`, `transient.ts`, `linear.ts`). Every part has two

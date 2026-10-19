@@ -1,5 +1,5 @@
 import type { Capacitor, Circuit, Part } from './circuit';
-import { CONDUCTOR_OHMS } from './circuit';
+import { CAPACITOR_SERIES_OHMS } from './circuit';
 import { solveWithLeds } from './dc';
 import type { CircuitSolution, Norton } from './mna';
 
@@ -20,7 +20,7 @@ export type Input =
  *
  * Every edit (adding, moving, rotating or removing a part or wire) starts a new simulation from
  * t = 0 with every capacitor discharged; inputs go through `applyInput`. An uncharged capacitor
- * conducts like a wire at t = 0, so the t = 0 solution shows the inrush current. Without
+ * conducts like its series resistance at t = 0, so the t = 0 solution shows the inrush current. Without
  * capacitors, every step gives the DC operating point.
  *
  * Steps are counted as an integer, so the same circuit and the same inputs at the same steps
@@ -72,8 +72,11 @@ export class TransientSimulation {
   /** Advances one time step and returns the new solution. */
   step(): CircuitSolution {
     this.latest = this.solve((part) => backwardEuler(part, this.capacitorVolts.get(part.id)!));
+    // The charge left on each capacitor: the voltage across its legs less what its series
+    // resistance takes.
     for (const id of this.capacitorVolts.keys()) {
-      this.capacitorVolts.set(id, this.latest.parts.get(id)!.voltage);
+      const reading = this.latest.parts.get(id)!;
+      this.capacitorVolts.set(id, reading.voltage - reading.current * CAPACITOR_SERIES_OHMS);
     }
     this.steps++;
     return this.latest;
@@ -120,17 +123,19 @@ export class TransientSimulation {
   }
 }
 
-/** A capacitor holding `volts`, treated for an instant as that voltage source. */
+/** A capacitor holding `volts`, treated for an instant as that voltage behind its series resistance. */
 function chargedCapacitor(volts: number): Norton {
-  return { conductance: 1 / CONDUCTOR_OHMS, amps: volts / CONDUCTOR_OHMS };
+  return { conductance: 1 / CAPACITOR_SERIES_OHMS, amps: volts / CAPACITOR_SERIES_OHMS };
 }
 
 /**
- * Backward-Euler companion model: i = C · (v − v_prev) / Δt, a conductance C / Δt in parallel
- * with a source of C · v_prev / Δt. It is stable at any step size, so it never rings numerically.
+ * Backward-Euler companion model in series with the capacitor's resistance. Alone, the capacitor
+ * is i = C · (v − v_prev) / Δt: v_prev behind Δt / C. With the series resistance that becomes
+ * v_prev behind Δt / C + R, as a Norton equivalent. It is stable at any step size, so it never
+ * rings numerically.
  */
 function backwardEuler(part: Capacitor, previousVolts: number): Norton {
-  const conductance = part.farads / TIME_STEP_SECONDS;
+  const conductance = 1 / (TIME_STEP_SECONDS / part.farads + CAPACITOR_SERIES_OHMS);
   return { conductance, amps: conductance * previousVolts };
 }
 
