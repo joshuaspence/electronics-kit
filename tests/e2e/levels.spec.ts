@@ -1,5 +1,9 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { levels } from '../../src/levels';
+import { chapter1 } from '../../src/levels/chapter1';
+import { chapter2 } from '../../src/levels/chapter2';
+import { chapter3 } from '../../src/levels/chapter3';
+import { chapter4 } from '../../src/levels/chapter4';
 
 async function centre(locator: Locator) {
   const box = await locator.boundingBox();
@@ -248,3 +252,15 @@ test.describe('Volty', () => {
     await expect(page.getByText('Stuck? Tap me for a hint!')).toBeVisible();
   });
 });
+
+// The board shrinks to leave room for the tray and tools, so nothing on a level is off the screen.
+for (const chapter of [chapter1, chapter2, chapter3, chapter4]) {
+  const level = chapter[0]!;
+  test(`fits ${level.id} on the screen`, async ({ page }) => {
+    await page.locator(`[data-level="${level.id}"]`).click();
+    await expect(page.getByRole('button', { name: 'Undo' })).toBeInViewport({ ratio: 1 });
+    expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(
+      page.viewportSize()!.height,
+    );
+  });
+}

@@ -65,8 +65,9 @@ h2 {
   display: block;
   width: 100%;
   height: auto;
-  /* Keep the whole board on screen on a landscape tablet (docs/design.md §9). */
-  max-height: calc(100vh - 320px);
+  /* Shrinks to the height the screen has left once the tray and tools are laid out. */
+  flex: 0 1 auto;
+  min-height: 0;
   touch-action: none;
   /* A part being dragged is drawn under the pointer even before it reaches the board. */
   overflow: visible;
@@ -74,8 +75,24 @@ h2 {
   filter: drop-shadow(0 4px 0 rgb(0 0 0 / 20%));
 }
 
-/* Dragging across the board must never select its labels. */
+/*
+ * A level fills the screen and no more, so the whole board and its tools stay on screen on a
+ * landscape tablet (docs/design.md §9). `dvh` leaves out the browser's own toolbars.
+ */
+.fit-screen {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100vh;
+  height: 100dvh;
+}
+
 .workbench {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* Dragging across the board must never select its labels. */
   user-select: none;
   -webkit-user-select: none;
 }

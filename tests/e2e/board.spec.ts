@@ -29,6 +29,13 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Electronics Kit' })).toBeVisible();
 });
 
+test('fits the board and its tools on the screen', async ({ page }) => {
+  await expect(page.getByRole('button', { name: 'Undo' })).toBeInViewport({ ratio: 1 });
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(
+    page.viewportSize()!.height,
+  );
+});
+
 test('highlights the strip of a touched hole', async ({ page }) => {
   await page.locator('[data-hole="a5"]').dispatchEvent('pointerdown');
 

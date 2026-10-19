@@ -121,7 +121,7 @@ export function App() {
 
   if (sandbox) {
     return (
-      <main>
+      <main className="fit-screen">
         <h1>{strings.title}</h1>
         <p>{sandbox === snapBoard ? strings.helloSnap : strings.helloBoard}</p>
         <Workbench board={sandbox.board} tray={tray} initial={sandbox.initial} />
