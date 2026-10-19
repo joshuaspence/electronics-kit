@@ -224,4 +224,38 @@ export const levelText: Readonly<Record<string, LevelText>> = {
         'Uh oh, a shortcut! Electricity is rushing straight back to the battery without going through the bulb or the buzzer.',
     },
   },
+  'out-4': {
+    title: 'Sunny glow',
+    goal: 'This is a light sensor. Make it control the bulb. Tap the sensor to change how much light falls on it.',
+    why: 'In the light, the sensor lets electricity through easily and the bulb glows. In the dark, it hardly lets any through, so the bulb goes out.',
+    more: 'A light sensor is a light-dependent resistor. Light frees up tiny charged particles inside it, so the brighter it is, the lower its resistance: here about 5 ohms in full light and 10,000 ohms in the dark.',
+    hints: {
+      'too-few-lit':
+        'Electricity needs a complete loop: out of one end of the battery, through the light sensor and the bulb, and back into the other end.',
+      'switch-off': 'Your circuit looks ready. Tap the light sensor and give it more light!',
+      'no-control':
+        'This one needs the light sensor in the loop, so the electricity has to go through it.',
+      'not-controlled':
+        'The bulb stays on even in the dark. Put the light sensor in the loop, so the electricity has to go through it.',
+      'short-circuit':
+        'Uh oh, a shortcut! Electricity is rushing straight back to the battery without going through the bulb.',
+    },
+  },
+  'out-5': {
+    title: 'Fridge alarm',
+    goal: 'Make an alarm that buzzes when light gets in, like a fridge left open. Tap the sensor to change how much light falls on it.',
+    why: 'Inside a shut fridge it is dark, so the sensor stops the electricity. Open the door and light falls on the sensor, so the buzzer sounds.',
+    more: 'The sensor and the buzzer share the battery’s 3 volts. In the light the sensor takes almost none of it, leaving the buzzer nearly all 3. In the dark the sensor takes nearly all of it, leaving far less than the buzzer’s 2 volts.',
+    hints: {
+      'too-few-lit':
+        'Electricity needs a complete loop: out of one end of the battery, through the light sensor and the buzzer, and back into the other end.',
+      'switch-off': 'Your circuit looks ready. Tap the light sensor and give it more light!',
+      'no-control':
+        'This one needs the light sensor in the loop, so the electricity has to go through it.',
+      'not-controlled':
+        'The buzzer sounds even in the dark. Put the light sensor in the loop, so the electricity has to go through it.',
+      'short-circuit':
+        'Uh oh, a shortcut! Electricity is rushing straight back to the battery without going through the buzzer.',
+    },
+  },
 };

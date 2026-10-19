@@ -11,6 +11,7 @@ const partInSentence: Record<PartKind, { readonly noun: string; readonly a: stri
   button: { noun: 'button', a: 'a button' },
   buzzer: { noun: 'buzzer', a: 'a buzzer' },
   motor: { noun: 'motor', a: 'a motor' },
+  'light-sensor': { noun: 'light sensor', a: 'a light sensor' },
   wire: { noun: 'wire', a: 'a wire' },
 };
 
@@ -93,6 +94,9 @@ export const strings = {
   zoomIn: 'Zoom in',
   zoomOut: 'Zoom out',
   meter: 'Meter',
+  light: 'Light',
+  dark: 'Dark',
+  lightLabel: 'Light on the sensor',
   meterLabel: 'Multimeter',
   meterPrompt: 'Tap a part to measure it.',
   meterPart: (part: string) => `${part}:`,
@@ -109,6 +113,7 @@ export const strings = {
     button: 'Button',
     buzzer: 'Buzzer',
     motor: 'Motor',
+    'light-sensor': 'Light sensor',
     wire: 'Wire',
   } satisfies Record<PartKind, string>,
 } as const;

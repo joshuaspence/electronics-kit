@@ -73,6 +73,26 @@ describe('TransientSimulation', () => {
     expect(sim.capacitorVoltage('cap')).toBeCloseTo(VOLTS * (1 - Math.exp(-1)), 2);
   });
 
+  it('changes the light on a light sensor while it runs', () => {
+    const sensor: Part = {
+      id: 'sensor',
+      kind: 'light-sensor',
+      pins: ['+', 'x'],
+      brightOhms: 5,
+      darkOhms: 10_000,
+      light: 1,
+    };
+    const bulb: Part = { id: 'bulb', kind: 'bulb', pins: ['x', '-'], ohms: 10, ratedWatts: 0.5 };
+    const sim = new TransientSimulation({ parts: [rc().parts[0]!, sensor, bulb] });
+    expect(sim.solution.parts.get('bulb')!.current).toBeCloseTo(3 / 15.5, 5);
+
+    sim.applyInput({ kind: 'light-sensor', partId: 'sensor', light: 0 });
+    expect(sim.run(1).parts.get('bulb')!.current).toBeCloseTo(3 / 10_010.5, 7);
+    expect(() => sim.applyInput({ kind: 'switch', partId: 'sensor', closed: true })).toThrow(
+      RangeError,
+    );
+  });
+
   it('discharges a capacitor through a bulb', () => {
     const circuit: Circuit = {
       parts: [

@@ -123,9 +123,11 @@ the decision and the main reason for it. When the design changes, update this fi
   shorts the battery when switched on, moved into the bulb's path). The first hint says
   short circuit in every one, *Switch it safely* included, since its goal is checked with the
   switch on.
-- **Chapter 7 levels** (so far; light sensors and timers come with those parts): *Ding dong* (a
-  doorbell: a button and a buzzer), *Fan it* (a switch and a motor) and *Lights and sound* (one
-  switch before a bulb and a buzzer side by side). A goal counts buzzers and motors as lights: a
+- **Chapter 7 levels** (so far; timers come with the blinker chip): *Ding dong* (a doorbell: a
+  button and a buzzer), *Fan it* (a switch and a motor), *Lights and sound* (one switch before a
+  bulb and a buzzer side by side), *Sunny glow* (a light sensor and a bulb) and *Fridge alarm* (a
+  buzzer that sounds when light reaches its sensor). Goals treat a light sensor as a control,
+  like a switch: on in full light and off in the dark. A goal counts buzzers and motors as lights: a
   sounding buzzer is lit and bright, a turning motor lit from a quarter of full speed. A level's
   text can replace Volty's nudges that talk about a bulb (`hints` in `src/levels/strings.ts`).
 - **Finishing:** the first time the goal is met *and* the goal's bulbs are lit with the switches as
@@ -164,7 +166,7 @@ state, so timers and capacitors behave like the real thing.
 | Resistor | Resistor |
 | LED | Piecewise-linear diode: open when off; on, a 2 V source behind 10 Ω, anode to cathode. Starting all off, each round turns on exactly the LEDs with more than 2 V across them, until none changes (`solveWithLeds`, shared by DC and transient). Brightness from current (full at 20 mA); pops above 30 mA |
 | Buzzer, motor | Resistive load with an activation threshold, either way round. A buzzer (150 Ω) sounds from 2 V across it; a motor (5 Ω) starts turning at 150 mA, is at full speed at 500 mA and turns the other way with the current reversed |
-| Light sensor (LDR) | Variable resistance from a slider or ambient light |
+| Light sensor (LDR) | Variable resistance from a slider: 10 kΩ in the dark falling to 5 Ω in full light, by equal factors (`lightSensorOhms`). It starts at half light, where a bulb or buzzer in a row with it doesn't work; tapping one shows its Dark–Light slider, an input like a switch |
 | Capacitor | Backward-Euler companion model (transient only) |
 | Blinker chip | 555-style behavioural block: output switches when its timing capacitor crosses thresholds |
 

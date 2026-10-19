@@ -90,8 +90,30 @@ export interface Motor extends PartBase {
   readonly ratedAmps: number;
 }
 
+/**
+ * A light sensor (a light-dependent resistor): `darkOhms` in the dark, falling to `brightOhms` in
+ * full light. `light` is how much light falls on it, from 0 (dark) to 1 (full light), set by a
+ * slider.
+ */
+export interface LightSensor extends PartBase {
+  readonly kind: 'light-sensor';
+  readonly brightOhms: number;
+  readonly darkOhms: number;
+  readonly light: number;
+}
+
 export type Part =
-  Battery | Resistor | Bulb | Led | Wire | Switch | PushButton | Capacitor | Buzzer | Motor;
+  | Battery
+  | Resistor
+  | Bulb
+  | Led
+  | Wire
+  | Switch
+  | PushButton
+  | Capacitor
+  | Buzzer
+  | Motor
+  | LightSensor;
 export type PartKind = Part['kind'];
 
 export interface Circuit {
@@ -144,12 +166,29 @@ export function validateCircuit(circuit: Circuit): void {
           throw new RangeError(`${part.id}: ratedAmps must be more than startAmps`);
         }
         break;
+      case 'light-sensor':
+        requirePositive(part, 'brightOhms', part.brightOhms);
+        if (!(part.darkOhms > part.brightOhms) || !Number.isFinite(part.darkOhms)) {
+          throw new RangeError(`${part.id}: darkOhms must be more than brightOhms`);
+        }
+        if (!(part.light >= 0 && part.light <= 1)) {
+          throw new RangeError(`${part.id}: light must be from 0 to 1, not ${part.light}`);
+        }
+        break;
       case 'wire':
       case 'switch':
       case 'button':
         break;
     }
   }
+}
+
+/**
+ * A light sensor's resistance. It falls by the same factor for each step of light, as a real one
+ * does over a wide range: halfway is the geometric mean of its dark and bright resistance.
+ */
+export function lightSensorOhms(part: LightSensor): number {
+  return part.darkOhms * (part.brightOhms / part.darkOhms) ** part.light;
 }
 
 /** Whether a part currently lets current through at all. */

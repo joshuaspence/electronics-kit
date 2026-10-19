@@ -510,6 +510,37 @@ button[aria-pressed='true'] {
   stroke-linecap: round;
 }
 
+.sensor-body {
+  fill: #c9473d;
+}
+
+.sensor-track {
+  fill: none;
+  stroke: #f3d9a4;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.sensor-rays line {
+  stroke: #f6b221;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+/* The light slider: a dark end and a light end, like dimming a room. */
+.light-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  font-weight: 700;
+}
+
+.light-control input {
+  width: 200px;
+  accent-color: #f6b221;
+}
+
 .motor-body {
   fill: #b8bcc2;
 }

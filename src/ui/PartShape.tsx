@@ -211,6 +211,28 @@ function body(spec: PartSpec, from: Point, to: Point, brightness: number, beside
           )}
         </g>
       );
+    case 'light-sensor': {
+      // A round sensor with its zigzag track, under rays that show how much light falls on it.
+      const rays = [0, 45, 90, 135, 180, 225, 270, 315];
+      return (
+        <g>
+          <g className="sensor-rays" opacity={spec.light}>
+            {rays.map((angle) => (
+              <line
+                key={angle}
+                x1={x}
+                y1={y - 21}
+                x2={x}
+                y2={y - 27}
+                transform={`rotate(${angle} ${x} ${y})`}
+              />
+            ))}
+          </g>
+          <circle className="body sensor-body" cx={x} cy={y} r={16} />
+          <path className="sensor-track" d={`M ${x - 9} ${y - 6} h 18 l -18 6 h 18 l -18 6 h 18`} />
+        </g>
+      );
+    }
     case 'motor': {
       // A can with a fan on its shaft, turning faster with the current, and backwards with it.
       const speed = Math.abs(brightness);

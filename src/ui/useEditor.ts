@@ -31,6 +31,10 @@ export function useEditor(board: Board, tray: readonly PartAllowance[], initial:
       editor.setControl(id, on);
       rerender();
     },
+    setLight: (id: string, light: number) => {
+      editor.setLight(id, light);
+      rerender();
+    },
     undo: () => {
       editor.undo();
       rerender();

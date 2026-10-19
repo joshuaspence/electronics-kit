@@ -336,3 +336,25 @@ describe('checkGoal: buzzers and motors', () => {
     expect(litNow(circuit(motor(['+', 'x'])))).toBe(0);
   });
 });
+
+describe('checkGoal: light sensors', () => {
+  const sensor = (pins: Pins): Part => ({
+    id: 'y',
+    kind: 'light-sensor',
+    pins,
+    brightOhms: 5,
+    darkOhms: 10_000,
+    light: 0,
+  });
+
+  it('counts a light sensor as a control: lit in full light, dark in the dark', () => {
+    const goal = { kind: 'control-lights', lights: 1 } as const;
+    expect(checkGoal(goal, circuit(sensor(['+', 'x']), bulb('b', ['x', '-'])))).toEqual({
+      met: true,
+    });
+    expect(checkGoal(goal, circuit(sensor(['+', '-']), bulb('b', ['+', '-'])))).toEqual({
+      met: false,
+      reason: 'not-controlled',
+    });
+  });
+});

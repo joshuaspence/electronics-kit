@@ -138,8 +138,9 @@ export function checkGoal(goal: Goal, circuit: Circuit): GoalResult {
   }
 }
 
+/** A switch, a button or a light sensor: what the child changes while playing, not building. */
 function isControl(part: Part): boolean {
-  return part.kind === 'switch' || part.kind === 'button';
+  return part.kind === 'switch' || part.kind === 'button' || part.kind === 'light-sensor';
 }
 
 /**
@@ -191,6 +192,7 @@ export function sandboxTray(
     'button',
     'buzzer',
     'motor',
+    'light-sensor',
     'capacitor',
   ];
   return [
@@ -221,6 +223,8 @@ function withControls(circuit: Circuit, on: boolean, except?: string): Circuit {
           return { ...part, closed: state };
         case 'button':
           return { ...part, pressed: state };
+        case 'light-sensor':
+          return { ...part, light: state ? 1 : 0 };
         default:
           return part;
       }

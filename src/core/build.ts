@@ -187,8 +187,22 @@ export class BuildEditor {
     if (!part || (part.spec.kind !== 'switch' && part.spec.kind !== 'button')) {
       return { ok: false, reason: 'unknown-part' };
     }
-    const spec: PartSpec =
-      part.spec.kind === 'switch' ? { ...part.spec, closed: on } : { ...part.spec, pressed: on };
+    return this.setInput(
+      id,
+      part.spec.kind === 'switch' ? { ...part.spec, closed: on } : { ...part.spec, pressed: on },
+    );
+  }
+
+  /** Sets how much light falls on a light sensor, from 0 to 1. An input, like `setControl`. */
+  setLight(id: string, light: number): EditResult {
+    const part = this.current.parts.find((p) => p.id === id);
+    if (!part || part.spec.kind !== 'light-sensor') {
+      return { ok: false, reason: 'unknown-part' };
+    }
+    return this.setInput(id, { ...part.spec, light: Math.min(1, Math.max(0, light)) });
+  }
+
+  private setInput(id: string, spec: PartSpec): EditResult {
     const update = (build: Build): Build => ({
       parts: build.parts.map((p) => (p.id === id ? { ...p, spec } : p)),
     });

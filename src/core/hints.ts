@@ -68,13 +68,14 @@ function samePlace(a: PlacedPart, b: PlacedPart): boolean {
 
 /**
  * The same part: the same kind and value, such as a resistor's ohms, or an LED that hasn't
- * popped. Whether a switch is on or a button pressed is the child playing, not a difference.
+ * popped. Whether a switch is on, a button pressed or a light sensor lit is the child playing, not
+ * a difference.
  */
 function sameSpec(a: PartSpec, b: PartSpec): boolean {
   const comparable = (spec: PartSpec) =>
     JSON.stringify(
       Object.entries(spec)
-        .filter(([key]) => key !== 'closed' && key !== 'pressed')
+        .filter(([key]) => key !== 'closed' && key !== 'pressed' && key !== 'light')
         .sort(([x], [y]) => x.localeCompare(y)),
     );
   return comparable(a) === comparable(b);

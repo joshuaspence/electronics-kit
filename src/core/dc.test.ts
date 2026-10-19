@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Battery, Bulb, Buzzer, Circuit, Led, Motor, Part, Pins } from './circuit';
-import { CONDUCTOR_OHMS, validateCircuit } from './circuit';
+import { CONDUCTOR_OHMS, lightSensorOhms, validateCircuit } from './circuit';
 import { newSpec } from './catalogue';
 import {
   bulbBrightness,
@@ -280,5 +280,45 @@ describe('buzzers and motors', () => {
     expect(() =>
       validateCircuit({ parts: [battery(['+', '-']), motor(['+', '-'])] }),
     ).not.toThrow();
+  });
+});
+
+describe('light sensors', () => {
+  const sensor = (light: number) => ({
+    ...(newSpec('light-sensor') as Extract<Part, { kind: 'light-sensor' }>),
+    id: 'sensor',
+    pins: ['+', 'x'] as const,
+    light,
+  });
+
+  it('runs from its dark resistance to its bright one, by equal factors', () => {
+    expect(lightSensorOhms(sensor(0))).toBeCloseTo(10_000, 6);
+    expect(lightSensorOhms(sensor(1))).toBeCloseTo(5, 6);
+    expect(lightSensorOhms(sensor(0.5))).toBeCloseTo(Math.sqrt(5 * 10_000), 6);
+  });
+
+  it('lights a bulb in a row with it in full light, but not in the dark', () => {
+    const lit = (light: number) =>
+      bulbBrightness(
+        bulb('b', ['x', '-']),
+        reading({ parts: [battery(['+', '-']), sensor(light), bulb('b', ['x', '-'])] }, 'b'),
+      );
+    expect(lit(1)).toBeGreaterThan(0.5);
+    expect(lit(0)).toBeLessThan(0.001);
+  });
+
+  it('starts at half light, where neither a bulb nor a buzzer in a row with it works', () => {
+    const start = newSpec('light-sensor') as Extract<Part, { kind: 'light-sensor' }>;
+    const withBulb = { parts: [battery(['+', '-']), sensor(start.light), bulb('b', ['x', '-'])] };
+    expect(bulbBrightness(bulb('b', ['x', '-']), reading(withBulb, 'b'))).toBeLessThan(0.05);
+    const buzzer: Buzzer = { ...(newSpec('buzzer') as Buzzer), id: 'z', pins: ['x', '-'] };
+    const withBuzzer = { parts: [battery(['+', '-']), sensor(start.light), buzzer] };
+    expect(buzzerSounds(buzzer, reading(withBuzzer, 'z'))).toBe(false);
+  });
+
+  it('refuses light outside 0 to 1, and a dark resistance below the bright one', () => {
+    expect(() => validateCircuit({ parts: [sensor(1.5)] })).toThrow(RangeError);
+    expect(() => validateCircuit({ parts: [{ ...sensor(1), darkOhms: 1 }] })).toThrow(RangeError);
+    expect(() => validateCircuit({ parts: [sensor(0.5)] })).not.toThrow();
   });
 });
