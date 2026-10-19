@@ -591,3 +591,18 @@ for (const chapter of [chapter1, chapter2, chapter3, chapter4]) {
     );
   });
 }
+
+// A phone on its side is short, and the fullest column beside the board is a level with three parts
+// and wires in its bin. Every level must still fit without scrolling.
+test('fits every level on a landscape phone', async ({ page }) => {
+  await page.setViewportSize({ width: 844, height: 390 });
+  for (const level of levels) {
+    await page.goto('./');
+    await page.locator(`[data-level="${level.id}"]`).click();
+    await expect(page.getByRole('button', { name: 'Undo' })).toBeInViewport({ ratio: 1 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollHeight),
+      level.id,
+    ).toBeLessThanOrEqual(390);
+  }
+});
