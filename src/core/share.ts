@@ -24,6 +24,7 @@ const LETTERS: Readonly<Record<Exclude<PartKind, 'battery'>, string>> = {
   button: 'p',
   buzzer: 'z',
   motor: 'm',
+  'light-sensor': 'y',
   wire: 'w',
 };
 
@@ -88,6 +89,8 @@ function valueOf(spec: Exclude<PartSpec, { kind: 'battery' }>): string | null {
       return String(spec.farads);
     case 'switch':
       return spec.closed ? '1' : '0';
+    case 'light-sensor':
+      return String(spec.light);
     default:
       return null;
   }
@@ -110,6 +113,9 @@ function specFor(kind: PartKind, value: string | undefined): PartSpec | null {
       return Number.isFinite(number) && number > 0 ? { ...spec, farads: number } : null;
     case 'switch':
       return value === '0' || value === '1' ? { ...spec, closed: value === '1' } : null;
+    case 'light-sensor':
+      // Number('') is 0, so an empty value has to be refused before it reads as dark.
+      return value && number >= 0 && number <= 1 ? { ...spec, light: number } : null;
     default:
       return value === undefined ? spec : null;
   }

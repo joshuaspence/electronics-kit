@@ -138,7 +138,11 @@ export function Workbench({
   meter = false,
   zoomable = false,
 }: WorkbenchProps) {
-  const { editor, build, newId, apply, setControl, undo, redo } = useEditor(board, tray, initial);
+  const { editor, build, newId, apply, setControl, setLight, undo, redo } = useEditor(
+    board,
+    tray,
+    initial,
+  );
   // Report only real changes to the build, not a parent passing a new callback.
   const onChangeRef = useRef(onChange);
   useEffect(() => {
@@ -490,8 +494,9 @@ export function Workbench({
     if (part.spec.kind === 'switch') {
       setControl(id, !part.spec.closed);
     }
-    // A level's own parts can't be moved, but tapping selects them so the meter can measure them.
-    if (meter && meterOn) {
+    // A level's own parts can't be moved, but tapping selects them so the meter can measure them,
+    // and a light sensor for its light slider.
+    if ((meter && meterOn) || part.spec.kind === 'light-sensor') {
       setSelectedId(id);
     }
   };
@@ -612,6 +617,20 @@ export function Workbench({
           </button>
         )}
       </div>
+      {selected?.spec.kind === 'light-sensor' && (
+        <label className="light-control">
+          <span aria-hidden="true">{strings.dark}</span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={Math.round(selected.spec.light * 100)}
+            aria-label={strings.lightLabel}
+            onChange={(event) => setLight(selected.id, Number(event.target.value) / 100)}
+          />
+          <span aria-hidden="true">{strings.light}</span>
+        </label>
+      )}
       {meter && meterOn && (
         <Meter part={selected} reading={selected && solution.parts.get(selected.id)} />
       )}

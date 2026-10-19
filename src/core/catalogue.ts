@@ -7,7 +7,9 @@ import type { PartKind } from './circuit';
  * straight across the pack takes about 95 mA and pops; behind a 100 Ω resistor it takes about 9 mA
  * and glows. A buzzer sounds from 2 V, so in a row with a bulb it still sounds, but behind a
  * 100 Ω resistor it doesn't. A motor takes about 0.55 A on its own, turning at full speed, and
- * turns slowly in a row with a bulb.
+ * turns slowly in a row with a bulb. A light sensor in a row with a bulb lights it in full light
+ * (5 Ω) and leaves it dark in the dark (10 kΩ). It starts at half light, a dim room where neither a
+ * bulb nor a buzzer in a row with it works, so the child turns the light up to see it work.
  */
 export function newSpec(kind: PartKind): PartSpec {
   switch (kind) {
@@ -25,6 +27,8 @@ export function newSpec(kind: PartKind): PartSpec {
       return { kind, ohms: 150, onVolts: 2 };
     case 'motor':
       return { kind, ohms: 5, startAmps: 0.15, ratedAmps: 0.5 };
+    case 'light-sensor':
+      return { kind, brightOhms: 5, darkOhms: 10_000, light: 0.5 };
     case 'switch':
       return { kind, closed: false };
     case 'button':

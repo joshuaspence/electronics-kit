@@ -193,6 +193,28 @@ describe('BuildEditor', () => {
     expect(editor.canUndo).toBe(false);
     expect(editor.setControl('b', true)).toEqual({ ok: false, reason: 'unknown-part' });
   });
+
+  it('sets the light on a light sensor as an input, within 0 to 1', () => {
+    const editor = new BuildEditor(mini, [{ kind: 'light-sensor', count: 1 }, ...tray], {
+      parts: [battery([hole('a', 1), hole('a', 2)])],
+    });
+    const sensor = { ...bulb('l', [hole('b', 3), hole('b', 4)]), spec: newSpec('light-sensor') };
+    editor.apply({ kind: 'place', part: sensor });
+    const light = () => {
+      const spec = editor.build.parts.find((p) => p.id === 'l')!.spec;
+      return spec.kind === 'light-sensor' ? spec.light : null;
+    };
+
+    expect(editor.setLight('l', 0.25)).toEqual({ ok: true });
+    expect(light()).toBe(0.25);
+    editor.setLight('l', 2);
+    expect(light()).toBe(1);
+    editor.setLight('l', -1);
+    expect(light()).toBe(0);
+    expect(editor.undo()).toBe(true);
+    expect(editor.canUndo).toBe(false);
+    expect(editor.setLight('battery', 0.5)).toEqual({ ok: false, reason: 'unknown-part' });
+  });
 });
 
 describe('blowOverdrivenLeds', () => {

@@ -12,7 +12,8 @@ export const TIME_STEP_SECONDS = 0.001;
  */
 export type Input =
   | { readonly kind: 'switch'; readonly partId: string; readonly closed: boolean }
-  | { readonly kind: 'button'; readonly partId: string; readonly pressed: boolean };
+  | { readonly kind: 'button'; readonly partId: string; readonly pressed: boolean }
+  | { readonly kind: 'light-sensor'; readonly partId: string; readonly light: number };
 
 /**
  * A circuit running through time in fixed steps.
@@ -86,7 +87,10 @@ export class TransientSimulation {
     return this.latest;
   }
 
-  /** Flips a switch or presses or releases a button, keeping capacitor state and the time. */
+  /**
+   * Flips a switch, presses or releases a button or changes the light on a light sensor, keeping
+   * capacitor state and the time.
+   */
   applyInput(input: Input): void {
     if (!this.circuitNow.parts.some((part) => part.id === input.partId)) {
       throw new RangeError(`No part ${input.partId}`);
@@ -95,12 +99,16 @@ export class TransientSimulation {
       if (part.id !== input.partId) {
         return part;
       }
-      if (part.kind !== input.kind) {
-        throw new RangeError(`${input.partId} is a ${part.kind}, not a ${input.kind}`);
+      if (part.kind === 'switch' && input.kind === 'switch') {
+        return { ...part, closed: input.closed };
       }
-      return input.kind === 'switch'
-        ? { ...part, kind: 'switch', closed: input.closed }
-        : { ...part, kind: 'button', pressed: input.pressed };
+      if (part.kind === 'button' && input.kind === 'button') {
+        return { ...part, pressed: input.pressed };
+      }
+      if (part.kind === 'light-sensor' && input.kind === 'light-sensor') {
+        return { ...part, light: input.light };
+      }
+      throw new RangeError(`${input.partId} is a ${part.kind}, not a ${input.kind}`);
     });
     this.circuitNow = { parts };
   }

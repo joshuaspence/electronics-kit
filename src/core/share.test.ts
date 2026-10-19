@@ -33,12 +33,13 @@ describe('share codes', () => {
       placed('c', newSpec('capacitor'), 'h40', 'h42'),
       placed('z', newSpec('buzzer'), 'i44', 'i46'),
       placed('m', newSpec('motor'), 'j48', 'j50'),
+      placed('y', { ...newSpec('light-sensor'), light: 0.25 } as PartSpec, 'a52', 'a54'),
     ],
   };
 
   it('writes each placed part as a short token, leaving out the fixed battery', () => {
     expect(encodeCircuit(build)).toBe(
-      '1_w.top+3.a3_r.b3.b6.4.7_l.c6.c8_s.d8.d10.1_b.f20.f22_p.g30.g32_c.h40.h42.0.001_z.i44.i46_m.j48.j50',
+      '1_w.top+3.a3_r.b3.b6.4.7_l.c6.c8_s.d8.d10.1_b.f20.f22_p.g30.g32_c.h40.h42.0.001_z.i44.i46_m.j48.j50_y.a52.a54.0.25',
     );
   });
 
@@ -64,6 +65,9 @@ describe('share codes', () => {
       '1_r.a1.a4.1e12', // a resistor too big for its colour code
       '1_r.a1.a4.4.7.1', // a value with a field too many
       '1_s.a1.a3.2', // a switch neither on nor off
+      '1_y.a1.a3', // a light sensor without its light
+      '1_y.a1.a3.2', // more light than full light
+      '1_y.a1.a3.', // an empty light
       '1_b.a1.a3.9', // a value on a part that has none
       '1_b.a1.a3_w.a3.a9', // two legs in one hole
       '1_w.top+1.a5', // a leg in the battery's hole

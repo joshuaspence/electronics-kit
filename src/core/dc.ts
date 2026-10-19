@@ -7,6 +7,7 @@ import {
   CONDUCTOR_OHMS,
   conducts,
   type Led,
+  lightSensorOhms,
   type Motor,
   type Part,
 } from './circuit';
@@ -90,6 +91,8 @@ function stampResistive(part: Exclude<Part, { kind: 'capacitor' | 'led' }>): Nor
     case 'buzzer':
     case 'motor':
       return { conductance: 1 / part.ohms, amps: 0 };
+    case 'light-sensor':
+      return { conductance: 1 / lightSensorOhms(part), amps: 0 };
     case 'wire':
     case 'switch':
     case 'button':
