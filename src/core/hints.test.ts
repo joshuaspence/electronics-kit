@@ -88,6 +88,42 @@ describe('hintFor', () => {
     });
   });
 
+  it('takes away a resistor of the wrong value, though it is in the right place', () => {
+    const resistor = (id: string, ohms: number): PlacedPart => ({
+      id,
+      spec: { kind: 'resistor', ohms },
+      at: [post(1, 1), post(1, 2)],
+      fixed: false,
+    });
+    const resistorLevel: Level = {
+      ...level,
+      parts: [battery],
+      tray: [{ kind: 'resistor', count: 1 }],
+      solution: { place: [resistor('r', 100)] },
+    };
+    const small = resistor('small', 10);
+    expect(hintFor(resistorLevel, { parts: [battery, small] }, 1)).toEqual({
+      kind: 'remove-part',
+      part: small,
+    });
+  });
+
+  it('counts a switch as in place however the child has left it', () => {
+    const toggle = (closed: boolean): PlacedPart => ({
+      id: 's',
+      spec: { kind: 'switch', closed },
+      at: [post(1, 1), post(1, 2)],
+      fixed: false,
+    });
+    const switchLevel: Level = {
+      ...level,
+      parts: [battery],
+      tray: [{ kind: 'switch', count: 1 }],
+      solution: { place: [toggle(false)] },
+    };
+    expect(hintFor(switchLevel, { parts: [battery, toggle(true)] }, 1).kind).toBe('nudge');
+  });
+
   it('takes away a part the child put where the solution has none, before showing one', () => {
     const stray = part('stray', 'wire', [post(1, 1), post(2, 3)]);
     expect(hintFor(level, { parts: [battery, stray] }, 1)).toEqual({

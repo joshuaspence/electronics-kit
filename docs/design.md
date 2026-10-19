@@ -93,6 +93,11 @@ the decision and the main reason for it. When the design changes, update this fi
   chapter 5): *Long leg, short leg* (place an LED the right way round), *Wrong way round* (turn a
   backwards LED round) and *Bulbs don't mind* (a bulb and an LED both placed backwards: only the
   LED needs turning). Hints compare an LED or battery with the solution the same way round only.
+- **Chapter 5 levels:** *Save the LED* (put the resistor in its path; the tray's wire is the
+  tempting shortcut that pops it), *One each* (two LEDs, each with its own resistor) and *Too
+  little* (swap a 10 Ω resistor, told apart by its bands, for the tray's 100 Ω). A tray offers
+  each kind at its catalogue value, so other values are starting parts. Hints compare a part's
+  value too, such as a resistor's ohms or an LED that has popped, but not whether a switch is on.
 - **Finishing:** the first time the goal is met *and* the goal's bulbs are lit with the switches as
   the child left them (so a switch level finishes when they switch it on), a card floats over the
   bottom of the screen with the stars and the "Why?" text, leaving the working circuit in view, and

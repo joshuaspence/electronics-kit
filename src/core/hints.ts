@@ -1,4 +1,4 @@
-import { type Build, locationKey, type PlacedPart, toCircuit } from './build';
+import { type Build, locationKey, type PartSpec, type PlacedPart, toCircuit } from './build';
 import { checkGoal, type GoalFailure, type Level, litNow } from './levels';
 
 /**
@@ -53,15 +53,29 @@ export function hintFor(level: Level, build: Build, step: number): Hint {
 }
 
 /**
- * The same kind of part with its legs in the same two places: either way round, unless the part
- * has a + and a − (a battery or an LED), when the way round is what matters.
+ * The same part with its legs in the same two places: either way round, unless the part has a +
+ * and a − (a battery or an LED), when the way round is what matters.
  */
 function samePlace(a: PlacedPart, b: PlacedPart): boolean {
-  if (a.spec.kind !== b.spec.kind) {
+  if (!sameSpec(a.spec, b.spec)) {
     return false;
   }
   const [a0, a1] = a.at.map(locationKey);
   const [b0, b1] = b.at.map(locationKey);
   const polarised = a.spec.kind === 'led' || a.spec.kind === 'battery';
   return (a0 === b0 && a1 === b1) || (!polarised && a0 === b1 && a1 === b0);
+}
+
+/**
+ * The same part: the same kind and value, such as a resistor's ohms, or an LED that hasn't
+ * popped. Whether a switch is on or a button pressed is the child playing, not a difference.
+ */
+function sameSpec(a: PartSpec, b: PartSpec): boolean {
+  const comparable = (spec: PartSpec) =>
+    JSON.stringify(
+      Object.entries(spec)
+        .filter(([key]) => key !== 'closed' && key !== 'pressed')
+        .sort(([x], [y]) => x.localeCompare(y)),
+    );
+  return comparable(a) === comparable(b);
 }
