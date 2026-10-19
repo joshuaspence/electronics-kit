@@ -14,6 +14,7 @@ export const chapterTitles: Readonly<Record<number, string>> = {
   2: 'On and off',
   3: 'Bright and dim',
   4: 'One way only',
+  5: 'Slow it down',
 };
 
 export const levelText: Readonly<Record<string, LevelText>> = {
@@ -136,5 +137,23 @@ export const levelText: Readonly<Record<string, LevelText>> = {
     goal: 'Make the bulb and the LED both glow.',
     why: 'A bulb works whichever way round it goes, but an LED only works one way. Only the LED needed turning round.',
     more: 'A bulb is just a thin wire that gets hot, and current can flow through a wire either way. An LED is made of two different materials joined together, and current only crosses the join in one direction.',
+  },
+  'res-1': {
+    title: 'Save the LED',
+    goal: 'Light the LED without popping it. Use the resistor to slow the electricity down.',
+    why: 'Straight from the battery, too much electricity rushes through an LED and it pops. A resistor slows it down to just the right amount.',
+    more: 'An LED has very little resistance of its own once it is on, so on its own it would let about 95 milliamps through, and it can only take 30. The resistor’s 100 ohms brings that down to about 9 milliamps.',
+  },
+  'res-2': {
+    title: 'One each',
+    goal: 'Light both LEDs. Each one needs its own resistor.',
+    why: 'Each LED has its own path from + to −, and each path needs a resistor to keep its LED safe.',
+    more: 'If two LEDs side by side shared one resistor, they would share its current too, and each would get only half: too little to glow brightly. That’s why every LED in a circuit usually gets a resistor of its own.',
+  },
+  'res-3': {
+    title: 'Too little',
+    goal: 'This resistor is too small to save the LED. Swap it for the one in the bin, then light the LED.',
+    why: 'The small resistor didn’t slow the electricity enough, so the LED would pop. A bigger resistor slows it more.',
+    more: 'A resistor’s colour bands give its value. The first two bands are digits and the third says how many zeros follow: brown-black-black is 10 ohms, and brown-black-brown is 100 ohms.',
   },
 };

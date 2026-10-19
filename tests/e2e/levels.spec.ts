@@ -128,6 +128,17 @@ test('controls a bulb with a switch on the breadboard', async ({ page }) => {
   await expect(page.getByText('You did it!')).toBeVisible();
 });
 
+test('saves an LED with a resistor', async ({ page }) => {
+  await page.locator('[data-level="res-1"]').click();
+
+  // The resistor from column 3 to 6, then the LED from 6 to 8, where the wire back to − waits.
+  await drag(page, page.locator('[data-tray="resistor"]'), await between(page, 'b3', 'b6'));
+  await drag(page, page.locator('[data-tray="led"]'), await between(page, 'c6', 'c8'));
+  await expect(page.locator('.board .part-led.part-blown')).toHaveCount(0);
+  await expect(page.locator('.board .part-led .led-glow')).not.toHaveAttribute('opacity', '0');
+  await expect(page.getByText('You did it!')).toBeVisible();
+});
+
 test('turns a backwards LED round to finish the level', async ({ page }) => {
   await page.locator('[data-level="led-2"]').click();
   await expect(page.locator('.board .part-led .led-glow')).toHaveAttribute('opacity', '0');
