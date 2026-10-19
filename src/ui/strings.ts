@@ -12,6 +12,7 @@ const partInSentence: Record<PartKind, { readonly noun: string; readonly a: stri
   buzzer: { noun: 'buzzer', a: 'a buzzer' },
   motor: { noun: 'motor', a: 'a motor' },
   'light-sensor': { noun: 'light sensor', a: 'a light sensor' },
+  blinker: { noun: 'blinker chip', a: 'a blinker chip' },
   wire: { noun: 'wire', a: 'a wire' },
 };
 
@@ -83,6 +84,8 @@ export const strings = {
     'not-every-control':
       'The bulb still lights with one of them off. Put them one after the other in the loop, so the bulb needs them all.',
     'switch-off': 'Your circuit looks ready. Try switching it on!',
+    'not-blinking':
+      'It stays the same all the time. Put the blinker chip in the loop, so it can switch the electricity on and off.',
     'fades-too-fast':
       'It goes dark as soon as you let go. Something beside the bulb needs to store electricity and keep it glowing.',
   },
@@ -119,6 +122,7 @@ export const strings = {
     buzzer: 'Buzzer',
     motor: 'Motor',
     'light-sensor': 'Light sensor',
+    blinker: 'Blinker chip',
     wire: 'Wire',
   } satisfies Record<PartKind, string>,
 } as const;

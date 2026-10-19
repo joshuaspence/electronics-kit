@@ -30,7 +30,8 @@ interface PartShapeProps {
   to: Point;
   /**
    * How hard the part is working: a light's brightness, 0 to 1; a buzzer's 1 while it sounds; a
-   * motor's speed, −1 to 1, negative turning the other way; how full a capacitor is, 0 to 1.
+   * motor's speed, −1 to 1, negative turning the other way; how full a capacitor is, 0 to 1;
+   * 1 while a blinker chip is on and passing current.
    */
   brightness?: number;
   /** Speed of the flowing dots in board units per second, signed like the current. */
@@ -253,6 +254,20 @@ function body(spec: PartSpec, from: Point, to: Point, brightness: number, beside
         </g>
       );
     }
+    case 'blinker':
+      // A black chip with a notch at one end and a little light that shows when it is on.
+      return (
+        <g>
+          <rect className="body blinker-body" x={x - 20} y={y - 13} width={40} height={26} rx={3} />
+          <path className="blinker-notch" d={`M ${x - 20} ${y - 5} a 5 5 0 0 1 0 10`} />
+          <circle
+            className={brightness > 0 ? 'blinker-light blinker-on' : 'blinker-light'}
+            cx={x + 8}
+            cy={y}
+            r={5}
+          />
+        </g>
+      );
     case 'motor': {
       // A can with a fan on its shaft, turning faster with the current, and backwards with it.
       const speed = Math.abs(brightness);

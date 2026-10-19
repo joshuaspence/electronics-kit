@@ -25,6 +25,7 @@ const LETTERS: Readonly<Record<Exclude<PartKind, 'battery'>, string>> = {
   buzzer: 'z',
   motor: 'm',
   'light-sensor': 'y',
+  blinker: 'k',
   wire: 'w',
 };
 

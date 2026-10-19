@@ -80,6 +80,7 @@ const BREADBOARD_SPANS: Partial<Record<PartKind, number>> = {
   motor: 2,
   'light-sensor': 2,
   capacitor: 2,
+  blinker: 2,
 };
 
 /** Snap posts: big and far apart for small fingers; every part reaches the next post. */

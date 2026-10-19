@@ -71,7 +71,10 @@ export class TransientSimulation {
 
   /** Advances one time step and returns the new solution. */
   step(): CircuitSolution {
-    this.latest = this.solve((part) => backwardEuler(part, this.capacitorVolts.get(part.id)!));
+    this.latest = this.solve(
+      (part) => backwardEuler(part, this.capacitorVolts.get(part.id)!),
+      (this.steps + 1) * TIME_STEP_SECONDS,
+    );
     // The charge left on each capacitor: the voltage across its legs less what its series
     // resistance takes.
     for (const id of this.capacitorVolts.keys()) {
@@ -118,8 +121,11 @@ export class TransientSimulation {
     this.latest = this.solve((part) => chargedCapacitor(this.capacitorVolts.get(part.id)!));
   }
 
-  private solve(capacitor: (part: Capacitor) => Norton): CircuitSolution {
-    return solveWithLeds(this.circuitNow, capacitor);
+  private solve(
+    capacitor: (part: Capacitor) => Norton,
+    seconds = this.steps * TIME_STEP_SECONDS,
+  ): CircuitSolution {
+    return solveWithLeds(this.circuitNow, capacitor, seconds);
   }
 }
 

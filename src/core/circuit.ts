@@ -102,6 +102,17 @@ export interface LightSensor extends PartBase {
   readonly light: number;
 }
 
+/**
+ * A blinker chip: a timer that switches itself on and off, conducting for the first half of every
+ * `periodSeconds` and open for the second half. Inside, a real one is a 555 timer and its timing
+ * capacitor; here it is one block with two legs, like every other part. The DC operating point is
+ * the instant t = 0, so it conducts there.
+ */
+export interface Blinker extends PartBase {
+  readonly kind: 'blinker';
+  readonly periodSeconds: number;
+}
+
 export type Part =
   | Battery
   | Resistor
@@ -113,7 +124,8 @@ export type Part =
   | Capacitor
   | Buzzer
   | Motor
-  | LightSensor;
+  | LightSensor
+  | Blinker;
 export type PartKind = Part['kind'];
 
 export interface Circuit {
@@ -182,6 +194,9 @@ export function validateCircuit(circuit: Circuit): void {
           throw new RangeError(`${part.id}: light must be from 0 to 1, not ${part.light}`);
         }
         break;
+      case 'blinker':
+        requirePositive(part, 'periodSeconds', part.periodSeconds);
+        break;
       case 'wire':
       case 'switch':
       case 'button':
@@ -196,6 +211,11 @@ export function validateCircuit(circuit: Circuit): void {
  */
 export function lightSensorOhms(part: LightSensor): number {
   return part.darkOhms * (part.brightOhms / part.darkOhms) ** part.light;
+}
+
+/** Whether a blinker chip is on, conducting, `seconds` into the transient run. */
+export function blinkerOn(part: Blinker, seconds: number): boolean {
+  return seconds % part.periodSeconds < part.periodSeconds / 2;
 }
 
 /** Whether a part currently lets current through at all. */

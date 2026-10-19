@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Battery, Bulb, Buzzer, Circuit, Led, Motor, Part, Pins } from './circuit';
-import { CONDUCTOR_OHMS, lightSensorOhms, validateCircuit } from './circuit';
+import { blinkerOn, CONDUCTOR_OHMS, lightSensorOhms, validateCircuit } from './circuit';
 import { newSpec } from './catalogue';
 import {
   bulbBrightness,
@@ -320,5 +320,25 @@ describe('light sensors', () => {
     expect(() => validateCircuit({ parts: [sensor(1.5)] })).toThrow(RangeError);
     expect(() => validateCircuit({ parts: [{ ...sensor(1), darkOhms: 1 }] })).toThrow(RangeError);
     expect(() => validateCircuit({ parts: [sensor(0.5)] })).not.toThrow();
+  });
+});
+
+describe('blinkerOn', () => {
+  const chip = { id: 'k', kind: 'blinker', pins: ['+', '-'], periodSeconds: 1 } as const;
+
+  it('is on for the first half of each period', () => {
+    expect([0, 0.25, 0.5, 0.75, 1, 1.4, 1.6].map((t) => blinkerOn(chip, t))).toEqual([
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      false,
+    ]);
+  });
+
+  it('refuses a period that isn’t positive', () => {
+    expect(() => validateCircuit({ parts: [{ ...chip, periodSeconds: 0 }] })).toThrow(RangeError);
   });
 });

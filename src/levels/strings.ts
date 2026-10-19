@@ -269,4 +269,22 @@ export const levelText: Readonly<Record<string, LevelText>> = {
         'The bulb stays on even without the button. Put the button in the loop, before the bulb and the capacitor.',
     },
   },
+  'out-7': {
+    title: 'Blink',
+    goal: 'This is a blinker chip. It switches itself on and off. Make the bulb blink.',
+    why: 'The blinker chip is a switch that flicks itself on and off, once a second. In the loop, it makes the bulb flash on and off with it.',
+    more: 'Inside the chip is a timer called a 555. A tiny capacitor charges up, and when it is full the chip switches over and empties it again, over and over. Changing the capacitor or a resistor changes how fast it blinks.',
+  },
+  'out-8': {
+    title: 'Beep beep',
+    goal: 'Make the buzzer beep on and off, like an alarm.',
+    why: 'The blinker chip switched the buzzer on and off, just as it did the bulb. Any output in its loop follows it.',
+    more: 'Alarms, indicators and the flashing lights on bikes all use a timer like this one. The same chip can flash a light, beep a buzzer or start and stop a motor: it just switches the current.',
+    hints: {
+      'too-few-lit':
+        'Electricity needs a complete loop: out of one end of the battery, through the blinker chip and the buzzer, and back into the other end.',
+      'short-circuit':
+        'Uh oh, a shortcut! Electricity is rushing straight back to the battery without going through the buzzer.',
+    },
+  },
 };

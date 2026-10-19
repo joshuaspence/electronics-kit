@@ -1,5 +1,6 @@
 import {
   type Battery,
+  blinkerOn,
   type Bulb,
   type Buzzer,
   type Capacitor,
@@ -32,13 +33,14 @@ export const LED_MAX_AMPS = 0.03;
  */
 const MAX_LED_ROUNDS = 32;
 
-/** Solves the circuit's DC operating point, with capacitors open. */
+/** Solves the circuit's DC operating point, with capacitors open and blinker chips on. */
 export function solveDc(circuit: Circuit): DcSolution {
   return solveWithLeds(circuit, () => OPEN);
 }
 
 /**
- * Solves the circuit with each capacitor stamped as `capacitor` says, finding which LEDs conduct.
+ * Solves the circuit `seconds` into a run, with each capacitor stamped as `capacitor` says,
+ * finding which LEDs conduct.
  * An LED is piecewise linear: open while off, and a source of `forwardVolts` behind `ohms` while on.
  * Starting with every LED off, each round solves and then turns on exactly the LEDs with more than
  * their forward voltage across them, until no LED changes. That state is consistent: an LED that is
@@ -47,6 +49,7 @@ export function solveDc(circuit: Circuit): DcSolution {
 export function solveWithLeds(
   circuit: Circuit,
   capacitor: (part: Capacitor) => Norton,
+  seconds = 0,
 ): CircuitSolution {
   const leds = circuit.parts.filter((part): part is Led => part.kind === 'led' && conducts(part));
   let on = new Set<string>();
@@ -59,7 +62,7 @@ export function solveWithLeds(
         case 'led':
           return on.has(part.id) ? stampLitLed(part) : OPEN;
         default:
-          return stampResistive(part);
+          return stampResistive(part, seconds);
       }
     });
     const next = new Set(
@@ -79,7 +82,10 @@ export function solveWithLeds(
  * is being solved. Inside a battery current flows from − to +, so through it from pins[0] (+) to
  * pins[1] (−) it is negative while the battery is delivering power.
  */
-function stampResistive(part: Exclude<Part, { kind: 'capacitor' | 'led' }>): Norton {
+function stampResistive(
+  part: Exclude<Part, { kind: 'capacitor' | 'led' }>,
+  seconds: number,
+): Norton {
   if (!conducts(part)) {
     return OPEN;
   }
@@ -97,6 +103,8 @@ function stampResistive(part: Exclude<Part, { kind: 'capacitor' | 'led' }>): Nor
     case 'switch':
     case 'button':
       return { conductance: 1 / CONDUCTOR_OHMS, amps: 0 };
+    case 'blinker':
+      return blinkerOn(part, seconds) ? { conductance: 1 / CONDUCTOR_OHMS, amps: 0 } : OPEN;
   }
 }
 

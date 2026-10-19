@@ -13,7 +13,7 @@ const MAX_STEPS_PER_FRAME = 100;
 
 /** Whether a circuit changes over time, so it needs the transient run rather than the DC point. */
 export function changesOverTime(circuit: Circuit): boolean {
-  return circuit.parts.some((part) => part.kind === 'capacitor');
+  return circuit.parts.some((part) => part.kind === 'capacitor' || part.kind === 'blinker');
 }
 
 /**
