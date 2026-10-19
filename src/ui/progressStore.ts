@@ -1,4 +1,4 @@
-import { loadProgress, NO_PROGRESS, type Progress } from '../core/progress';
+import { loadPlayers, NO_PLAYERS, type Players, savePlayers } from '../core/profiles';
 
 // Saved progress lives in IndexedDB in this browser only; nothing leaves the device
 // (docs/design.md §2). Every failure falls back to playing without saving rather than breaking
@@ -27,19 +27,22 @@ function run<T>(mode: IDBTransactionMode, action: (store: IDBObjectStore) => IDB
   );
 }
 
-/** The saved progress, or no progress if there is none or it can't be read. */
-export async function loadSavedProgress(): Promise<Progress> {
+/**
+ * The saved players and their progress, or one player with none if nothing can be read. Older
+ * saved data, one child's progress, is migrated (`loadPlayers`).
+ */
+export async function loadSavedPlayers(): Promise<Players> {
   try {
-    return loadProgress(await run('readonly', (store) => store.get(KEY)));
+    return loadPlayers(await run('readonly', (store) => store.get(KEY)));
   } catch {
-    return NO_PROGRESS;
+    return NO_PLAYERS;
   }
 }
 
-/** Saves progress, replacing what was saved before. */
-export async function saveProgress(progress: Progress): Promise<void> {
+/** Saves the players, replacing what was saved before. */
+export async function saveSavedPlayers(players: Players): Promise<void> {
   try {
-    await run('readwrite', (store) => store.put(progress, KEY));
+    await run('readwrite', (store) => store.put(savePlayers(players), KEY));
     // Ask the browser not to clear it under storage pressure (Safari clears unused sites' data).
     await navigator.storage?.persist?.();
   } catch {

@@ -34,6 +34,106 @@ async function wire(page: Page, from: string, to: string) {
   await drag(page, post(page, from), await centre(post(page, to)));
 }
 
+/** What the game has saved in IndexedDB, or null if nothing yet. */
+function saved(page: Page): Promise<unknown> {
+  return page.evaluate(
+    () =>
+      new Promise<unknown>((resolve) => {
+        const open = indexedDB.open('electronics-kit');
+        // Creating the database here would leave the game's own open no upgrade to make its store.
+        open.onupgradeneeded = () => open.transaction?.abort();
+        open.onerror = () => resolve(null);
+        open.onsuccess = () => {
+          const db = open.result;
+          if (!db.objectStoreNames.contains('progress')) {
+            db.close();
+            resolve(null);
+            return;
+          }
+          const get = db.transaction('progress').objectStore('progress').get('progress');
+          get.onsuccess = () => {
+            db.close();
+            resolve(get.result);
+          };
+          get.onerror = () => resolve(null);
+        };
+      }),
+  );
+}
+
+/** Replaces what the game has saved, once the page has made its store. */
+async function save(page: Page, data: unknown) {
+  // An empty store reads as `undefined`, not `null`.
+  await expect.poll(() => saved(page)).not.toBeNull();
+  await page.evaluate(
+    (data) =>
+      new Promise<void>((resolve) => {
+        const open = indexedDB.open('electronics-kit');
+        open.onsuccess = () => {
+          const db = open.result;
+          const put = db
+            .transaction('progress', 'readwrite')
+            .objectStore('progress')
+            .put(data, 'progress');
+          put.onsuccess = () => {
+            db.close();
+            resolve();
+          };
+        };
+      }),
+    data,
+  );
+}
+
+/**
+ * Holds storage back from the next page load. The returned function lets it through and resolves
+ * once the load has closed it.
+ */
+async function holdStorage(page: Page): Promise<() => Promise<void>> {
+  await page.addInitScript(() => {
+    const open = IDBFactory.prototype.open;
+    let release!: () => void;
+    const released = new Promise<void>((resolve) => (release = resolve));
+    let closed!: () => void;
+    const loaded = new Promise<void>((resolve) => (closed = resolve));
+    const close = IDBDatabase.prototype.close;
+    IDBDatabase.prototype.close = function () {
+      close.call(this);
+      closed();
+    };
+    Object.assign(window, { releaseStorage: () => (release(), loaded) });
+    IDBFactory.prototype.open = function (name: string, version?: number) {
+      let real: IDBOpenDBRequest;
+      const held = {
+        get result() {
+          return real.result;
+        },
+        get error() {
+          return real.error;
+        },
+      } as IDBOpenDBRequest;
+      void released.then(() => {
+        real = open.call(this, name, version);
+        real.onupgradeneeded = (event) => held.onupgradeneeded?.call(real, event);
+        real.onsuccess = (event) => held.onsuccess?.call(real, event);
+        real.onerror = (event) => held.onerror?.call(real, event);
+      });
+      return held;
+    };
+  });
+  return () =>
+    page.evaluate(() =>
+      (window as unknown as { releaseStorage: () => Promise<void> }).releaseStorage(),
+    );
+}
+
+/** Finishes *Mind the gap*, with three stars, by adding its one missing wire. */
+async function finishMindTheGap(page: Page) {
+  await page.locator('[data-level="loop-3"]').click();
+  await wire(page, 'p1-1', 'p2-4');
+  await expect(page.getByText('You did it!')).toBeVisible();
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto('./');
 });
@@ -116,38 +216,7 @@ test('opens the sandbox with the parts unlocked so far', async ({ page }) => {
 });
 
 test('keeps a sandbox build when saved progress arrives late', async ({ page }) => {
-  // Hold storage back until `releaseStorage()`, which resolves once the load has closed it.
-  await page.addInitScript(() => {
-    const open = IDBFactory.prototype.open;
-    let release!: () => void;
-    const released = new Promise<void>((resolve) => (release = resolve));
-    let closed!: () => void;
-    const loaded = new Promise<void>((resolve) => (closed = resolve));
-    const close = IDBDatabase.prototype.close;
-    IDBDatabase.prototype.close = function () {
-      close.call(this);
-      closed();
-    };
-    Object.assign(window, { releaseStorage: () => (release(), loaded) });
-    IDBFactory.prototype.open = function (name: string, version?: number) {
-      let real: IDBOpenDBRequest;
-      const held = {
-        get result() {
-          return real.result;
-        },
-        get error() {
-          return real.error;
-        },
-      } as IDBOpenDBRequest;
-      void released.then(() => {
-        real = open.call(this, name, version);
-        real.onupgradeneeded = (event) => held.onupgradeneeded?.call(real, event);
-        real.onsuccess = (event) => held.onsuccess?.call(real, event);
-        real.onerror = (event) => held.onerror?.call(real, event);
-      });
-      return held;
-    };
-  });
+  const releaseStorage = await holdStorage(page);
   await page.goto('./');
 
   await page.getByRole('button', { name: 'Sandbox' }).click();
@@ -155,13 +224,21 @@ test('keeps a sandbox build when saved progress arrives late', async ({ page }) 
   await expect(page.locator('.board .part-bulb:not(.part-ghost)')).toHaveCount(1);
 
   // Let the load land and re-render the app, then give React two frames to show it.
-  await page.evaluate(() =>
-    (window as unknown as { releaseStorage: () => Promise<void> }).releaseStorage(),
-  );
+  await releaseStorage();
   await page.evaluate(
     () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
   );
   await expect(page.locator('.board .part-bulb:not(.part-ghost)')).toHaveCount(1);
+});
+
+test('offers to change player only once saved players arrive', async ({ page }) => {
+  // A player added or chosen before then would be lost when the saved players replaced them.
+  const releaseStorage = await holdStorage(page);
+  await page.goto('./');
+  await expect(page.getByRole('button', { name: 'Change player' })).toBeDisabled();
+
+  await releaseStorage();
+  await expect(page.getByRole('button', { name: 'Change player' })).toBeEnabled();
 });
 
 test('finishes a level, earns stars and moves on', async ({ page }) => {
@@ -346,38 +423,54 @@ test('needs both switches on, one click at a time', async ({ page }) => {
 });
 
 test('keeps stars after a reload', async ({ page }) => {
-  await page.locator('[data-level="loop-3"]').click();
-  await wire(page, 'p1-1', 'p2-4');
-  await expect(page.getByText('You did it!')).toBeVisible();
+  await finishMindTheGap(page);
 
   // Saving is asynchronous: wait until the stars are in IndexedDB before reloading.
   await expect
-    .poll(() =>
-      page.evaluate(
-        () =>
-          new Promise<unknown>((resolve) => {
-            const open = indexedDB.open('electronics-kit');
-            open.onerror = () => resolve(null);
-            open.onsuccess = () => {
-              const db = open.result;
-              if (!db.objectStoreNames.contains('progress')) {
-                db.close();
-                resolve(null);
-                return;
-              }
-              const get = db.transaction('progress').objectStore('progress').get('progress');
-              get.onsuccess = () => {
-                db.close();
-                resolve(get.result);
-              };
-              get.onerror = () => resolve(null);
-            };
-          }),
-      ),
-    )
-    .toMatchObject({ stars: { 'loop-3': 3 } });
+    .poll(() => saved(page))
+    .toMatchObject({ version: 2, profiles: [{ stars: { 'loop-3': 3 } }] });
 
   await page.reload();
+  await expect(page.locator('[data-level="loop-3"]').getByLabel('3 of 3 stars')).toBeVisible();
+});
+
+test('keeps the stars a version 1 save had, as the first player', async ({ page }) => {
+  // One child's progress, as version 1 saved it.
+  await save(page, { version: 1, stars: { 'loop-3': 3 } });
+
+  await page.reload();
+  await expect(page.getByText('Playing as Player 1')).toBeVisible();
+  await expect(page.locator('[data-level="loop-3"]').getByLabel('3 of 3 stars')).toBeVisible();
+});
+
+test('keeps saved data it can’t read when the player playing is chosen again', async ({ page }) => {
+  // Saved by a newer version, say, before going back to this one.
+  const newer = { version: 99, players: 'not ours' };
+  await save(page, newer);
+  await page.reload();
+
+  await page.getByRole('button', { name: 'Change player' }).click();
+  await page.getByRole('button', { name: /Player 1/ }).click();
+  await expect(page.getByText('Playing as Player 1')).toBeVisible();
+
+  // A save starts as the choice shows, so it would come before this read.
+  expect(await saved(page)).toEqual(newer);
+});
+
+test('adds a player with their own progress, and switches back', async ({ page }) => {
+  await finishMindTheGap(page);
+  await page.getByRole('button', { name: 'Levels' }).click();
+
+  await page.getByRole('button', { name: 'Change player' }).click();
+  await page.getByLabel('Name').fill('Mia');
+  await page.getByRole('button', { name: 'Picture 🚀' }).click();
+  await page.getByRole('button', { name: 'Add player' }).click();
+  await expect(page.getByText('Playing as Mia')).toBeVisible();
+  await expect(page.locator('[data-level="loop-3"]').getByLabel('0 of 3 stars')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Change player' }).click();
+  await page.getByRole('button', { name: /Player 1/ }).click();
+  await expect(page.getByText('Playing as Player 1')).toBeVisible();
   await expect(page.locator('[data-level="loop-3"]').getByLabel('3 of 3 stars')).toBeVisible();
 });
 

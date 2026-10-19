@@ -23,13 +23,21 @@ the decision and the main reason for it. When the design changes, update this fi
 - **Single-player. No accounts, no backend, no analytics, no ads, no third-party scripts.** For
   under-13s (COPPA, GDPR-K) the simplest compliance is collecting nothing.
 - Progress is stored locally in **IndexedDB** (`src/ui/progressStore.ts`). The app calls
-  `navigator.storage.persist()`. It saves only when the child earns stars, and only after saved
-  progress has loaded, merging in anything earned in the meantime. If storage is refused (private
-  windows, locked-down devices) the game plays on without saving.
+  `navigator.storage.persist()`. It saves only when the child earns stars or changes players, and
+  only after saved data has loaded, merging anything earned in the meantime into whoever is
+  playing. If storage is refused (private windows, locked-down devices) the game plays on without
+  saving.
 - Saved data carries a **schema version**; migrations live in `core/` and are unit-tested so that
-  an update never wipes progress (`src/core/progress.ts`). Progress is the best stars per level.
-  Data that can't be read (corrupt, or written by a newer version) loads as no progress and is
-  only overwritten once the child finishes a level; unreadable entries are dropped one by one.
+  an update never wipes progress (`src/core/profiles.ts`, `progress.ts`). Progress is the best
+  stars per level, and each profile keeps its own. Version 1 was one child's progress; it loads as
+  a single profile, "Player 1", keeping every star. Version 2 is the profiles (id, name, avatar,
+  stars) and which is playing. Data that can't be read (corrupt, or written by a newer version)
+  loads as one player with no progress and is only overwritten once something is saved;
+  unreadable entries are dropped one by one, and a profile's blank name or unknown avatar mended.
+- **Profiles** (`src/ui/PlayersScreen.tsx`): the level list says who's playing, with **Change
+  player** to pick another or add one by name (up to 20 characters) and one of eight emoji
+  pictures, so a child who can't spell their name yet still knows theirs. A new player starts
+  with no stars and is then the one playing.
 - **M1:** one implicit profile. **M3:** several local profiles (name + avatar, no passwords) for
   shared family and classroom devices, and **share links** that encode a circuit in the URL
   fragment (`#c=<code>`), which never reaches a server.

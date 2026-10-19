@@ -1,4 +1,5 @@
 import type { Level } from '../core/levels';
+import type { Profile } from '../core/profiles';
 import type { Progress } from '../core/progress';
 import { chapterTitles, levelText } from '../levels/strings';
 import { strings } from './strings';
@@ -7,15 +8,26 @@ import { UpdatePrompt } from './UpdatePrompt';
 interface LevelListProps {
   levels: readonly Level[];
   progress: Progress;
+  /** Who's playing, shown so a child on a shared device can tell it's their progress. */
+  profile: Profile;
   onPlay: (level: Level) => void;
   onSandbox: () => void;
+  /** Null until saved players arrive, which would undo a change made before them. */
+  onPlayers: (() => void) | null;
 }
 
 /**
  * Every level by chapter, with the best stars earned on each, and the sandbox. All are open from
  * the start.
  */
-export function LevelList({ levels, progress, onPlay, onSandbox }: LevelListProps) {
+export function LevelList({
+  levels,
+  progress,
+  profile,
+  onPlay,
+  onSandbox,
+  onPlayers,
+}: LevelListProps) {
   const chapters = [...new Set(levels.map((level) => level.chapter))];
   return (
     <main>
@@ -25,6 +37,15 @@ export function LevelList({ levels, progress, onPlay, onSandbox }: LevelListProp
           {strings.sandbox}
         </button>
       </header>
+      <p className="playing-as">
+        <span className="avatar" aria-hidden="true">
+          {profile.avatar}
+        </span>
+        {strings.playingAs(profile.name)}
+        <button type="button" onClick={onPlayers ?? undefined} disabled={!onPlayers}>
+          {strings.changePlayer}
+        </button>
+      </p>
       {/* Offered only between levels, never in the middle of one. */}
       <UpdatePrompt />
       {chapters.map((chapter) => (
