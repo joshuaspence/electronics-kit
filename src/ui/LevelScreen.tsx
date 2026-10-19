@@ -4,6 +4,7 @@ import { type Hint, hintFor } from '../core/hints';
 import { checkGoal, type Level, litNow, starsFor } from '../core/levels';
 import type { Stars } from '../core/progress';
 import { levelText } from '../levels/strings';
+import { Confetti } from './Confetti';
 import { strings } from './strings';
 import { Volty } from './Volty';
 import { Workbench } from './Workbench';
@@ -75,6 +76,7 @@ export function LevelScreen({ level, onFinish, onNext, onBack }: LevelScreenProp
         <h1>{text.title}</h1>
       </header>
       <p className="level-goal">{text.goal}</p>
+      {stars !== null && <Confetti />}
       {stars !== null && (
         <section className="success" aria-live="polite">
           <h2>{strings.success}</h2>
@@ -105,6 +107,7 @@ export function LevelScreen({ level, onFinish, onNext, onBack }: LevelScreenProp
         tray={level.tray}
         initial={initial}
         onChange={onChange}
+        finished={stars !== null}
         hint={
           hint?.kind === 'show-part'
             ? { place: hint.part }

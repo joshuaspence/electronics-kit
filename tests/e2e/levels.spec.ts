@@ -55,6 +55,42 @@ test('finishes a level, earns stars and moves on', async ({ page }) => {
   await expect(page.locator('[data-level="loop-4"]').getByLabel('0 of 3 stars')).toBeVisible();
 });
 
+test.describe('finishing', () => {
+  // Record every tone played, so the test can hear the chime without any speakers.
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      const tones: number[] = [];
+      Object.assign(window, { tones });
+      const start = OscillatorNode.prototype.start;
+      OscillatorNode.prototype.start = function (when?: number) {
+        tones.push(this.frequency.value);
+        start.call(this, when);
+      };
+    });
+    await page.reload();
+    await page.locator('[data-level="loop-3"]').click();
+  });
+
+  const chime = [523, 659, 784];
+  const tones = (page: Page) =>
+    page.evaluate(() => (window as unknown as { tones: number[] }).tones);
+
+  test('bursts confetti and chimes', async ({ page }) => {
+    await wire(page, 'p1-1', 'p2-4');
+    await expect(page.locator('.confetti')).toBeAttached();
+    await expect.poll(() => tones(page)).toEqual(expect.arrayContaining(chime));
+  });
+
+  test('stays quiet when muted', async ({ page }) => {
+    await page.getByRole('button', { name: 'Sound on' }).click();
+    await wire(page, 'p1-1', 'p2-4');
+    await expect(page.getByText('You did it!')).toBeVisible();
+    // Give the chime the time it takes when unmuted, so its absence means something.
+    await page.waitForTimeout(500);
+    expect(await tones(page)).toEqual([]);
+  });
+});
+
 test('does not count a short circuit as a win', async ({ page }) => {
   await page.locator('[data-level="loop-5"]').click();
   await expect(page.locator('.part-battery.part-hot')).toHaveCount(1);

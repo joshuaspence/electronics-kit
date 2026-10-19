@@ -16,20 +16,21 @@ function audio(): AudioContext | null {
   }
 }
 
-function tone(frequency: number, seconds: number, type: OscillatorType, volume: number) {
+function tone(frequency: number, seconds: number, type: OscillatorType, volume: number, delay = 0) {
   const ctx = audio();
   if (!ctx) {
     return;
   }
   const oscillator = ctx.createOscillator();
   const gain = ctx.createGain();
+  const start = ctx.currentTime + delay;
   oscillator.type = type;
   oscillator.frequency.value = frequency;
-  gain.gain.setValueAtTime(volume, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + seconds);
+  gain.gain.setValueAtTime(volume, start);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + seconds);
   oscillator.connect(gain).connect(ctx.destination);
-  oscillator.start();
-  oscillator.stop(ctx.currentTime + seconds);
+  oscillator.start(start);
+  oscillator.stop(start + seconds);
 }
 
 /** A short click as a part snaps into the board. */
@@ -40,4 +41,9 @@ export function playSnap() {
 /** A low buzz when the battery is shorted. */
 export function playWarning() {
   tone(110, 0.4, 'sawtooth', 0.1);
+}
+
+/** A rising chime when a level is finished: C, E and G, a major chord played a note at a time. */
+export function playChime() {
+  [523, 659, 784].forEach((frequency, i) => tone(frequency, 0.5, 'triangle', 0.12, i * 0.12));
 }
