@@ -49,7 +49,7 @@ changes.
 
 ```sh
 pnpm install
-pnpm lint         # ESLint + Prettier check (pnpm format fixes formatting)
+pnpm lint         # ESLint, Prettier and Markdown width (pnpm format fixes formatting)
 pnpm typecheck    # whole project, then src/core alone without DOM types
 pnpm test         # Vitest unit tests
 pnpm test:e2e     # Playwright: builds, serves the preview and runs tests/e2e
@@ -60,5 +60,6 @@ pnpm build && pnpm size   # gzipped JS + CSS must stay under the 1 MiB first-loa
   `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm test:e2e`
   (only the Chromium project runs). Don't run `playwright install` in cloud sessions.
 - `ci.yml` runs all of these on every PR; `deploy.yml` publishes `master` to GitHub Pages.
-- Markdown is formatted by hand (Prettier skips it); wrap at 100 columns.
+- Markdown is formatted by hand (Prettier skips it); wrap at 100 columns. `pnpm lint` checks the
+  width in characters, skipping tables and fenced code.
 - TypeScript is pinned to 6.x until typescript-eslint supports 7.
