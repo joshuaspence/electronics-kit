@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { Circuit, Part, PartKind, Pins } from './circuit';
+import { solveDc } from './dc';
+import { TransientSimulation } from './transient';
 import {
   checkGoal,
+  finishedNow,
   type Level,
   litNow,
   METER_CHAPTER,
@@ -356,5 +359,57 @@ describe('checkGoal: light sensors', () => {
       met: false,
       reason: 'not-controlled',
     });
+  });
+});
+
+describe('checkGoal: keep-glowing', () => {
+  const goal = { kind: 'keep-glowing', lights: 1, seconds: 1 } as const;
+  const button = (pressed: boolean): Part => ({
+    id: 'p',
+    kind: 'button',
+    pins: ['+', 'x'],
+    pressed,
+  });
+  const capacitor: Part = { id: 'c', kind: 'capacitor', pins: ['x', '-'], farads: 0.2 };
+
+  it('is met when a capacitor beside the bulb keeps it glowing after the button is let go', () => {
+    expect(checkGoal(goal, circuit(button(false), bulb('b', ['x', '-']), capacitor))).toEqual({
+      met: true,
+    });
+  });
+
+  it('is not met when the bulb goes dark at once, or the capacitor is too small', () => {
+    expect(checkGoal(goal, circuit(button(false), bulb('b', ['x', '-'])))).toEqual({
+      met: false,
+      reason: 'fades-too-fast',
+    });
+    const small = { ...capacitor, farads: 0.001 } as Part;
+    expect(checkGoal(goal, circuit(button(false), bulb('b', ['x', '-']), small))).toEqual({
+      met: false,
+      reason: 'fades-too-fast',
+    });
+  });
+
+  it('finishes only once the button is let go with the bulb still glowing', () => {
+    const held = circuit(button(true), bulb('b', ['x', '-']), capacitor);
+    expect(finishedNow(goal, held, solveDc(held))).toBe(false);
+
+    const sim = new TransientSimulation(held);
+    sim.run(500);
+    sim.applyInput({ kind: 'button', partId: 'p', pressed: false });
+    const released = circuit(button(false), bulb('b', ['x', '-']), capacitor);
+    expect(finishedNow(goal, released, sim.solution)).toBe(true);
+    // With no capacitor charged, as the DC solution has it, there's nothing glowing to see.
+    expect(finishedNow(goal, released, solveDc(released))).toBe(false);
+  });
+});
+
+describe('finishedNow', () => {
+  it('needs the goal’s lights glowing in the solution shown', () => {
+    const goal = { kind: 'light-up', lights: 1 } as const;
+    const lit = circuit(bulb('b', ['+', '-']));
+    expect(finishedNow(goal, lit, solveDc(lit))).toBe(true);
+    const dark = circuit(bulb('b', ['+', 'x']));
+    expect(finishedNow(goal, dark, solveDc(dark))).toBe(false);
   });
 });

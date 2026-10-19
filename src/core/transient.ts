@@ -111,6 +111,8 @@ export class TransientSimulation {
       throw new RangeError(`${input.partId} is a ${part.kind}, not a ${input.kind}`);
     });
     this.circuitNow = { parts };
+    // The solution at the same instant, with every capacitor still holding its charge.
+    this.latest = this.solve((part) => chargedCapacitor(this.capacitorVolts.get(part.id)!));
   }
 
   private solve(capacitor: (part: Capacitor) => Norton): CircuitSolution {
@@ -130,4 +132,48 @@ function chargedCapacitor(volts: number): Norton {
 function backwardEuler(part: Capacitor, previousVolts: number): Norton {
   const conductance = part.farads / TIME_STEP_SECONDS;
   return { conductance, amps: conductance * previousVolts };
+}
+
+/**
+ * The inputs that turn `before` into `after`, or null if anything else differs: an edit, which
+ * starts a new simulation. Parts must be the same, in the same order, with the same pins.
+ */
+export function inputsBetween(before: Circuit, after: Circuit): Input[] | null {
+  if (before.parts.length !== after.parts.length) {
+    return null;
+  }
+  const inputs: Input[] = [];
+  for (let i = 0; i < before.parts.length; i++) {
+    const a = before.parts[i]!;
+    const b = after.parts[i]!;
+    if (a === b) {
+      continue;
+    }
+    if (JSON.stringify(withoutInput(a)) !== JSON.stringify(withoutInput(b))) {
+      return null;
+    }
+    if (b.kind === 'switch' && a.kind === 'switch' && a.closed !== b.closed) {
+      inputs.push({ kind: 'switch', partId: b.id, closed: b.closed });
+    } else if (b.kind === 'button' && a.kind === 'button' && a.pressed !== b.pressed) {
+      inputs.push({ kind: 'button', partId: b.id, pressed: b.pressed });
+    } else if (b.kind === 'light-sensor' && a.kind === 'light-sensor' && a.light !== b.light) {
+      inputs.push({ kind: 'light-sensor', partId: b.id, light: b.light });
+    }
+  }
+  return inputs;
+}
+
+/** A part without the value an input changes, to compare the rest of it. */
+function withoutInput(part: Part): unknown {
+  // JSON.stringify leaves out a field set to undefined.
+  switch (part.kind) {
+    case 'switch':
+      return { ...part, closed: undefined };
+    case 'button':
+      return { ...part, pressed: undefined };
+    case 'light-sensor':
+      return { ...part, light: undefined };
+    default:
+      return part;
+  }
 }

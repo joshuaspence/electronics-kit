@@ -2,6 +2,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
   useEffect,
+  useEffectEvent,
   useMemo,
   useRef,
   useState,
@@ -22,8 +23,8 @@ import {
   ledBrightness,
   motorSpeed,
   type PartReading,
-  solveDc,
 } from '../core/dc';
+import type { CircuitSolution } from '../core/mna';
 import { flowSpeed } from '../core/flow';
 import type { PartAllowance } from '../core/levels';
 import { Board, type Ghost } from './Board';
@@ -41,6 +42,10 @@ import { strings } from './strings';
 import { playChime, playPop, playSnap, playWarning, setBuzzing } from './sound';
 import { Tray } from './Tray';
 import { useEditor } from './useEditor';
+import { changesOverTime, useSimulation } from './useSimulation';
+
+/** Real time, slow motion and slower motion (docs/design.md §4); the speed button steps through them. */
+const SPEEDS = [1, 0.25, 0.1] as const;
 
 /** Pointer travel (in board units) below which a press counts as a tap, not a drag. */
 const TAP_DISTANCE = 6;
@@ -109,8 +114,11 @@ interface WorkbenchProps {
   board: BoardModel;
   tray: readonly PartAllowance[];
   initial: Build;
-  /** Called with the build after every change, edits and flipped switches alike. */
-  onChange?: (build: Build) => void;
+  /**
+   * Called with the build after every change, edits and flipped switches alike, and the solution
+   * the board then shows: for a circuit that changes over time, the transient run's.
+   */
+  onChange?: (build: Build, shown: CircuitSolution) => void;
   /** What one of Volty's hints points at: a part to place, or a placed part to take away. */
   hint?: { readonly place?: PlacedPart; readonly removeId?: string } | undefined;
   /** The level's goal has been met: chime as it happens, unless muted. */
@@ -143,12 +151,6 @@ export function Workbench({
     tray,
     initial,
   );
-  // Report only real changes to the build, not a parent passing a new callback.
-  const onChangeRef = useRef(onChange);
-  useEffect(() => {
-    onChangeRef.current = onChange;
-  });
-  useEffect(() => onChangeRef.current?.(build), [build]);
   const geometry = useMemo(() => geometryFor(board), [board]);
 
   // A zoomable board opens on its left end.
@@ -206,7 +208,17 @@ export function Workbench({
   };
 
   const circuit = toCircuit(board, build);
-  const solution = solveDc(circuit);
+  const timed = changesOverTime(circuit);
+  const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(SPEEDS[0]);
+  const solution = useSimulation(circuit, speed);
+  // Report only real changes to the build, not a parent passing a new callback or a new frame.
+  const reportChange = useEffectEvent(() => onChange?.(build, solution));
+  useEffect(() => reportChange(), [build]);
+  // A capacitor's charge, drawn as how full it is, against the battery it can charge to.
+  const fullVolts = Math.max(
+    1,
+    ...circuit.parts.map((part) => (part.kind === 'battery' ? Math.abs(part.volts) : 0)),
+  );
   const brightness = new Map<string, number>();
   const flows = new Map<string, number>();
   const hot = new Set<string>();
@@ -221,6 +233,8 @@ export function Workbench({
       brightness.set(part.id, buzzerSounds(part, reading) ? 1 : 0);
     } else if (part.kind === 'motor') {
       brightness.set(part.id, motorSpeed(part, reading));
+    } else if (part.kind === 'capacitor') {
+      brightness.set(part.id, Math.min(1, Math.abs(reading.voltage) / fullVolts));
     } else if (part.kind === 'battery' && isShorted(part, reading)) {
       hot.add(part.id);
     }
@@ -598,6 +612,15 @@ export function Workbench({
         >
           {strings.remove}
         </button>
+        {timed && (
+          <button
+            type="button"
+            aria-label={strings.speedLabel}
+            onClick={() => setSpeed((s) => SPEEDS[(SPEEDS.indexOf(s) + 1) % SPEEDS.length]!)}
+          >
+            {strings.speed(speed)}
+          </button>
+        )}
         <button type="button" aria-pressed={muted} onClick={() => setMuted((m) => !m)}>
           {muted ? strings.soundOff : strings.soundOn}
         </button>

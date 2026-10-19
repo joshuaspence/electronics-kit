@@ -126,12 +126,19 @@ the decision and the main reason for it. When the design changes, update this fi
 - **Chapter 7 levels** (so far; timers come with the blinker chip): *Ding dong* (a doorbell: a
   button and a buzzer), *Fan it* (a switch and a motor), *Lights and sound* (one switch before a
   bulb and a buzzer side by side), *Sunny glow* (a light sensor and a bulb) and *Fridge alarm* (a
-  buzzer that sounds when light reaches its sensor). Goals treat a light sensor as a control,
+  buzzer that sounds when light reaches its sensor) and *Keep it glowing* (a capacitor beside a
+  bulb keeps it lit after a button is let go). Goals treat a light sensor as a control,
   like a switch: on in full light and off in the dark. A goal counts buzzers and motors as lights: a
   sounding buzzer is lit and bright, a turning motor lit from a quarter of full speed. A level's
   text can replace Volty's nudges that talk about a bulb (`hints` in `src/levels/strings.ts`).
+- **Time-based goals:** `keep-glowing` needs the lights lit with every control on, and still lit
+  a second after every control is turned off. It is checked on a transient run: three seconds with
+  the controls on to settle, then the controls off (`keepsGlowing` in `src/core/levels.ts`).
 - **Finishing:** the first time the goal is met *and* the goal's bulbs are lit with the switches as
-  the child left them (so a switch level finishes when they switch it on), a card floats over the
+  the child left them (so a switch level finishes when they switch it on), by the solution the
+  board shows, which for a circuit with a capacitor is the transient run's (`finishedNow`). A
+  `keep-glowing` level also needs every control off, so it finishes as the child lets go of the
+  button and sees the bulb keep glowing. Then a card floats over the
   bottom of the screen with the stars and the "Why?" text, leaving the working circuit in view, and
   offers the next level. Parts the level started with don't count towards par. The level list shows
   the best stars; every level is open from the start.
@@ -152,6 +159,15 @@ models.**
    default with **slow motion (¼×, ⅒×)**. If a circuit is too large, the step count adapts down
    rather than dropping frames.
 
+**On the board** (`src/ui/useSimulation.ts`). A circuit with a capacitor runs the transient
+simulation, stepped each animation frame by the real time since the last frame times the speed;
+one without shows its DC point, which is what the transient run would settle at anyway. A frame
+runs at most 100 steps and lets any more time go, so a slow device or a tab coming back from the
+background never runs behind. A **Speed** button, shown only while the circuit has a capacitor,
+steps through 1×, ¼× and ⅒×. `inputsBetween` tells an input from an edit by comparing the
+circuit before and after, and an input re-solves the same instant at once (`applyInput`), so the
+board and the finishing check see a switch's effect without waiting for a step.
+
 **Edits vs inputs.** An **edit** — adding, moving, rotating or removing a part or wire —
 re-solves the DC point and restarts the transient run from t = 0 (`new TransientSimulation`). An
 **input** — flipping a switch, pressing or releasing a button, moving a light-sensor slider —
@@ -167,7 +183,7 @@ state, so timers and capacitors behave like the real thing.
 | LED | Piecewise-linear diode: open when off; on, a 2 V source behind 10 Ω, anode to cathode. Starting all off, each round turns on exactly the LEDs with more than 2 V across them, until none changes (`solveWithLeds`, shared by DC and transient). Brightness from current (full at 20 mA); pops above 30 mA |
 | Buzzer, motor | Resistive load with an activation threshold, either way round. A buzzer (150 Ω) sounds from 2 V across it; a motor (5 Ω) starts turning at 150 mA, is at full speed at 500 mA and turns the other way with the current reversed |
 | Light sensor (LDR) | Variable resistance from a slider: 10 kΩ in the dark falling to 5 Ω in full light, by equal factors (`lightSensorOhms`). It starts at half light, where a bulb or buzzer in a row with it doesn't work; tapping one shows its Dark–Light slider, an input like a switch |
-| Capacitor | Backward-Euler companion model (transient only) |
+| Capacitor | Backward-Euler companion model (transient only). The kit's is a big 0.2 F one, so beside a bulb (a time constant of 2 s) it keeps the bulb lit for over a second once the battery is cut off. Drawn filling with yellow as it charges |
 | Blinker chip | 555-style behavioural block: output switches when its timing capacitor crosses thresholds |
 
 **Solver details** (`src/core/mna.ts`, `dc.ts`, `transient.ts`, `linear.ts`). Every part has two

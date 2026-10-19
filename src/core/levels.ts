@@ -9,6 +9,8 @@ import {
   motorSpeed,
   solveDc,
 } from './dc';
+import type { CircuitSolution } from './mna';
+import { inputsBetween, TIME_STEP_SECONDS, TransientSimulation } from './transient';
 
 /**
  * A light (a bulb or an LED) counts as lit at a quarter of full brightness or more. Goals count
@@ -48,7 +50,13 @@ export type Goal =
    * As `control-lights`, and also none is lit with any one switch open or button released and the
    * rest on: the lights need every control at once.
    */
-  | { readonly kind: 'every-control'; readonly lights: number };
+  | { readonly kind: 'every-control'; readonly lights: number }
+  /**
+   * At least `lights` lights are lit with every control on, and still lit `seconds` after every
+   * control is turned off: something keeps them glowing, such as a charged capacitor. Checked on
+   * the transient run rather than the DC solution, which can't store anything.
+   */
+  | { readonly kind: 'keep-glowing'; readonly lights: number; readonly seconds: number };
 
 export interface PartAllowance {
   readonly kind: PartKind;
@@ -95,7 +103,8 @@ export type GoalFailure =
   | 'led-backwards'
   | 'not-controlled'
   | 'no-control'
-  | 'not-every-control';
+  | 'not-every-control'
+  | 'fades-too-fast';
 
 export function checkGoal(goal: Goal, circuit: Circuit): GoalResult {
   const on = withControls(circuit, true);
@@ -112,6 +121,8 @@ export function checkGoal(goal: Goal, circuit: Circuit): GoalResult {
       return goal.bright && onResult.bright < goal.lights
         ? { met: false, reason: 'too-dim' }
         : { met: true };
+    case 'keep-glowing':
+      return keepsGlowing(circuit, goal) ? { met: true } : { met: false, reason: 'fades-too-fast' };
     case 'control-lights':
     case 'every-control': {
       const controls = circuit.parts.filter(isControl);
@@ -144,12 +155,42 @@ function isControl(part: Part): boolean {
 }
 
 /**
- * How many lights are lit with every switch and button as the child left them. A level finishes
- * only when its goal is met and this many lights are glowing, so the child sees the light come on.
+ * How many lights are lit with every switch and button as the child left them, by the DC solution
+ * unless `solution` gives another, such as the transient run's at this moment.
  */
-export function litNow(circuit: Circuit): number {
-  const { lit, shorted } = litLights(circuit);
+export function litNow(circuit: Circuit, solution?: CircuitSolution): number {
+  const { lit, shorted } = litLights(circuit, solution);
   return shorted ? 0 : lit;
+}
+
+/**
+ * Whether a level whose goal is met is finished by the circuit as the child sees it now, so the
+ * child sees what the goal asks for happen: its lights glowing, and for `keep-glowing` glowing
+ * with every control off. `solution` is what the board shows, which for a circuit that changes
+ * over time is the transient run's.
+ */
+export function finishedNow(goal: Goal, circuit: Circuit, solution: CircuitSolution): boolean {
+  if (litNow(circuit, solution) < goal.lights) {
+    return false;
+  }
+  return (
+    goal.kind !== 'keep-glowing' ||
+    inputsBetween(withControls(circuit, false), circuit)?.length === 0
+  );
+}
+
+/** How long a circuit settles with its controls on before a `keep-glowing` goal turns them off. */
+const SETTLE_SECONDS = 3;
+
+function keepsGlowing(circuit: Circuit, goal: Goal & { kind: 'keep-glowing' }): boolean {
+  const on = withControls(circuit, true);
+  const sim = new TransientSimulation(on);
+  sim.run(Math.round(SETTLE_SECONDS / TIME_STEP_SECONDS));
+  for (const input of inputsBetween(on, withControls(circuit, false)) ?? []) {
+    sim.applyInput(input);
+  }
+  sim.run(Math.round(goal.seconds / TIME_STEP_SECONDS));
+  return litNow(sim.circuit, sim.solution) >= goal.lights;
 }
 
 /**
@@ -250,8 +291,7 @@ interface Lights {
   readonly backwards: boolean;
 }
 
-function litLights(circuit: Circuit): Lights {
-  const solution = solveDc(circuit);
+function litLights(circuit: Circuit, solution = solveDc(circuit)): Lights {
   let lit = 0;
   let bright = 0;
   let shorted = false;

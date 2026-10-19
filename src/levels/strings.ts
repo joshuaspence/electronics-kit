@@ -258,4 +258,13 @@ export const levelText: Readonly<Record<string, LevelText>> = {
         'Uh oh, a shortcut! Electricity is rushing straight back to the battery without going through the buzzer.',
     },
   },
+  'out-6': {
+    title: 'Keep it glowing',
+    goal: 'This is a capacitor. Make the bulb keep glowing for a moment after you let go of the button.',
+    why: 'While you held the button, the capacitor filled up with electricity. When you let go, it emptied through the bulb, so the bulb kept glowing and slowly faded.',
+    more: 'A capacitor stores electric charge on two metal plates kept apart by a thin layer. Charged, it pushes current out like a tiny battery, but only until it is empty. Bigger capacitors hold more and keep the bulb glowing for longer.',
+    hints: {
+      'switch-off': 'Your circuit looks ready. Press and hold the button, then let go!',
+    },
+  },
 };

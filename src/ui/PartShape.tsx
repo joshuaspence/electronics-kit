@@ -30,7 +30,7 @@ interface PartShapeProps {
   to: Point;
   /**
    * How hard the part is working: a light's brightness, 0 to 1; a buzzer's 1 while it sounds; a
-   * motor's speed, −1 to 1, negative turning the other way.
+   * motor's speed, −1 to 1, negative turning the other way; how full a capacitor is, 0 to 1.
    */
   brightness?: number;
   /** Speed of the flowing dots in board units per second, signed like the current. */
@@ -178,8 +178,28 @@ function body(spec: PartSpec, from: Point, to: Point, brightness: number, beside
       );
     }
     case 'capacitor':
+      // A can that fills from the bottom as it charges, so a child can watch it fill and empty.
       return (
-        <rect className="body capacitor-body" x={x - 10} y={y - 14} width={20} height={28} rx={6} />
+        <g>
+          <rect
+            className="body capacitor-body"
+            x={x - 10}
+            y={y - 14}
+            width={20}
+            height={28}
+            rx={6}
+          />
+          {brightness > 0 && (
+            <rect
+              className="capacitor-charge"
+              x={x - 7}
+              y={y + 11 - 22 * brightness}
+              width={14}
+              height={22 * brightness}
+              rx={3}
+            />
+          )}
+        </g>
       );
     case 'switch':
       return (

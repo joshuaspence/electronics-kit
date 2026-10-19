@@ -39,7 +39,7 @@ describe('share codes', () => {
 
   it('writes each placed part as a short token, leaving out the fixed battery', () => {
     expect(encodeCircuit(build)).toBe(
-      '1_w.top+3.a3_r.b3.b6.4.7_l.c6.c8_s.d8.d10.1_b.f20.f22_p.g30.g32_c.h40.h42.0.001_z.i44.i46_m.j48.j50_y.a52.a54.0.25',
+      '1_w.top+3.a3_r.b3.b6.4.7_l.c6.c8_s.d8.d10.1_b.f20.f22_p.g30.g32_c.h40.h42.0.2_z.i44.i46_m.j48.j50_y.a52.a54.0.25',
     );
   });
 
