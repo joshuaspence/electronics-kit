@@ -673,3 +673,19 @@ test('places a part dropped between holes or at the board’s edge on a phone', 
   await drag(page, page.locator('[data-tray="bulb"]'), await centre(post(page, 'h15')));
   await expect(bulbs).toHaveCount(2);
 });
+
+// A snap board has few posts, so filling a tablet's space would blow them up.
+test('keeps a small snap board a comfortable size, in the middle of its space', async ({
+  page,
+}) => {
+  await page.locator('[data-level="loop-1"]').click();
+  const a = await centre(post(page, 'p1-1'));
+  const b = await centre(post(page, 'p1-2'));
+  expect(b.x - a.x).toBeLessThanOrEqual(170);
+  expect(b.x - a.x).toBeGreaterThanOrEqual(150);
+  const board = (await page.locator('.board').boundingBox())!;
+  const tools = (await page.getByRole('toolbar', { name: 'Tools' }).boundingBox())!;
+  const space = { left: tools.x + tools.width, right: page.viewportSize()!.width };
+  const middle = board.x + board.width / 2;
+  expect(Math.abs(middle - (space.left + space.right) / 2)).toBeLessThan(40);
+});
