@@ -1102,3 +1102,52 @@ button[aria-pressed='true'] {
     height: 62px;
   }
 }
+
+/* Shown only where it applies: the rotate prompt on a narrow portrait screen, over everything. */
+.rotate-prompt,
+.small-screen-note {
+  display: none;
+}
+
+@media (orientation: portrait) and (max-width: 600px) {
+  .rotate-prompt {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px;
+    background: var(--mat);
+    font-size: 1.3rem;
+    font-weight: 700;
+    text-align: center;
+  }
+}
+
+.rotate-phone {
+  fill: var(--plastic);
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.rotate-arrow {
+  fill: none;
+  stroke: var(--hole-active);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .small-screen-note {
+    display: block;
+    width: fit-content;
+    padding: 4px 12px;
+    border-radius: 8px;
+    background: var(--plastic);
+    color: var(--ink);
+  }
+}

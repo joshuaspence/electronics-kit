@@ -606,3 +606,20 @@ test('fits every level on a landscape phone', async ({ page }) => {
     ).toBeLessThanOrEqual(390);
   }
 });
+
+test('asks to turn a phone held upright sideways, and only then', async ({ page }) => {
+  const prompt = page.getByText('Turn your screen sideways to play.');
+  const note = page.getByText('Electronics Kit is easier to play on a tablet or a computer', {
+    exact: false,
+  });
+  await expect(prompt).toBeHidden();
+  await expect(note).toBeHidden();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(prompt).toBeVisible();
+
+  // On its side, the phone plays, and the level list says a bigger screen is easier.
+  await page.setViewportSize({ width: 844, height: 390 });
+  await expect(prompt).toBeHidden();
+  await expect(note).toBeVisible();
+});

@@ -3,6 +3,7 @@ import type { Profile } from '../core/profiles';
 import type { Progress } from '../core/progress';
 import { chapterTitles, levelText } from '../levels/strings';
 import { strings } from './strings';
+import { SmallScreenNote } from './ScreenNotes';
 import { UpdatePrompt } from './UpdatePrompt';
 
 interface LevelListProps {
@@ -46,6 +47,7 @@ export function LevelList({
           {strings.changePlayer}
         </button>
       </p>
+      <SmallScreenNote />
       {/* Offered only between levels, never in the middle of one. */}
       <UpdatePrompt />
       {chapters.map((chapter) => (
