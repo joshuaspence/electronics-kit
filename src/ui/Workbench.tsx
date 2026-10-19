@@ -143,7 +143,6 @@ export function Workbench({
   const [view, setView] = useState<View>(() =>
     clamped(geometry, { zoom: 1, centre: { x: 0, y: geometry.height / 2 } }),
   );
-  const zoomBy = (factor: number) => setView((v) => zoomed(geometry, v, factor));
   /** Where a pan has moved the window's centre to, in board units. */
   const pannedCentre = (pan: Drag & { type: 'pan' }): Point => ({
     x: pan.centre.x - (pan.client.x - pan.start.x) * pan.perPixel,
@@ -151,6 +150,15 @@ export function Workbench({
   });
   const svgRef = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
+  // One drag at a time: a second finger pressing a hole, a part or the tray mid-drag starts nothing.
+  const startDrag = (next: Drag) => setDrag((d) => d ?? next);
+  // A pan keeps the scale it started at, so the zoom waits for it to end.
+  const panning = drag?.type === 'pan';
+  const zoomBy = (factor: number) => {
+    if (!panning) {
+      setView((v) => zoomed(geometry, v, factor));
+    }
+  };
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [orientation, setOrientation] = useState<Orientation>('right');
   const [muted, setMuted] = useState(false);
@@ -168,11 +176,13 @@ export function Workbench({
         return;
       }
       event.preventDefault();
-      setView((v) => zoomed(geometry, v, event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP));
+      if (!panning) {
+        setView((v) => zoomed(geometry, v, event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP));
+      }
     };
     svg.addEventListener('wheel', onWheel, { passive: false });
     return () => svg.removeEventListener('wheel', onWheel);
-  }, [zoomable, geometry]);
+  }, [zoomable, geometry, panning]);
 
   /** Applies an edit, with a snap when a part lands in the board. */
   const edit = (change: Edit) => {
@@ -436,13 +446,13 @@ export function Workbench({
   const onPickUp = (spec: PartSpec, event: ReactPointerEvent) => {
     event.preventDefault();
     setSelectedId(null);
-    setDrag({ type: 'new', spec, pointer: toBoard(event.clientX, event.clientY) });
+    startDrag({ type: 'new', spec, pointer: toBoard(event.clientX, event.clientY) });
   };
 
   const onHolePointerDown = (hole: Location, event: ReactPointerEvent) => {
     const pointer = toBoard(event.clientX, event.clientY);
     if (pointer && editor.remaining('wire') > 0) {
-      setDrag({ type: 'wire', from: hole, pointer });
+      startDrag({ type: 'wire', from: hole, pointer });
     }
   };
 
@@ -457,7 +467,7 @@ export function Workbench({
       setControl(id, true);
     }
     if (!part.fixed) {
-      setDrag({ type: 'move', id, start: pointer, pointer });
+      startDrag({ type: 'move', id, start: pointer, pointer });
       return;
     }
     if (part.spec.kind === 'switch') {
@@ -516,13 +526,10 @@ export function Workbench({
         onBackgroundPointerDown={
           zoomable
             ? (event) => {
-                if (drag) {
-                  return;
-                }
                 const client = { x: event.clientX, y: event.clientY };
                 // The board's on-screen scale, whichever of its width or height bounds it.
                 const perPixel = 1 / (svgRef.current?.getScreenCTM()?.a ?? 1);
-                setDrag({
+                startDrag({
                   type: 'pan',
                   pointerId: event.pointerId,
                   start: client,

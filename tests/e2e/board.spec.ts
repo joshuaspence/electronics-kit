@@ -443,45 +443,110 @@ test.describe('full-size board', () => {
     expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
   });
 
-  test('follows only the finger that started a pan', async ({ page }) => {
+  /**
+   * One finger pans the board from its middle, between rows e and f. `touch` sends that finger
+   * (or another) a press on the bare board, or a move or lift on the window, `dx` pixels across;
+   * `press` presses another finger on an element. `left` reads where the window has panned to.
+   */
+  async function fingers(page: Page) {
     const board = (await page.locator('svg.board').boundingBox())!;
     const x = board.x + board.width / 2;
     const y = (await centre(page.locator('[data-hole="e1"]'))).y + 20;
     const perPixel = await page
       .locator('svg.board')
       .evaluate((svg: SVGSVGElement) => 1 / svg.getScreenCTM()!.a);
-
-    /** Sends a touch pointer event to the bare board (a press) or the window (a move or lift). */
-    const touch = (type: string, pointerId: number, dx: number) =>
+    const send = (
+      type: string,
+      pointerId: number,
+      selector: string | null,
+      at: { x: number; y: number },
+    ) =>
       page.evaluate(
-        ({ type, pointerId, clientX, clientY }) => {
-          const init = { bubbles: true, pointerId, pointerType: 'touch', clientX, clientY };
-          const target = type === 'pointerdown' ? document.querySelector('.board-body')! : window;
-          target.dispatchEvent(new PointerEvent(type, { ...init, isPrimary: pointerId === 1 }));
+        ({ type, pointerId, selector, at }) => {
+          const target = selector ? document.querySelector(selector)! : window;
+          const init = { bubbles: true, pointerId, pointerType: 'touch', isPrimary: false };
+          target.dispatchEvent(new PointerEvent(type, { ...init, clientX: at.x, clientY: at.y }));
         },
-        { type, pointerId, clientX: x + dx, clientY: y },
+        { type, pointerId, selector, at },
       );
-    const left = async () => (await viewBox(page))[0]!;
-    /** Lets React render what the events so far did. */
-    const rendered = () =>
-      page.evaluate(
-        () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
-      );
+    return {
+      perPixel,
+      touch: (type: string, pointerId: number, dx: number) =>
+        send(type, pointerId, type === 'pointerdown' ? '.board-body' : null, { x: x + dx, y }),
+      press: async (pointerId: number, selector: string) =>
+        send('pointerdown', pointerId, selector, await centre(page.locator(selector))),
+      left: async () => (await viewBox(page))[0]!,
+      /** Lets React render what the events so far did. */
+      rendered: () =>
+        page.evaluate(
+          () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
+        ),
+    };
+  }
 
-    await touch('pointerdown', 1, 0);
-    await touch('pointermove', 1, -100);
+  test('follows only the finger that started a pan', async ({ page }) => {
+    const { perPixel, touch, left, rendered } = await fingers(page);
+    await touch('pointerdown', 11, 0);
+    await touch('pointermove', 11, -100);
     await expect.poll(left).toBeCloseTo(100 * perPixel, 0);
 
     // A second finger pressing, moving and lifting neither drags the board nor ends the pan.
-    await touch('pointerdown', 2, 50);
-    await touch('pointermove', 2, 150);
+    await touch('pointerdown', 12, 50);
+    await touch('pointermove', 12, 150);
     await rendered();
     expect(await left()).toBeCloseTo(100 * perPixel, 0);
-    await touch('pointermove', 1, -150);
+    await touch('pointermove', 11, -150);
     await expect.poll(left).toBeCloseTo(150 * perPixel, 0);
-    await touch('pointerup', 2, 150);
-    await touch('pointermove', 1, -200);
+    await touch('pointerup', 12, 150);
+    await touch('pointermove', 11, -200);
     await expect.poll(left).toBeCloseTo(200 * perPixel, 0);
-    await touch('pointerup', 1, -200);
+    await touch('pointerup', 11, -200);
+  });
+
+  test('keeps panning when a second finger presses a hole, a part or the tray', async ({
+    page,
+  }) => {
+    await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'e5', 'e7'));
+    const bulb = page.locator('.board .part-bulb:not(.part-ghost)');
+    await expect(bulb).toHaveCount(1);
+    const { perPixel, touch, press, left, rendered } = await fingers(page);
+    await touch('pointerdown', 11, 0);
+    await touch('pointermove', 11, -100);
+    await expect.poll(left).toBeCloseTo(100 * perPixel, 0);
+
+    for (const selector of [
+      '[data-hole="e20"]',
+      '[data-part]:has(.part-bulb)',
+      '[data-tray="bulb"]',
+    ]) {
+      await press(12, selector);
+      await rendered();
+      expect(await left(), selector).toBeCloseTo(100 * perPixel, 0);
+      await touch('pointerup', 12, 0);
+    }
+    await touch('pointermove', 11, -200);
+    await expect.poll(left).toBeCloseTo(200 * perPixel, 0);
+    await touch('pointerup', 11, -200);
+
+    // Nothing was drawn, dropped or moved by the second finger.
+    await expect(page.locator('.board .part-wire')).toHaveCount(0);
+    await expect(bulb).toHaveCount(1);
+    await expect(page.locator('[data-tray="bulb"]')).toContainText('×1');
+  });
+
+  test('holds the zoom while a pan is under way', async ({ page }) => {
+    const { perPixel, touch, left, rendered } = await fingers(page);
+    const [, , width] = await viewBox(page);
+    await touch('pointerdown', 11, 0);
+    await touch('pointermove', 11, -100);
+    await expect.poll(left).toBeCloseTo(100 * perPixel, 0);
+
+    await page.locator('svg.board').dispatchEvent('wheel', { deltaY: -100, cancelable: true });
+    await page.getByRole('button', { name: 'Zoom in' }).click();
+    await rendered();
+    expect((await viewBox(page))[2]).toBe(width);
+    await touch('pointermove', 11, -200);
+    await expect.poll(left).toBeCloseTo(200 * perPixel, 0);
+    await touch('pointerup', 11, -200);
   });
 });
