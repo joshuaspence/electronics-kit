@@ -20,6 +20,7 @@ import { flowSpeed } from '../core/flow';
 import type { PartAllowance } from '../core/levels';
 import { Board, type Ghost } from './Board';
 import {
+  type BoardGeometry,
   geometryFor,
   type Orientation,
   type Point,
@@ -41,7 +42,60 @@ type Legs = readonly [Location, Location];
 type Drag =
   | { readonly type: 'new'; readonly spec: PartSpec; readonly pointer: Point | null }
   | { readonly type: 'move'; readonly id: string; readonly start: Point; readonly pointer: Point }
-  | { readonly type: 'wire'; readonly from: Location; readonly pointer: Point };
+  | { readonly type: 'wire'; readonly from: Location; readonly pointer: Point }
+  // Panning a zoomed board works in screen pixels: board units shift under the pointer as it pans,
+  // so the pan keeps how many board units a pixel was worth when it started. It follows only the
+  // finger that started it, so a second finger can't drag the board back or end the pan.
+  | {
+      readonly type: 'pan';
+      readonly pointerId: number;
+      readonly start: Point;
+      readonly client: Point;
+      readonly centre: Point;
+      readonly perPixel: number;
+    };
+
+/** How far a zoomable board can zoom in, from showing its full height, and by how much a step. */
+const MAX_ZOOM = 3;
+const ZOOM_STEP = 1.25;
+
+/** A zoomable board's window: wider than tall, like a landscape tablet. */
+const VIEW_ASPECT = 1.5;
+
+/** A zoomable board's window: `zoom` times its full height, centred on `centre`. */
+interface View {
+  readonly zoom: number;
+  readonly centre: Point;
+}
+
+/** The window `view` shows onto the board, as a viewBox `[x, y, width, height]` kept within it. */
+function viewBox(board: BoardGeometry, { zoom, centre }: View): [number, number, number, number] {
+  const height = board.height / zoom;
+  const width = Math.min(board.width, height * VIEW_ASPECT);
+  const clamp = (v: number, size: number, full: number) =>
+    Math.min(Math.max(v - size / 2, 0), full - size);
+  return [
+    clamp(centre.x, width, board.width),
+    clamp(centre.y, height, board.height),
+    width,
+    height,
+  ];
+}
+
+/**
+ * `view` with its centre moved to where the window actually is. A centre left beyond where the
+ * window can go would make the next pan do nothing until it had made up the difference.
+ */
+function clamped(board: BoardGeometry, view: View): View {
+  const [x, y, width, height] = viewBox(board, view);
+  return { zoom: view.zoom, centre: { x: x + width / 2, y: y + height / 2 } };
+}
+
+/** `view` zoomed by `factor`, from the board's full height to `MAX_ZOOM` times closer. */
+function zoomed(board: BoardGeometry, view: View, factor: number): View {
+  const zoom = Math.min(MAX_ZOOM, Math.max(1, Math.round(view.zoom * factor * 100) / 100));
+  return clamped(board, { ...view, zoom });
+}
 
 interface WorkbenchProps {
   board: BoardModel;
@@ -60,6 +114,8 @@ interface WorkbenchProps {
   aside?: ReactNode;
   /** The multimeter is unlocked, so it can be switched on (docs/design.md §4). */
   meter?: boolean;
+  /** A board too big to show whole, such as the sandbox's: it pans and zooms. */
+  zoomable?: boolean;
 }
 
 /** The board, the parts tray and the editing tools, wired to a BuildEditor. */
@@ -72,6 +128,7 @@ export function Workbench({
   finished,
   aside,
   meter = false,
+  zoomable = false,
 }: WorkbenchProps) {
   const { editor, build, newId, apply, setControl, undo, redo } = useEditor(board, tray, initial);
   // Report only real changes to the build, not a parent passing a new callback.
@@ -81,12 +138,51 @@ export function Workbench({
   });
   useEffect(() => onChangeRef.current?.(build), [build]);
   const geometry = useMemo(() => geometryFor(board), [board]);
+
+  // A zoomable board opens on its left end.
+  const [view, setView] = useState<View>(() =>
+    clamped(geometry, { zoom: 1, centre: { x: 0, y: geometry.height / 2 } }),
+  );
+  /** Where a pan has moved the window's centre to, in board units. */
+  const pannedCentre = (pan: Drag & { type: 'pan' }): Point => ({
+    x: pan.centre.x - (pan.client.x - pan.start.x) * pan.perPixel,
+    y: pan.centre.y - (pan.client.y - pan.start.y) * pan.perPixel,
+  });
   const svgRef = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
+  // One drag at a time: a second finger pressing a hole, a part or the tray mid-drag starts nothing.
+  const startDrag = (next: Drag) => setDrag((d) => d ?? next);
+  // A pan keeps the scale it started at, so the zoom waits for it to end.
+  const panning = drag?.type === 'pan';
+  const zoomBy = (factor: number) => {
+    if (!panning) {
+      setView((v) => zoomed(geometry, v, factor));
+    }
+  };
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [orientation, setOrientation] = useState<Orientation>('right');
   const [muted, setMuted] = useState(false);
   const [meterOn, setMeterOn] = useState(false);
+
+  // React's own wheel listeners are passive, so they can't stop the page scrolling (or, with a
+  // pinch, zooming) under the board as it zooms. A sideways swipe has no `deltaY`, and isn't a zoom.
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!zoomable || !svg) {
+      return;
+    }
+    const onWheel = (event: WheelEvent) => {
+      if (event.deltaY === 0) {
+        return;
+      }
+      event.preventDefault();
+      if (!panning) {
+        setView((v) => zoomed(geometry, v, event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP));
+      }
+    };
+    svg.addEventListener('wheel', onWheel, { passive: false });
+    return () => svg.removeEventListener('wheel', onWheel);
+  }, [zoomable, geometry, panning]);
 
   /** Applies an edit, with a snap when a part lands in the board. */
   const edit = (change: Edit) => {
@@ -222,6 +318,8 @@ export function Workbench({
         }
         return;
       }
+      case 'pan':
+        return;
     }
   };
 
@@ -229,9 +327,15 @@ export function Workbench({
   // button is pressed only while it is held, so every release lets go of it too.
   useEffect(() => {
     const onMove = (event: PointerEvent) => {
+      if (drag?.type === 'pan') {
+        if (event.pointerId === drag.pointerId) {
+          setDrag({ ...drag, client: { x: event.clientX, y: event.clientY } });
+        }
+        return;
+      }
       const pointer = toBoard(event.clientX, event.clientY);
       if (pointer) {
-        setDrag((d) => (d ? { ...d, pointer } : d));
+        setDrag((d) => (d && d.type !== 'pan' ? { ...d, pointer } : d));
       }
     };
     const onUp = (event: PointerEvent) => {
@@ -240,7 +344,13 @@ export function Workbench({
           setControl(part.id, false);
         }
       }
-      if (drag) {
+      if (drag?.type === 'pan') {
+        if (event.pointerId === drag.pointerId) {
+          const centre = pannedCentre({ ...drag, client: { x: event.clientX, y: event.clientY } });
+          setView((v) => clamped(geometry, { ...v, centre }));
+          setDrag(null);
+        }
+      } else if (drag) {
         // Drop where the pointer is released, not where the last render saw it: a fast drag can
         // be released before the final move has re-rendered.
         const pointer = toBoard(event.clientX, event.clientY) ?? drag.pointer;
@@ -308,7 +418,7 @@ export function Workbench({
 
   // While dragging, light up the strips the part would join, so a child sees where it connects.
   const targetStrips = ((): ReadonlySet<string> | null => {
-    if (!drag) {
+    if (!drag || drag.type === 'pan') {
       return null;
     }
     // A wire is joined to the strip it starts from wherever it ends up.
@@ -336,13 +446,13 @@ export function Workbench({
   const onPickUp = (spec: PartSpec, event: ReactPointerEvent) => {
     event.preventDefault();
     setSelectedId(null);
-    setDrag({ type: 'new', spec, pointer: toBoard(event.clientX, event.clientY) });
+    startDrag({ type: 'new', spec, pointer: toBoard(event.clientX, event.clientY) });
   };
 
   const onHolePointerDown = (hole: Location, event: ReactPointerEvent) => {
     const pointer = toBoard(event.clientX, event.clientY);
     if (pointer && editor.remaining('wire') > 0) {
-      setDrag({ type: 'wire', from: hole, pointer });
+      startDrag({ type: 'wire', from: hole, pointer });
     }
   };
 
@@ -357,7 +467,7 @@ export function Workbench({
       setControl(id, true);
     }
     if (!part.fixed) {
-      setDrag({ type: 'move', id, start: pointer, pointer });
+      startDrag({ type: 'move', id, start: pointer, pointer });
       return;
     }
     if (part.spec.kind === 'switch') {
@@ -405,6 +515,31 @@ export function Workbench({
         hintedId={hint?.removeId ?? null}
         onHolePointerDown={onHolePointerDown}
         onPartPointerDown={onPartPointerDown}
+        view={
+          zoomable
+            ? viewBox(
+                geometry,
+                drag?.type === 'pan' ? { ...view, centre: pannedCentre(drag) } : view,
+              )
+            : undefined
+        }
+        onBackgroundPointerDown={
+          zoomable
+            ? (event) => {
+                const client = { x: event.clientX, y: event.clientY };
+                // The board's on-screen scale, whichever of its width or height bounds it.
+                const perPixel = 1 / (svgRef.current?.getScreenCTM()?.a ?? 1);
+                startDrag({
+                  type: 'pan',
+                  pointerId: event.pointerId,
+                  start: client,
+                  client,
+                  centre: view.centre,
+                  perPixel,
+                });
+              }
+            : undefined
+        }
       />
       <div className="tools" role="toolbar" aria-label={strings.toolsLabel}>
         <button type="button" onClick={undo} disabled={!editor.canUndo}>
@@ -413,6 +548,20 @@ export function Workbench({
         <button type="button" onClick={redo} disabled={!editor.canRedo}>
           {strings.redo}
         </button>
+        {zoomable && (
+          <>
+            <button
+              type="button"
+              onClick={() => zoomBy(ZOOM_STEP)}
+              disabled={view.zoom >= MAX_ZOOM}
+            >
+              {strings.zoomIn}
+            </button>
+            <button type="button" onClick={() => zoomBy(1 / ZOOM_STEP)} disabled={view.zoom <= 1}>
+              {strings.zoomOut}
+            </button>
+          </>
+        )}
         <button type="button" onClick={rotate} disabled={selected?.fixed}>
           {strings.rotate}
         </button>

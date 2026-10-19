@@ -71,6 +71,8 @@ export const strings = {
   redo: 'Redo',
   rotate: 'Rotate',
   remove: 'Remove',
+  zoomIn: 'Zoom in',
+  zoomOut: 'Zoom out',
   meter: 'Meter',
   meterLabel: 'Multimeter',
   meterPrompt: 'Tap a part to measure it.',

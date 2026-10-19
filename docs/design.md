@@ -169,6 +169,12 @@ selected at all, so **Rotate** still turns the parts that come out of the tray.
 - Size by chapter: **chapter 1** has no breadboard (parts snap onto big terminals, Snap Circuits
   style); **chapter 2** a ~10-column mini board; later chapters a half-size board with rails; the
   sandbox a full-size board with pan and zoom.
+- **Pan and zoom** (a `zoomable` workbench): the board shows a window onto itself, as tall as the
+  board at zoom 1 and up to three times closer, half again as wide as it is tall. **Zoom in** and
+  **Zoom out** (and the mouse wheel) zoom it; dragging the bare board, between holes and parts,
+  pans it, since a hole starts a wire and a part a move. Dragging a part works as anywhere else,
+  since the pointer is mapped through the board's own transform. A zoomable board clips to its
+  window, so a part in hand shows only over the board.
 - **Half-size board** (`centreGap`, `rails: 'top'` or `'both'`): a + and a − rail above (and
   with `both`, below), then rows a–e, the centre gap and f–j, each set apart by a blank row where
   nothing snaps. A rail hole sits in the column of the terminals beside it. A battery with both

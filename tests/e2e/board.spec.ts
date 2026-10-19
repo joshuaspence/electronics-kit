@@ -321,3 +321,232 @@ test.describe('half-size board', () => {
     await expect(page.locator('.board .part-bulb .flow')).toHaveCount(0);
   });
 });
+
+test.describe('full-size board', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('./?sandbox=full');
+  });
+
+  const viewBox = async (page: Page) =>
+    (await page.locator('svg.board').getAttribute('viewBox'))!.split(' ').map(Number);
+
+  /** The board point under a screen point, mapped through the board's transform. */
+  const boardPoint = (page: Page, x: number, y: number) =>
+    page.locator('svg.board').evaluate(
+      (svg: SVGSVGElement, [x, y]) => {
+        const p = new DOMPoint(x, y).matrixTransform(svg.getScreenCTM()!.inverse());
+        return { x: p.x, y: p.y };
+      },
+      [x, y],
+    );
+
+  /**
+   * Drags the bare board `dx` pixels sideways, from its middle between rows e and f, and checks
+   * the board point it was pressed on ends up under the pointer, until an edge stops it.
+   */
+  async function pan(page: Page, dx: number) {
+    const board = (await page.locator('svg.board').boundingBox())!;
+    const x = board.x + board.width / 2;
+    const y = (await centre(page.locator('[data-hole="e1"]'))).y + 20;
+    const pressed = await page.evaluate(
+      ([x, y]) => document.elementFromPoint(x!, y!)?.getAttribute('class'),
+      [x, y],
+    );
+    expect(pressed).toBe('board-body');
+    const start = await boardPoint(page, x, y);
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + dx, y, { steps: 5 });
+    await page.mouse.up();
+    return { start, end: await boardPoint(page, x + dx, y) };
+  }
+
+  test('zooms in and out, but not out past its full height', async ({ page }) => {
+    await expect(page.getByRole('button', { name: 'Zoom out' })).toBeDisabled();
+    const [, , width] = await viewBox(page);
+    await page.getByRole('button', { name: 'Zoom in' }).click();
+    expect((await viewBox(page))[2]).toBeLessThan(width!);
+    await page.getByRole('button', { name: 'Zoom out' }).click();
+    expect((await viewBox(page))[2]).toBeCloseTo(width!, 5);
+  });
+
+  test('pans by dragging the board, and places parts where the pointer is after', async ({
+    page,
+  }) => {
+    expect((await viewBox(page))[0]).toBe(0);
+
+    // Drag the bare board leftwards, between rows, to bring columns further right into view.
+    const board = (await page.locator('svg.board').boundingBox())!;
+    const y = (await centre(page.locator('[data-hole="e10"]'))).y + 20;
+    await page.mouse.move(board.x + board.width * 0.8, y);
+    await page.mouse.down();
+    await page.mouse.move(board.x + board.width * 0.2, y, { steps: 10 });
+    await page.mouse.up();
+    const [left, , width] = await viewBox(page);
+    expect(left).toBeGreaterThan(0);
+
+    // A column that has panned into view still takes a part dropped on it. Holes start 120
+    // board units in (margin and battery room) and are 40 apart.
+    const column = Math.round((left! + width! / 2 - 120) / 40) + 1;
+    await drag(
+      page,
+      page.locator('[data-tray="bulb"]'),
+      await between(page, `e${column}`, `e${column + 2}`),
+    );
+    await expect(page.locator('.board .part-bulb:not(.part-ghost)')).toHaveCount(1);
+  });
+
+  test('pans with the first small drag, and back at once after overshooting an edge', async ({
+    page,
+  }) => {
+    const first = await pan(page, -100);
+    expect(first.end.x).toBeCloseTo(first.start.x, 0);
+    expect((await viewBox(page))[0]).toBeGreaterThan(0);
+
+    // Past the left edge, the board stops; the next drag the other way moves it straight away.
+    await pan(page, 400);
+    expect((await viewBox(page))[0]).toBe(0);
+    const back = await pan(page, -100);
+    expect(back.end.x).toBeCloseTo(back.start.x, 0);
+  });
+
+  test('keeps to the pointer where the screen is too short for its width', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 560 });
+    const box = (await page.locator('svg.board').boundingBox())!;
+    const [, , width, height] = await viewBox(page);
+    expect(box.width / box.height).toBeCloseTo(width! / height!, 2);
+
+    const { start, end } = await pan(page, -100);
+    expect(end.x).toBeCloseTo(start.x, 0);
+  });
+
+  test('zooms out with the wheel without scrolling the page, but not with a sideways swipe', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 560 });
+    const scrollable = await page.evaluate(
+      () => document.documentElement.scrollHeight > window.innerHeight,
+    );
+    expect(scrollable).toBe(true);
+    const zoomIn = page.getByRole('button', { name: 'Zoom in' });
+    await zoomIn.click();
+    const [, , oneStep] = await viewBox(page);
+    await zoomIn.click();
+    const board = await centre(page.locator('svg.board'));
+    await page.mouse.move(board.x, board.y);
+    const scrollY = await page.evaluate(() => window.scrollY);
+
+    // Scrolling down would scroll the page too, if the board didn't stop it.
+    await page.mouse.wheel(100, 0);
+    await page.mouse.wheel(0, 100);
+    await expect.poll(async () => (await viewBox(page))[2]).toBeCloseTo(oneStep!, 5);
+    expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
+  });
+
+  /**
+   * One finger pans the board from its middle, between rows e and f. `touch` sends that finger
+   * (or another) a press on the bare board, or a move or lift on the window, `dx` pixels across;
+   * `press` presses another finger on an element. `left` reads where the window has panned to.
+   */
+  async function fingers(page: Page) {
+    const board = (await page.locator('svg.board').boundingBox())!;
+    const x = board.x + board.width / 2;
+    const y = (await centre(page.locator('[data-hole="e1"]'))).y + 20;
+    const perPixel = await page
+      .locator('svg.board')
+      .evaluate((svg: SVGSVGElement) => 1 / svg.getScreenCTM()!.a);
+    const send = (
+      type: string,
+      pointerId: number,
+      selector: string | null,
+      at: { x: number; y: number },
+    ) =>
+      page.evaluate(
+        ({ type, pointerId, selector, at }) => {
+          const target = selector ? document.querySelector(selector)! : window;
+          const init = { bubbles: true, pointerId, pointerType: 'touch', isPrimary: false };
+          target.dispatchEvent(new PointerEvent(type, { ...init, clientX: at.x, clientY: at.y }));
+        },
+        { type, pointerId, selector, at },
+      );
+    return {
+      perPixel,
+      touch: (type: string, pointerId: number, dx: number) =>
+        send(type, pointerId, type === 'pointerdown' ? '.board-body' : null, { x: x + dx, y }),
+      press: async (pointerId: number, selector: string) =>
+        send('pointerdown', pointerId, selector, await centre(page.locator(selector))),
+      left: async () => (await viewBox(page))[0]!,
+      /** Lets React render what the events so far did. */
+      rendered: () =>
+        page.evaluate(
+          () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
+        ),
+    };
+  }
+
+  test('follows only the finger that started a pan', async ({ page }) => {
+    const { perPixel, touch, left, rendered } = await fingers(page);
+    await touch('pointerdown', 11, 0);
+    await touch('pointermove', 11, -100);
+    await expect.poll(left).toBeCloseTo(100 * perPixel, 0);
+
+    // A second finger pressing, moving and lifting neither drags the board nor ends the pan.
+    await touch('pointerdown', 12, 50);
+    await touch('pointermove', 12, 150);
+    await rendered();
+    expect(await left()).toBeCloseTo(100 * perPixel, 0);
+    await touch('pointermove', 11, -150);
+    await expect.poll(left).toBeCloseTo(150 * perPixel, 0);
+    await touch('pointerup', 12, 150);
+    await touch('pointermove', 11, -200);
+    await expect.poll(left).toBeCloseTo(200 * perPixel, 0);
+    await touch('pointerup', 11, -200);
+  });
+
+  test('keeps panning when a second finger presses a hole, a part or the tray', async ({
+    page,
+  }) => {
+    await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'e5', 'e7'));
+    const bulb = page.locator('.board .part-bulb:not(.part-ghost)');
+    await expect(bulb).toHaveCount(1);
+    const { perPixel, touch, press, left, rendered } = await fingers(page);
+    await touch('pointerdown', 11, 0);
+    await touch('pointermove', 11, -100);
+    await expect.poll(left).toBeCloseTo(100 * perPixel, 0);
+
+    for (const selector of [
+      '[data-hole="e20"]',
+      '[data-part]:has(.part-bulb)',
+      '[data-tray="bulb"]',
+    ]) {
+      await press(12, selector);
+      await rendered();
+      expect(await left(), selector).toBeCloseTo(100 * perPixel, 0);
+      await touch('pointerup', 12, 0);
+    }
+    await touch('pointermove', 11, -200);
+    await expect.poll(left).toBeCloseTo(200 * perPixel, 0);
+    await touch('pointerup', 11, -200);
+
+    // Nothing was drawn, dropped or moved by the second finger.
+    await expect(page.locator('.board .part-wire')).toHaveCount(0);
+    await expect(bulb).toHaveCount(1);
+    await expect(page.locator('[data-tray="bulb"]')).toContainText('×1');
+  });
+
+  test('holds the zoom while a pan is under way', async ({ page }) => {
+    const { perPixel, touch, left, rendered } = await fingers(page);
+    const [, , width] = await viewBox(page);
+    await touch('pointerdown', 11, 0);
+    await touch('pointermove', 11, -100);
+    await expect.poll(left).toBeCloseTo(100 * perPixel, 0);
+
+    await page.locator('svg.board').dispatchEvent('wheel', { deltaY: -100, cancelable: true });
+    await page.getByRole('button', { name: 'Zoom in' }).click();
+    await rendered();
+    expect((await viewBox(page))[2]).toBe(width);
+    await touch('pointermove', 11, -200);
+    await expect.poll(left).toBeCloseTo(200 * perPixel, 0);
+    await touch('pointerup', 11, -200);
+  });
+});

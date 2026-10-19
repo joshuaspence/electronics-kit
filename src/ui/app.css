@@ -203,6 +203,22 @@ h2 {
     grid-area: board;
     height: 100%;
   }
+
+  .workbench > .board-zoomable {
+    height: auto;
+    max-height: 100%;
+  }
+}
+
+/*
+ * A zoomed board shows a window onto itself, so nothing outside the window may spill out. Sized by
+ * its viewBox however it's bounded, it has no strips beside the window to spill into.
+ */
+.board-zoomable {
+  width: auto;
+  max-width: 100%;
+  margin-inline: auto;
+  overflow: hidden;
 }
 
 /* The part in hand: lifted off the board with a shadow, never in the way of the pointer. */
