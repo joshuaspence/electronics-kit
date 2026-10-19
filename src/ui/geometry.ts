@@ -62,12 +62,14 @@ export interface BoardGeometry {
 }
 
 /**
- * How close, as a fraction of the pitch, a pointer must be to a location to snap to it. A whole
- * pitch, so every point among the holes snaps somewhere, even diagonally between four of them, in
- * a blank row or across the centre gap: a fingertip on a phone covers several holes, and a drop
- * that puts nothing down is the frustrating case (docs/design.md §5, forgiving snapping).
+ * How close, as a fraction of the pitch, a pointer must be to a location to snap to it. Enough that
+ * every point among the holes snaps somewhere, even diagonally between four of them, in a blank row
+ * or across the centre gap: a fingertip on a phone covers several holes, and a drop that puts
+ * nothing down is the frustrating case (docs/design.md §5, forgiving snapping). The farthest such
+ * point is on a blank row's centre line halfway between two columns, √(0.5² + 1²) ≈ 1.118 pitches
+ * from the nearest hole.
  */
-const SNAP_FRACTION = 1;
+const SNAP_FRACTION = 1.15;
 
 /** Breadboard holes: small and close, so a 10-column board fits a tablet. */
 const BREADBOARD = { pitch: 40, margin: 30, radius: 9 };

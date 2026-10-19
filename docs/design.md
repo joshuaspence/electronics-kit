@@ -266,7 +266,7 @@ selected at all, so **Rotate** still turns the parts that come out of the tray.
   spacing per part); rotate with a button; draw wires by dragging hole to hole. Battery packs sit
   off the board with leads into the rails.
 - **Forgiving snapping** (`nearest` and `legsFrom` in `src/ui/geometry.ts`): a point snaps to the
-  nearest hole within a whole pitch, looking at the neighbouring holes too, so a drop diagonally
+  nearest hole within 1.15 pitches, looking at the neighbouring holes too, so a drop diagonally
   between four holes, in a blank row or across the centre gap still lands. A part whose second leg
   would be off the board's edge slides back so that leg is where its first would have been. Only a
   drop off the board, such as beside it where the battery sits, puts nothing down. On a phone a

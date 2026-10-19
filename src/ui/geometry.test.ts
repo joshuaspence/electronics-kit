@@ -86,6 +86,14 @@ describe('nearest', () => {
     expect(near(a5.x, a5.y - pitch * 0.9)).toBe('a5');
   });
 
+  it('snaps from a blank row’s centre line halfway between two columns, its farthest point', () => {
+    const e5 = at('e5');
+    const e6 = at('e6');
+    expect(near((e5.x + e6.x) / 2, e5.y + pitch)).not.toBeNull();
+    const a5 = at('a5');
+    expect(near(a5.x + pitch / 2, a5.y - pitch)).not.toBeNull();
+  });
+
   it('snaps to nothing well off the board', () => {
     const a1 = at('a1');
     expect(near(a1.x - pitch * 1.5, a1.y)).toBeNull();
