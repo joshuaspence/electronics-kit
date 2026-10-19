@@ -164,8 +164,11 @@ the current. An unlockable **multimeter** shows volts and milliamps for older ch
   and − labels sit at the right-hand end, clear of the leads.
 - **Hole size on a level's board:** the board fits the screen's height, so its row count sets the
   hole size. Levels use only the top rails (14 rows rather than 17) and only the columns they
-  need; that gives 34.5 px between holes at 1180×820, up from about 29 but still short of the
-  ~9 mm target. The sandbox's half-size board keeps both rail pairs.
+  need, and on a landscape screen the parts bin, tools and Volty stand in a column beside the
+  board, with the goal beside the title, so the board takes whatever height is left. At 1180×820
+  that gives 47.1 px between half-size holes (about 9 mm on an iPad), 65 px on the mini board and
+  274 px between snap posts. A narrow or portrait screen stacks them as before. The sandbox's
+  half-size board keeps both rail pairs.
 - **Snap board** (chapter 1): a grid of big metal posts (`{ kind: 'snap', rows, columns }`), 110
   board units apart against the breadboard's 40. Every part reaches the next post; wires go from any
   post to any other. A post takes any number of parts and is drawn above them, so a wire can always
