@@ -67,13 +67,24 @@ describe('hintFor', () => {
     });
   });
 
+  it('takes away a part the child put where the solution has none, before showing one', () => {
+    const stray = part('stray', 'wire', [post(1, 1), post(2, 3)]);
+    expect(hintFor(level, { parts: [battery, stray] }, 1)).toEqual({
+      kind: 'remove-part',
+      part: stray,
+    });
+  });
+
+  it('takes away a second part in the same place as a solution part', () => {
+    const w1 = part('mine', 'wire', [post(1, 1), post(2, 1)]);
+    const again = part('again', 'wire', [post(2, 1), post(1, 1)]);
+    expect(hintFor(level, { parts: [battery, w1, again] }, 1)).toEqual({
+      kind: 'remove-part',
+      part: again,
+    });
+  });
+
   it('nudges to switch on a circuit that only needs switching on', () => {
-    const switchLevel: Level = {
-      ...level,
-      parts: [battery],
-      goal: { kind: 'control-bulbs', bulbs: 1 },
-      solution: { place: [] },
-    };
     const build = {
       parts: [
         battery,
@@ -81,6 +92,12 @@ describe('hintFor', () => {
         part('b', 'bulb', [post(2, 2), post(2, 1)]),
         part('w', 'wire', [post(2, 1), post(1, 1)]),
       ],
+    };
+    const switchLevel: Level = {
+      ...level,
+      parts: build.parts,
+      goal: { kind: 'control-bulbs', bulbs: 1 },
+      solution: { place: [] },
     };
     expect(hintFor(switchLevel, build, 0)).toEqual({ kind: 'nudge', reason: 'switch-off' });
     // With nothing left to show, later hints nudge too.

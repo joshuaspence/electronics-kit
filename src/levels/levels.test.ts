@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { BuildEditor, toCircuit } from '../core/build';
+import { holesInStrip } from '../core/breadboard';
+import { BuildEditor, type Location, locationKey, toCircuit } from '../core/build';
+import { newSpec } from '../core/catalogue';
 import { hintFor } from '../core/hints';
 import { checkGoal } from '../core/levels';
 import { levels } from './index';
@@ -24,7 +26,36 @@ describe('levels', () => {
       });
 
       it('can be finished by following Volty’s hints', () => {
+        followHints(start());
+      });
+
+      it('can be finished by following Volty’s hints after a misplaced part', () => {
         const editor = start();
+        const spare = level.tray.find(({ kind }) => editor.remaining(kind) > 0)!;
+        const spec = newSpec(spare.kind);
+        const solved = new Set(level.solution.place.map((p) => legsKey(p.at)));
+        const { board } = level;
+
+        // Somewhere joined to the level's own legs, so it can short the battery or bridge a loop.
+        const legs = [...level.parts, ...level.solution.place]
+          .flatMap((p) => p.at)
+          .flatMap((leg) =>
+            leg.kind === 'snap' || board.kind !== 'breadboard'
+              ? [leg]
+              : holesInStrip(board.layout, leg),
+          );
+        const misplaced = legs
+          .flatMap((from) => legs.map((to) => [from, to] as const))
+          .find(
+            (at) =>
+              !solved.has(legsKey(at)) &&
+              editor.apply({ kind: 'place', part: { id: 'misplaced', spec, at, fixed: false } }).ok,
+          );
+        expect(misplaced).toBeDefined();
+        followHints(editor);
+      });
+
+      function followHints(editor: BuildEditor) {
         for (let step = 1; step <= 20; step++) {
           if (checkGoal(level.goal, toCircuit(level.board, editor.build)).met) {
             return;
@@ -40,7 +71,7 @@ describe('levels', () => {
           }
         }
         throw new Error('Hints did not finish the level');
-      });
+      }
 
       it('can be finished at par with its tray', () => {
         const editor = start();
@@ -66,3 +97,8 @@ describe('strips-2', () => {
     expect(bulb.pins).toEqual([battery.pins[0], battery.pins[0]]);
   });
 });
+
+/** The same for the same two locations, either way round. */
+function legsKey(at: readonly [Location, Location]): string {
+  return at.map(locationKey).sort().join(' ');
+}

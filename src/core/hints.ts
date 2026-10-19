@@ -11,23 +11,34 @@ export type Hint =
   | { readonly kind: 'show-part'; readonly part: PlacedPart };
 
 /**
- * The hint for the child's `step`th request (0 for the first) on this build. Later steps show the
- * next part of the solution the build doesn't have yet: first a starting part to take away, then a
- * part to place. Once the build has every solution part, it nudges again.
+ * The hint for the child's `step`th request (0 for the first) on this build. Later steps show one
+ * difference from the solved build at a time: first a part to take away (a starting part the
+ * solution removes, or one the child put where the solution has none), then a part to place. Once
+ * the build matches, it nudges again.
  */
 export function hintFor(level: Level, build: Build, step: number): Hint {
   if (step > 0) {
-    const toRemove = (level.solution.remove ?? [])
-      .map((id) => build.parts.find((p) => p.id === id))
-      .find((part) => part !== undefined);
-    if (toRemove) {
-      return { kind: 'remove-part', part: toRemove };
+    const removed = new Set(level.solution.remove ?? []);
+    const missing = [
+      ...level.parts.filter((part) => !removed.has(part.id)),
+      ...level.solution.place,
+    ];
+    const extras: PlacedPart[] = [];
+
+    // One to one, so a second part in a solution part's place is an extra holding back the tray.
+    for (const part of build.parts) {
+      const match = missing.findIndex((wanted) => samePlace(part, wanted));
+      if (match >= 0) {
+        missing.splice(match, 1);
+      } else if (!part.fixed) {
+        extras.push(part);
+      }
     }
-    const toPlace = level.solution.place.find(
-      (part) => !build.parts.some((p) => samePlace(p, part)),
-    );
-    if (toPlace) {
-      return { kind: 'show-part', part: toPlace };
+    if (extras[0]) {
+      return { kind: 'remove-part', part: extras[0] };
+    }
+    if (missing[0]) {
+      return { kind: 'show-part', part: missing[0] };
     }
   }
   const circuit = toCircuit(level.board, build);

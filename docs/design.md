@@ -166,9 +166,10 @@ the current. An unlockable **multimeter** shows volts and milliamps for older ch
 - **Hints escalate** (`src/core/hints.ts`). After 30 s without a change Volty bobs and offers help;
   tapping Volty asks. The first hint is a nudge saying what is wrong (a broken loop, a short
   circuit, a switch outside the loop, a circuit that only needs switching on). Each further tap
-  points at one step of the level's solution: a starting part to remove (it pulses), then a part to
-  place (drawn faintly where it goes). Never an automatic solution. Any hint costs the "no hints"
-  star. Tests check that following the hints alone finishes every level.
+  points at one step of the level's solution: a part to remove (it pulses), whether a starting part
+  or one the child put where the solution has none, then a part to place (drawn faintly where it
+  goes). Never an automatic solution. Any hint costs the "no hints" star. Tests check that following
+  the hints alone finishes every level, from its start and from a build with a misplaced part.
 - A **"Why?" card** after each level explains the concept in a sentence or two, with "Tell me more"
   using real terms (volts, current, resistance) for older children.
 - **Australian English.** All text lives in string files from day one so translation is possible.
