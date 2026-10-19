@@ -25,17 +25,18 @@ describe('share codes', () => {
     parts: [
       battery,
       placed('w', newSpec('wire'), 'top+3', 'a3'),
-      placed('r', { kind: 'resistor', ohms: 470 }, 'b3', 'b6'),
+      placed('r', { kind: 'resistor', ohms: 4.7 }, 'b3', 'b6'),
       placed('l', newSpec('led'), 'c6', 'c8'),
       placed('s', { kind: 'switch', closed: true }, 'd8', 'd10'),
       placed('b', newSpec('bulb'), 'f20', 'f22'),
       placed('p', newSpec('button'), 'g30', 'g32'),
+      placed('c', newSpec('capacitor'), 'h40', 'h42'),
     ],
   };
 
   it('writes each placed part as a short token, leaving out the fixed battery', () => {
     expect(encodeCircuit(build)).toBe(
-      '1_w.top+3.a3_r.b3.b6.470_l.c6.c8_s.d8.d10.1_b.f20.f22_p.g30.g32',
+      '1_w.top+3.a3_r.b3.b6.4.7_l.c6.c8_s.d8.d10.1_b.f20.f22_p.g30.g32_c.h40.h42.0.001',
     );
   });
 
@@ -58,6 +59,8 @@ describe('share codes', () => {
       '1_b.a1', // a leg missing
       '1_r.a1.a4', // a resistor without its value
       '1_r.a1.a4.-5', // a resistor with a value that can't be
+      '1_r.a1.a4.1e12', // a resistor too big for its colour code
+      '1_r.a1.a4.4.7.1', // a value with a field too many
       '1_s.a1.a3.2', // a switch neither on nor off
       '1_b.a1.a3.9', // a value on a part that has none
       '1_b.a1.a3_w.a3.a9', // two legs in one hole

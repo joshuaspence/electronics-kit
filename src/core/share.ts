@@ -2,13 +2,15 @@ import { type BoardLayout, holeName, parseHole } from './breadboard';
 import type { Build, PartSpec, PlacedPart } from './build';
 import { newSpec } from './catalogue';
 import type { PartKind } from './circuit';
+import { colourBands } from './colourCode';
 
 /**
  * Share links (docs/design.md §2): a sandbox circuit in the URL fragment, `#c=<code>`, which never
  * reaches a server. The code is short text rather than compressed bytes: `1` for this version,
  * then a token per part the child placed, `<kind>.<hole>.<hole>[.<value>]`, joined by `_`. A 100 Ω
- * resistor from b3 to b6 is `r.b3.b6.100`; a closed switch `s.e3.e5.1`. The level's own fixed
- * parts, such as the battery, aren't in it: the sandbox places them.
+ * resistor from b3 to b6 is `r.b3.b6.100`; a closed switch `s.e3.e5.1`. The value comes last and
+ * a hole name has no `.`, so the value keeps any decimal point of its own: `c.a1.a3.0.001`. The
+ * level's own fixed parts, such as the battery, aren't in it: the sandbox places them.
  */
 
 const VERSION = '1';
@@ -51,12 +53,12 @@ export function decodeCircuit(layout: BoardLayout, initial: Build, code: string)
   const taken = new Set(initial.parts.flatMap((part) => part.at.map(holeKey)));
   const parts: PlacedPart[] = [];
   for (const [i, token] of tokens.entries()) {
-    const [letter, from, to, value, ...extra] = token.split('.');
+    const [letter, from, to, ...value] = token.split('.');
     const kind = KINDS.get(letter ?? '');
     const a = parseHole(layout, from ?? '');
     const b = parseHole(layout, to ?? '');
-    const spec = kind && specFor(kind, value);
-    if (!spec || !a || !b || extra.length > 0) {
+    const spec = kind && specFor(kind, value.length > 0 ? value.join('.') : undefined);
+    if (!spec || !a || !b) {
       return null;
     }
     for (const hole of [a, b]) {
@@ -95,7 +97,13 @@ function specFor(kind: PartKind, value: string | undefined): PartSpec | null {
   const number = Number(value);
   switch (spec.kind) {
     case 'resistor':
-      return Number.isFinite(number) && number > 0 ? { ...spec, ohms: number } : null;
+      // The board draws a resistor's colour code, so a resistance it can't show would crash it.
+      try {
+        colourBands(number);
+      } catch {
+        return null;
+      }
+      return { ...spec, ohms: number };
     case 'capacitor':
       return Number.isFinite(number) && number > 0 ? { ...spec, farads: number } : null;
     case 'switch':
