@@ -59,9 +59,12 @@ the decision and the main reason for it. When the design changes, update this fi
   placing no more than the level's par, one for using no hints. No level has time pressure.
 - **Goals** (`src/core/levels.ts`) are evaluated on the DC solution. A bulb is *lit* at a quarter
   of full brightness or more. `light-bulbs` needs N lit bulbs with every switch closed and button
-  pressed; `control-bulbs` also needs every bulb dark with every switch open and button released.
-  No goal is met while a battery is shorted, and a failed check says why (short circuit, too few
-  lit, not controlled, no switch) so hints can respond to it.
+  pressed; `control-bulbs` also needs every bulb dark with every switch open and button released;
+  `every-control` also needs them dark with any one switch open or button released and the rest
+  on. No goal is met while a battery is shorted, and a failed check says why (short circuit, too
+  few lit, not controlled, no switch, not every control) so hints can respond to it.
+- **No level needs two buttons held at once:** a mouse or touchpad has one pointer, and Chromebooks
+  are a primary target (§9). Levels about needing several controls use switches.
 - **Level data** (`src/levels/`): each level has a board, its starting parts (fixed, or movable
   ones that count against the tray), a goal, a tray, a par and a **solution**. Unit tests check
   every level starts unsolved and that its solution finishes it at par using only its tray; hints
@@ -72,8 +75,8 @@ the decision and the main reason for it. When the design changes, update this fi
 - **Chapter 2 levels** (mini breadboard): *Hidden wires* (a bulb in the battery's columns, no
   wires), *Sneaky strip* (a bulb with both legs in one column, shorted out by the strip), *One
   column out* (a wire one column off), *Flick the switch*, *Press to glow* (a button), *All
-  together* (one switch, two bulbs) and *Out of the loop* (move a switch from beside the loop into
-  it).
+  together* (one switch, two bulbs), *Out of the loop* (move a switch from beside the loop into it)
+  and *Both switches* (two switches in series: an AND).
 - **Finishing:** the first time the goal is met *and* the goal's bulbs are lit with the switches as
   the child left them (so a switch level finishes when they switch it on), a card floats over the
   bottom of the screen with the stars and the "Why?" text, leaving the working circuit in view, and

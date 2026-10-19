@@ -156,4 +156,27 @@ export const chapter2: readonly Level[] = [
       place: [part('s', 'switch', hole('e', 1), hole('e', 5))],
     },
   },
+  {
+    id: 'switch-4',
+    chapter: 2,
+    board,
+    parts: [battery],
+    goal: { kind: 'every-control', bulbs: 1 },
+    tray: [
+      { kind: 'bulb', count: 1 },
+      { kind: 'switch', count: 2 },
+      { kind: 'wire', count: 3 },
+    ],
+    par: 4,
+    // Switches rather than buttons, so a mouse or touchpad can have both on at once. In the one
+    // loop, one after the other, either switch off makes a gap.
+    solution: {
+      place: [
+        part('s1', 'switch', hole('e', 3), hole('e', 5)),
+        part('s2', 'switch', hole('f', 5), hole('f', 7)),
+        part('b', 'bulb', hole('g', 7), hole('g', 9)),
+        part('w', 'wire', hole('j', 9), hole('j', 1)),
+      ],
+    },
+  },
 ];

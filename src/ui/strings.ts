@@ -38,6 +38,8 @@ export const strings = {
     'not-controlled':
       'The bulb stays on even when the switch is off. Put the switch in the loop so it can make a gap.',
     'no-control': 'This one needs a switch or a button in the loop.',
+    'not-every-control':
+      'The bulb still lights with one of them off. Put them one after the other in the loop, so the bulb needs them all.',
     'switch-off': 'Your circuit looks ready. Try switching it on!',
   },
   hintPlace: (part: string) => `Try putting a ${part} where I’ve shown it.`,
