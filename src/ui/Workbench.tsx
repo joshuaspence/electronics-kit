@@ -40,12 +40,19 @@ interface WorkbenchProps {
   initial: Build;
   /** Called with the build after every change, edits and flipped switches alike. */
   onChange?: (build: Build) => void;
+  /** What one of Volty's hints points at: a part to place, or a placed part to take away. */
+  hint?: { readonly place?: PlacedPart; readonly removeId?: string } | undefined;
 }
 
 /** The board, the parts tray and the editing tools, wired to a BuildEditor. */
-export function Workbench({ board, tray, initial, onChange }: WorkbenchProps) {
+export function Workbench({ board, tray, initial, onChange, hint }: WorkbenchProps) {
   const { editor, build, newId, apply, setControl, undo, redo } = useEditor(board, tray, initial);
-  useEffect(() => onChange?.(build), [build, onChange]);
+  // Report only real changes to the build, not a parent passing a new callback.
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  });
+  useEffect(() => onChangeRef.current?.(build), [build]);
   const geometry = useMemo(() => geometryFor(board), [board]);
   const svgRef = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
@@ -288,6 +295,16 @@ export function Workbench({ board, tray, initial, onChange }: WorkbenchProps) {
         hot={hot}
         selectedId={selectedId}
         ghost={ghost}
+        hintGhost={
+          hint?.place
+            ? {
+                spec: hint.place.spec,
+                from: geometry.position(hint.place.at[0]),
+                to: geometry.position(hint.place.at[1]),
+              }
+            : null
+        }
+        hintedId={hint?.removeId ?? null}
         onHolePointerDown={onHolePointerDown}
         onPartPointerDown={onPartPointerDown}
       />

@@ -1,10 +1,15 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { type Build, toCircuit } from '../core/build';
+import { type Hint, hintFor } from '../core/hints';
 import { checkGoal, type Level, litNow, starsFor } from '../core/levels';
 import type { Stars } from '../core/progress';
 import { levelText } from '../levels/strings';
 import { strings } from './strings';
+import { Volty } from './Volty';
 import { Workbench } from './Workbench';
+
+/** After this long without a change, Volty offers to help (docs/design.md §6). */
+const IDLE_MS = 30_000;
 
 interface LevelScreenProps {
   level: Level;
@@ -18,12 +23,34 @@ export function LevelScreen({ level, onFinish, onNext, onBack }: LevelScreenProp
   const text = levelText[level.id]!;
   const initial = useMemo<Build>(() => ({ parts: level.parts }), [level]);
   const [stars, setStars] = useState<Stars | null>(null);
+  const [build, setBuild] = useState<Build>(initial);
+  const [hint, setHint] = useState<Hint | null>(null);
+  const [hintsUsed, setHintsUsed] = useState(0);
+  // Offer help after a while without progress. The timer records which build it went idle on, so
+  // any change starts the wait again.
+  const [idleBuild, setIdleBuild] = useState<Build | null>(null);
+  const idle = idleBuild === build;
+  useEffect(() => {
+    const timer = setTimeout(() => setIdleBuild(build), IDLE_MS);
+    return () => clearTimeout(timer);
+  }, [build]);
+
+  const askVolty = () => {
+    // Each request goes one step further: a nudge first, then the solution a part at a time.
+    setHint(hintFor(level, build, hintsUsed));
+    setHintsUsed((n) => n + 1);
+    setIdleBuild(null);
+  };
 
   const onChange = useCallback(
-    (build: Build) => {
+    (next: Build) => {
+      setBuild(next);
+      // A hint is about the circuit it was given for; once that changes, it's done its job.
+      setHint(null);
       if (stars !== null) {
         return;
       }
+      const build = next;
       // The goal must be met, and the bulbs must be glowing right now: a switch-controlled
       // circuit finishes when the child switches it on.
       const circuit = toCircuit(level.board, build);
@@ -32,11 +59,11 @@ export function LevelScreen({ level, onFinish, onNext, onBack }: LevelScreenProp
       }
       // Parts the level started with don't count as placed, even if the child moved them.
       const placed = build.parts.filter((p) => !level.parts.some((s) => s.id === p.id)).length;
-      const earned = starsFor(level, placed, 0);
+      const earned = starsFor(level, placed, hintsUsed);
       setStars(earned);
       onFinish(earned);
     },
-    [level, stars, onFinish],
+    [level, stars, hintsUsed, onFinish],
   );
 
   return (
@@ -69,7 +96,37 @@ export function LevelScreen({ level, onFinish, onNext, onBack }: LevelScreenProp
           )}
         </section>
       )}
-      <Workbench board={level.board} tray={level.tray} initial={initial} onChange={onChange} />
+      <Workbench
+        board={level.board}
+        tray={level.tray}
+        initial={initial}
+        onChange={onChange}
+        hint={
+          hint?.kind === 'show-part'
+            ? { place: hint.part }
+            : hint?.kind === 'remove-part'
+              ? { removeId: hint.part.id }
+              : undefined
+        }
+      />
+      {stars === null && (
+        <Volty
+          says={hint ? hintText(hint) : idle ? strings.stuck : null}
+          offering={idle}
+          onAsk={askVolty}
+        />
+      )}
     </main>
   );
+}
+
+function hintText(hint: Hint): string {
+  switch (hint.kind) {
+    case 'nudge':
+      return strings.hints[hint.reason];
+    case 'show-part':
+      return strings.hintPlace(strings.parts[hint.part.spec.kind].toLowerCase());
+    case 'remove-part':
+      return strings.hintRemove(strings.parts[hint.part.spec.kind].toLowerCase());
+  }
 }

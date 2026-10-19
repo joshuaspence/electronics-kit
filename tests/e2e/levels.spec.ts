@@ -119,3 +119,41 @@ test('keeps stars after a reload', async ({ page }) => {
 test('shows the version', async ({ page }) => {
   await expect(page.getByText(/^Version \d+\.\d+\.\d+ \(\w+\)$/)).toBeVisible();
 });
+
+test.describe('Volty', () => {
+  const askVolty = (page: Page) =>
+    page.getByRole('button', { name: 'Ask Volty for a hint' }).click();
+
+  test('nudges first, then shows a part, and a hint costs a star', async ({ page }) => {
+    await page.locator('[data-level="loop-3"]').click();
+
+    await askVolty(page);
+    await expect(page.getByRole('status').filter({ hasText: 'complete loop' })).toBeVisible();
+    await expect(page.locator('.part-ghost.part-hinted')).toHaveCount(0);
+
+    await askVolty(page);
+    await expect(page.getByText('Try putting a wire where I’ve shown it.')).toBeVisible();
+    await expect(page.locator('.part-wire.part-ghost.part-hinted')).toHaveCount(1);
+
+    await wire(page, 'p1-1', 'p2-4');
+    await expect(page.locator('.part-ghost.part-hinted')).toHaveCount(0);
+    await expect(page.getByLabel('2 of 3 stars')).toBeVisible();
+  });
+
+  test('points at a part to remove', async ({ page }) => {
+    await page.locator('[data-level="loop-5"]').click();
+    await askVolty(page);
+    await expect(page.getByText('Uh oh, a shortcut!', { exact: false })).toBeVisible();
+    await askVolty(page);
+    await expect(page.locator('[data-part="short-2"] .part-hinted')).toHaveCount(1);
+  });
+
+  test('offers help after 30 seconds without progress', async ({ page }) => {
+    await page.clock.install();
+    await page.goto('./');
+    await page.locator('[data-level="loop-1"]').click();
+    await expect(page.getByText('Stuck? Tap me for a hint!')).toHaveCount(0);
+    await page.clock.fastForward(31_000);
+    await expect(page.getByText('Stuck? Tap me for a hint!')).toBeVisible();
+  });
+});

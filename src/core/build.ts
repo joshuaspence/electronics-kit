@@ -244,7 +244,8 @@ export class BuildEditor {
   }
 }
 
-function locationKey(location: Location): string {
+/** A stable name for a location, equal for equal locations. */
+export function locationKey(location: Location): string {
   return location.kind === 'snap' ? `snap:${location.row}:${location.column}` : holeName(location);
 }
 

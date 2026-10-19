@@ -289,3 +289,108 @@ button:disabled {
   background: var(--board);
   border: 2px solid var(--board-edge);
 }
+
+.volty {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: min(420px, calc(100% - 32px));
+  pointer-events: none;
+}
+
+.volty-bubble,
+.volty-button {
+  pointer-events: auto;
+}
+
+.volty-bubble {
+  margin: 0 0 40px;
+  padding: 10px 14px;
+  border-radius: 16px 16px 4px;
+  background: #fff;
+  border: 2px solid var(--board-edge);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+}
+
+.volty-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+}
+
+.volty-label {
+  font-weight: 600;
+}
+
+.volty-body {
+  fill: #f28c28;
+  stroke: #b85f0f;
+  stroke-width: 3;
+}
+
+.volty-cap {
+  fill: #e6e1d6;
+  stroke: #8a8780;
+  stroke-width: 2;
+}
+
+.volty-plus {
+  fill: #2b2a28;
+  font-size: 14px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.volty-arm {
+  stroke: #b85f0f;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.volty-eye {
+  fill: #2b2a28;
+}
+
+.volty-smile {
+  fill: none;
+  stroke: #2b2a28;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.volty-offering svg {
+  animation: volty-bob 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes volty-bob {
+  to {
+    transform: translateY(-6px);
+  }
+}
+
+.part-hinted {
+  animation: hint-pulse 0.9s ease-in-out infinite alternate;
+}
+
+.part-ghost.part-hinted {
+  opacity: 0.6;
+}
+
+@keyframes hint-pulse {
+  to {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .volty-offering svg,
+  .part-hinted {
+    animation: none;
+  }
+}
