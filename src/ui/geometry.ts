@@ -43,6 +43,7 @@ const BREADBOARD = { pitch: 40, margin: 30, radius: 9 };
 const BREADBOARD_SPANS: Partial<Record<PartKind, number>> = {
   battery: 2,
   bulb: 2,
+  led: 2,
   resistor: 3,
   switch: 2,
   button: 2,

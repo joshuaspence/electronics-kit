@@ -14,7 +14,7 @@ import {
   type PlacedPart,
   toCircuit,
 } from '../core/build';
-import { bulbBrightness, isShorted, solveDc } from '../core/dc';
+import { bulbBrightness, isShorted, ledBrightness, solveDc } from '../core/dc';
 import { flowSpeed } from '../core/flow';
 import type { PartAllowance } from '../core/levels';
 import { Board, type Ghost } from './Board';
@@ -81,6 +81,8 @@ export function Workbench({ board, tray, initial, onChange, hint, finished }: Wo
     flows.set(part.id, flowSpeed(reading.current));
     if (part.kind === 'bulb') {
       brightness.set(part.id, bulbBrightness(part, reading));
+    } else if (part.kind === 'led') {
+      brightness.set(part.id, ledBrightness(part, reading));
     } else if (part.kind === 'battery' && isShorted(part, reading)) {
       hot.add(part.id);
     }

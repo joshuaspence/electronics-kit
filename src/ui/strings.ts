@@ -1,5 +1,17 @@
 import type { PartKind } from '../core/circuit';
 
+/** A part's name mid-sentence, alone and with its article, which "LED" can't be derived for. */
+const partInSentence: Record<PartKind, { readonly noun: string; readonly a: string }> = {
+  battery: { noun: 'battery', a: 'a battery' },
+  bulb: { noun: 'bulb', a: 'a bulb' },
+  led: { noun: 'LED', a: 'an LED' },
+  resistor: { noun: 'resistor', a: 'a resistor' },
+  capacitor: { noun: 'capacitor', a: 'a capacitor' },
+  switch: { noun: 'switch', a: 'a switch' },
+  button: { noun: 'button', a: 'a button' },
+  wire: { noun: 'wire', a: 'a wire' },
+};
+
 // Player-facing text, in Australian English (docs/design.md §6).
 export const strings = {
   title: 'Electronics Kit',
@@ -42,8 +54,9 @@ export const strings = {
       'The bulb still lights with one of them off. Put them one after the other in the loop, so the bulb needs them all.',
     'switch-off': 'Your circuit looks ready. Try switching it on!',
   },
-  hintPlace: (part: string) => `Try putting a ${part} where I’ve shown it.`,
-  hintRemove: (part: string) => `That ${part} is getting in the way. Try removing it.`,
+  hintPlace: (kind: PartKind) => `Try putting ${partInSentence[kind].a} where I’ve shown it.`,
+  hintRemove: (kind: PartKind) =>
+    `That ${partInSentence[kind].noun} is getting in the way. Try removing it.`,
   undo: 'Undo',
   redo: 'Redo',
   rotate: 'Rotate',

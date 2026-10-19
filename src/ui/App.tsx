@@ -19,6 +19,8 @@ import { Workbench } from './Workbench';
 // Free-build sandboxes, until the sandbox mode in M3: a mini breadboard and a snap board.
 const tray: readonly PartAllowance[] = [
   { kind: 'bulb', count: 2 },
+  { kind: 'led', count: 2 },
+  { kind: 'resistor', count: 2 },
   { kind: 'switch', count: 1 },
   { kind: 'button', count: 1 },
   { kind: 'wire', count: 6 },

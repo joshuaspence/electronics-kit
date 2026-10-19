@@ -132,8 +132,8 @@ function hintText(hint: Hint): string {
     case 'nudge':
       return strings.hints[hint.reason];
     case 'show-part':
-      return strings.hintPlace(strings.parts[hint.part.spec.kind].toLowerCase());
+      return strings.hintPlace(hint.part.spec.kind);
     case 'remove-part':
-      return strings.hintRemove(strings.parts[hint.part.spec.kind].toLowerCase());
+      return strings.hintRemove(hint.part.spec.kind);
   }
 }
