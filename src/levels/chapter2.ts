@@ -56,6 +56,22 @@ export const chapter2: readonly Level[] = [
     solution: { remove: ['bulb'], place: [part('b', 'bulb', hole('e', 1), hole('e', 3))] },
   },
   {
+    id: 'strips-3',
+    chapter: 2,
+    board,
+    // The wire from the battery's column 1 lands in column 4, one short of the bulb's column 5.
+    parts: [
+      battery,
+      part('bulb', 'bulb', hole('f', 5), hole('f', 7), true),
+      part('back', 'wire', hole('j', 7), hole('j', 3), true),
+      part('off', 'wire', hole('h', 1), hole('h', 4)),
+    ],
+    goal: { kind: 'light-bulbs', bulbs: 1 },
+    tray: [{ kind: 'wire', count: 1 }],
+    par: 1,
+    solution: { remove: ['off'], place: [part('w', 'wire', hole('h', 1), hole('h', 5))] },
+  },
+  {
     id: 'switch-1',
     chapter: 2,
     board,
@@ -115,6 +131,29 @@ export const chapter2: readonly Level[] = [
         part('b2', 'bulb', hole('g', 7), hole('g', 9)),
         part('w', 'wire', hole('j', 9), hole('j', 1)),
       ],
+    },
+  },
+  {
+    id: 'switch-3',
+    chapter: 2,
+    board,
+    // The bulb is lit through the wire, while the switch sits off in columns 7 and 9, joined to
+    // nothing: flicking it changes nothing until it takes the wire's place in the loop.
+    parts: [
+      battery,
+      part('bulb', 'bulb', hole('f', 3), hole('f', 5), true),
+      part('wire', 'wire', hole('j', 5), hole('j', 1)),
+      part('switch', 'switch', hole('e', 7), hole('e', 9)),
+    ],
+    goal: { kind: 'control-bulbs', bulbs: 1 },
+    tray: [
+      { kind: 'switch', count: 1 },
+      { kind: 'wire', count: 1 },
+    ],
+    par: 1,
+    solution: {
+      remove: ['wire', 'switch'],
+      place: [part('s', 'switch', hole('e', 1), hole('e', 5))],
     },
   },
 ];

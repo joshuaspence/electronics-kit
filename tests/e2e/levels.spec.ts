@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
+import { levels } from '../../src/levels';
 
 async function centre(locator: Locator) {
   const box = await locator.boundingBox();
@@ -29,7 +30,7 @@ test.beforeEach(async ({ page }) => {
 test('lists the levels by chapter', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Chapter 1: Make a loop' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Chapter 2: On and off' })).toBeVisible();
-  await expect(page.locator('[data-level]')).toHaveCount(10);
+  await expect(page.locator('[data-level]')).toHaveCount(levels.length);
 });
 
 test('finishes a level, earns stars and moves on', async ({ page }) => {

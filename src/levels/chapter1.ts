@@ -102,4 +102,22 @@ export const chapter1: readonly Level[] = [
       place: [wire('w1', post(2, 1), post(3, 3)), wire('w2', post(1, 2), post(3, 4))],
     },
   },
+  {
+    id: 'loop-6',
+    chapter: 1,
+    board: { kind: 'snap', rows: 3, columns: 4 },
+    // One gap on each side of the bulb: closing just one still lights nothing.
+    parts: [
+      battery,
+      bulb('bulb', post(3, 3), post(3, 4), true),
+      wire('plus', post(1, 1), post(2, 1), true),
+      wire('minus', post(1, 2), post(2, 4), true),
+    ],
+    goal: { kind: 'light-bulbs', bulbs: 1 },
+    tray: [{ kind: 'wire', count: 2 }],
+    par: 2,
+    solution: {
+      place: [wire('w1', post(2, 1), post(3, 3)), wire('w2', post(2, 4), post(3, 4))],
+    },
+  },
 ];

@@ -68,10 +68,12 @@ the decision and the main reason for it. When the design changes, update this fi
   can show the solution's parts later. Level text lives in `src/levels/strings.ts`.
 - **Chapter 1 levels:** *Light it up* (bulb and two wires), *The long way round* (a far-away bulb),
   *Mind the gap* (one missing wire), *Double bright* (two bulbs in one loop), *Shortcut!* (remove a
-  wire that shorts the battery).
+  wire that shorts the battery) and *Two gaps* (closing one gap still lights nothing).
 - **Chapter 2 levels** (mini breadboard): *Hidden wires* (a bulb in the battery's columns, no
-  wires), *Sneaky strip* (a bulb with both legs in one column, shorted out by the strip), *Flick the
-  switch*, *Press to glow* (a button) and *All together* (one switch, two bulbs).
+  wires), *Sneaky strip* (a bulb with both legs in one column, shorted out by the strip), *One
+  column out* (a wire one column off), *Flick the switch*, *Press to glow* (a button), *All
+  together* (one switch, two bulbs) and *Out of the loop* (move a switch from beside the loop into
+  it).
 - **Finishing:** the first time the goal is met *and* the goal's bulbs are lit with the switches as
   the child left them (so a switch level finishes when they switch it on), a card floats over the
   bottom of the screen with the stars and the "Why?" text, leaving the working circuit in view, and

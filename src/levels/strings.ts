@@ -45,6 +45,12 @@ export const levelText: Readonly<Record<string, LevelText>> = {
     why: 'Electricity takes the easiest path. A wire straight from one end of the battery to the other is a short circuit: it skips the bulb and makes the battery hot.',
     more: 'A wire has almost no resistance, so a wire across the battery lets a huge current flow: about 6 amps here, twenty times what the bulb needs. Nearly all of it goes through the wire, not the bulb.',
   },
+  'loop-6': {
+    title: 'Two gaps',
+    goal: 'This loop is broken in more than one place. Fix every gap to light the bulb.',
+    why: 'Fixing one gap isn’t enough. Electricity has to get all the way round, so every gap in the loop must be closed.',
+    more: 'With even one gap, the circuit is still open and the current is zero. Electricians check a broken circuit one piece at a time, because there may be more than one fault.',
+  },
   'strips-1': {
     title: 'Hidden wires',
     goal: 'This is a breadboard. Holes in the same column are joined underneath. Light the bulb.',
@@ -57,6 +63,12 @@ export const levelText: Readonly<Record<string, LevelText>> = {
     why: 'Both legs of the bulb were in the same column, so the strip joined them both to the same end of the battery. A bulb only lights when its legs join different ends of the loop.',
     more: 'With both legs on one strip, there is no voltage across the bulb: both legs get the same push. With no difference in push, no current flows through it. We say the bulb is shorted out.',
   },
+  'strips-3': {
+    title: 'One column out',
+    goal: 'One wire is in the wrong column. Find it and move it so the bulb lights.',
+    why: 'The wire’s end was one column away from the bulb’s leg. Different columns aren’t joined, so the loop had a gap.',
+    more: 'On a breadboard, being one hole out is as bad as a missing wire. When a breadboard circuit doesn’t work, the first thing to check is that every leg is in the column you meant.',
+  },
   'switch-1': {
     title: 'Flick the switch',
     goal: 'Add a switch so you can turn the bulb on and off. Tap the switch to flick it.',
@@ -68,6 +80,12 @@ export const levelText: Readonly<Record<string, LevelText>> = {
     goal: 'Make one switch turn two bulbs on and off.',
     why: 'When everything is in one loop, one gap stops it all. That’s how one switch can control lots of lights.',
     more: 'The switch and both bulbs are in series, so the same current flows through each of them. Open the switch and the current is zero everywhere in the loop.',
+  },
+  'switch-3': {
+    title: 'Out of the loop',
+    goal: 'The switch doesn’t do anything yet. Put it in the loop so it turns the bulb on and off.',
+    why: 'A switch only works when the electricity has to go through it. Off to the side, it can’t make a gap in the loop.',
+    more: 'A switch must be in series with what it controls: the current has to flow through the switch as well as the bulb. A switch outside the loop has no current through it, so opening it changes nothing.',
   },
   'button-1': {
     title: 'Press to glow',
