@@ -83,6 +83,8 @@ export const strings = {
     'not-every-control':
       'The bulb still lights with one of them off. Put them one after the other in the loop, so the bulb needs them all.',
     'switch-off': 'Your circuit looks ready. Try switching it on!',
+    'fades-too-fast':
+      'It goes dark as soon as you let go. Something beside the bulb needs to store electricity and keep it glowing.',
   },
   hintPlace: (kind: PartKind) => `Try putting ${partInSentence[kind].a} where I’ve shown it.`,
   hintRemove: (kind: PartKind) =>
@@ -94,6 +96,9 @@ export const strings = {
   zoomIn: 'Zoom in',
   zoomOut: 'Zoom out',
   meter: 'Meter',
+  speedLabel: 'Speed',
+  // Real time, then slow motion: a quarter and a tenth of real time.
+  speed: (speed: number) => (speed === 1 ? 'Speed 1×' : speed === 0.25 ? 'Speed ¼×' : 'Speed ⅒×'),
   light: 'Light',
   dark: 'Dark',
   lightLabel: 'Light on the sensor',

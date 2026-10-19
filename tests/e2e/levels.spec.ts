@@ -325,6 +325,31 @@ test('controls a bulb with a switch on the breadboard', async ({ page }) => {
   await expect(page.getByText('You did it!')).toBeVisible();
 });
 
+test('keeps a bulb glowing from a capacitor after the button is let go', async ({ page }) => {
+  await page.locator('[data-level="out-6"]').click();
+
+  // + rail into column 3, a button to 5, the bulb and the capacitor side by side from 5 to 7, and
+  // 7 back to the − rail.
+  await wire(page, 'top+3', 'a3');
+  await drag(page, page.locator('[data-tray="button"]'), await between(page, 'b3', 'b5'));
+  await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'c5', 'c7'));
+  await drag(page, page.locator('[data-tray="capacitor"]'), await between(page, 'd5', 'd7'));
+  await wire(page, 'a7', 'top-7');
+  await expect(page.getByRole('button', { name: 'Speed' })).toHaveText('Speed 1×');
+
+  // Holding the button lights the bulb and charges the capacitor; that alone doesn't finish it.
+  const button = await centre(page.locator('.board .part-button:not(.part-ghost) .button-body'));
+  await page.mouse.move(button.x, button.y);
+  await page.mouse.down();
+  await expect(page.locator('.board .capacitor-charge')).toHaveCount(1);
+  await page.waitForTimeout(500);
+  await expect(page.getByText('You did it!')).toHaveCount(0);
+
+  // Let go, and the capacitor keeps the bulb glowing: that's the goal.
+  await page.mouse.up();
+  await expect(page.getByText('You did it!')).toBeVisible();
+});
+
 test('saves an LED with a resistor', async ({ page }) => {
   await page.locator('[data-level="res-1"]').click();
 

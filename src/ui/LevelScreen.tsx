@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { type Build, toCircuit } from '../core/build';
 import { type Hint, hintFor } from '../core/hints';
-import { checkGoal, type Level, litNow, starsFor } from '../core/levels';
+import { checkGoal, finishedNow, type Level, starsFor } from '../core/levels';
+import type { CircuitSolution } from '../core/mna';
 import type { Stars } from '../core/progress';
 import { type LevelText, levelText } from '../levels/strings';
 import { Confetti } from './Confetti';
@@ -46,7 +47,7 @@ export function LevelScreen({ level, onFinish, onNext, onBack, meter }: LevelScr
   };
 
   const onChange = useCallback(
-    (next: Build) => {
+    (next: Build, shown: CircuitSolution) => {
       setBuild(next);
       // A hint is about the circuit it was given for; once that changes, it's done its job.
       setHint(null);
@@ -54,10 +55,10 @@ export function LevelScreen({ level, onFinish, onNext, onBack, meter }: LevelScr
         return;
       }
       const build = next;
-      // The goal must be met, and the lights must be glowing right now: a switch-controlled
+      // The goal must be met, and the child must see it working on the board: a switch-controlled
       // circuit finishes when the child switches it on.
       const circuit = toCircuit(level.board, build);
-      if (!checkGoal(level.goal, circuit).met || litNow(circuit) < level.goal.lights) {
+      if (!checkGoal(level.goal, circuit).met || !finishedNow(level.goal, circuit, shown)) {
         return;
       }
       // Parts the level started with don't count as placed, even if the child moved them.

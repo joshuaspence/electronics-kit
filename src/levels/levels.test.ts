@@ -3,7 +3,9 @@ import { holesInStrip } from '../core/breadboard';
 import { BuildEditor, type Location, locationKey, toCircuit } from '../core/build';
 import { newSpec } from '../core/catalogue';
 import { hintFor } from '../core/hints';
+import { isShorted } from '../core/dc';
 import { checkGoal } from '../core/levels';
+import { TransientSimulation } from '../core/transient';
 import { levels } from './index';
 import { chapterTitles, levelText } from './strings';
 
@@ -152,3 +154,21 @@ describe('pair-2', () => {
 function legsKey(at: readonly [Location, Location]): string {
   return at.map(locationKey).sort().join(' ');
 }
+
+describe('out-6', () => {
+  it('doesn’t call the empty capacitor’s inrush a short circuit when the button is pressed', () => {
+    const level = levels.find((l) => l.id === 'out-6')!;
+    const editor = new BuildEditor(level.board, level.tray, { parts: level.parts });
+    level.solution.place.forEach((part) => editor.apply({ kind: 'place', part }));
+    const sim = new TransientSimulation(toCircuit(level.board, editor.build));
+    const button = sim.circuit.parts.find((p) => p.kind === 'button')!;
+    sim.applyInput({ kind: 'button', partId: button.id, pressed: true });
+    const battery = sim.circuit.parts.find((p) => p.kind === 'battery')!;
+    for (let step = 0; step <= 500; step++) {
+      if (battery.kind === 'battery') {
+        expect(isShorted(battery, sim.solution.parts.get(battery.id)!), `step ${step}`).toBe(false);
+      }
+      sim.step();
+    }
+  });
+});

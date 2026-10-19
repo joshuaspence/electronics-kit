@@ -94,4 +94,23 @@ export const chapter7: readonly Level[] = [
     par: 4,
     solution: { place: loop('light-sensor', 'buzzer') },
   },
+  {
+    id: 'out-6',
+    chapter: 7,
+    board,
+    parts: [battery],
+    // The capacitor beside the bulb, after the button: it charges while the button is held, then
+    // keeps the bulb glowing, fading, once it is let go.
+    goal: { kind: 'keep-glowing', lights: 1, seconds: 1 },
+    tray: [
+      { kind: 'button', count: 1 },
+      { kind: 'bulb', count: 1 },
+      { kind: 'capacitor', count: 1 },
+      { kind: 'wire', count: 2 },
+    ],
+    par: 5,
+    solution: {
+      place: [...loop('button', 'bulb'), part('cap', 'capacitor', hole('d', 5), hole('d', 7))],
+    },
+  },
 ];
