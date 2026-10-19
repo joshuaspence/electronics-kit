@@ -15,6 +15,7 @@ export const chapterTitles: Readonly<Record<number, string>> = {
   3: 'Bright and dim',
   4: 'One way only',
   5: 'Slow it down',
+  6: 'Shortcuts',
 };
 
 export const levelText: Readonly<Record<string, LevelText>> = {
@@ -155,5 +156,23 @@ export const levelText: Readonly<Record<string, LevelText>> = {
     goal: 'This resistor is too small to save the LED. Swap it for the one in the bin, then light the LED.',
     why: 'The small resistor didn’t slow the electricity enough, so the LED would pop. A bigger resistor slows it more.',
     more: 'A resistor’s colour bands give its value. The first two bands are digits and the third says how many zeros follow: brown-black-black is 10 ohms, and brown-black-brown is 100 ohms.',
+  },
+  'short-1': {
+    title: 'Rail to rail',
+    goal: 'The battery is getting hot. Find the shortcut, take it away, then light the bulb.',
+    why: 'The wire went straight from + to −, with nothing in the way. Electricity rushed through it instead of going anywhere useful, and the battery got hot.',
+    more: 'A wire across a battery is a short circuit. The wire has almost no resistance, so the only thing holding back the current is the battery’s own tiny resistance, and the current is huge. A real battery can get hot enough to burn you, so never join its ends with a wire.',
+  },
+  'short-2': {
+    title: 'The way round',
+    goal: 'The bulb is in the loop, but it won’t light and the battery is hot. Fix it.',
+    why: 'The wire joined both of the bulb’s columns, so the electricity took the easy way round the bulb instead of going through it.',
+    more: 'The wire was in parallel with the bulb. Current shares itself between paths side by side, and almost all of it takes the one with least resistance: the wire. With nothing else in its way, that path is a short circuit.',
+  },
+  'short-3': {
+    title: 'Switch it safely',
+    goal: 'Switching this switch on makes a shortcut. Move it so it turns the bulb on and off safely.',
+    why: 'Beside the bulb, the switch made a way round it when it was on. In the bulb’s path, it makes a gap when it is off instead.',
+    more: 'A switch has almost no resistance when it is on, just like a wire. In parallel with the bulb it shorts the battery; in series with the bulb it controls it. Electricians always put a light switch in series with the light.',
   },
 };
