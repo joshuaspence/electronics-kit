@@ -1021,3 +1021,84 @@ button[aria-pressed='true'] {
     display: none;
   }
 }
+
+/*
+ * A short landscape screen, a phone on its side: the same layout as a tablet's, made compact so
+ * the column beside the board fits in the height (docs/design.md §9). Buttons stay 40px tall, a
+ * comfortable target for a finger.
+ */
+@media (orientation: landscape) and (max-height: 500px) {
+  :root {
+    font-size: 14px;
+  }
+
+  main.level {
+    padding: 6px 10px;
+  }
+
+  .level-header {
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+
+  .level-header h1 {
+    font-size: 1.25rem;
+    line-height: 1.2;
+  }
+
+  .level-goal {
+    font-size: 0.9rem;
+    line-height: 1.3;
+  }
+
+  button {
+    min-height: 40px;
+    padding: 4px 10px;
+    border-bottom-width: 4px;
+  }
+
+  .tray {
+    gap: 4px;
+    padding: 4px;
+  }
+
+  /* Two parts to a row, with the wires' line across the foot, so a full bin stays short. */
+  .workbench > .tray {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .workbench > .tray > .tray-info {
+    grid-column: 1 / -1;
+  }
+
+  .tray-item {
+    width: 100%;
+    padding: 4px 6px;
+    gap: 4px;
+  }
+
+  .tray-icon {
+    width: 44px;
+    height: 26px;
+  }
+
+  .tray-info {
+    min-height: 40px;
+  }
+
+  .warning {
+    margin-bottom: 4px;
+  }
+
+  .workbench > .tools {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin: 6px 0;
+  }
+
+  .volty-button svg {
+    width: 48px;
+    height: 62px;
+  }
+}

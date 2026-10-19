@@ -243,6 +243,11 @@ selected at all, so **Rotate** still turns the parts that come out of the tray.
   that gives 47.1 px between half-size holes (about 9 mm on an iPad), 65 px on the mini board and
   274 px between snap posts. Volty has a row of his own at the foot of that column, laid out with
   the rest rather than fixed to a corner, so on a short landscape screen he can't cover the tools.
+  A short landscape screen (500 px tall or less, a phone on its side) keeps that layout but makes it
+  compact: smaller type, 40 px buttons, the tools three to a row and the parts bin two to a row with
+  the wires' line across its foot, so every level fits 844×390 without scrolling. Its holes are
+  small there, 21 px between half-size holes (about 4 mm), which is why phones are a secondary
+  target (§9).
   A narrow or portrait screen stacks them as before, with Volty in the bottom-right corner. The
   sandbox's half-size board keeps both rail pairs.
 - **Snap board** (chapter 1): a grid of big metal posts (`{ kind: 'snap', rows, columns }`), 110
