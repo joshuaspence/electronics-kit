@@ -1,5 +1,5 @@
 import type { PartSpec } from '../core/build';
-import type { Point } from './geometry';
+import { BATTERY_ROOM, type Point } from './geometry';
 import { strings } from './strings';
 
 /** Distance between flowing dots, in board units. */
@@ -58,10 +58,12 @@ export function PartShape({
     );
   }
 
+  // A battery beside the board has leads instead of legs running between its holes.
+  const legs = !(spec.kind === 'battery' && from.x === to.x);
   return (
     <g className={className}>
-      <line className="leg" x1={from.x} y1={from.y} x2={to.x} y2={to.y} />
-      <Flow from={from} to={to} speed={flow} />
+      {legs && <line className="leg" x1={from.x} y1={from.y} x2={to.x} y2={to.y} />}
+      {legs && <Flow from={from} to={to} speed={flow} />}
       {body(spec, from, to, brightness)}
       {hot && (
         <text className="hot-label" x={mid.x} y={mid.y + 36}>
@@ -98,15 +100,33 @@ function body(spec: PartSpec, from: Point, to: Point, brightness: number) {
         </g>
       );
     }
-    case 'battery':
+    case 'battery': {
+      // With its legs one above the other it is plugged into a pair of rails: the pack sits
+      // beside the board, with a lead to each rail.
+      const beside = from.x === to.x;
+      const bx = beside ? from.x - BATTERY_ROOM + 20 : x;
       return (
         <g>
-          <rect className="body battery-body" x={x - 26} y={y - 14} width={52} height={28} rx={5} />
-          <text className="body-label" x={x} y={y + 6}>
+          {beside && (
+            <>
+              <line className="lead lead-plus" x1={bx} y1={y} x2={from.x} y2={from.y} />
+              <line className="lead lead-minus" x1={bx} y1={y} x2={to.x} y2={to.y} />
+            </>
+          )}
+          <rect
+            className="body battery-body"
+            x={bx - 26}
+            y={y - 14}
+            width={52}
+            height={28}
+            rx={5}
+          />
+          <text className="body-label" x={bx} y={y + 6}>
             + −
           </text>
         </g>
       );
+    }
     case 'bulb':
       return (
         <g>

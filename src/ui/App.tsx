@@ -60,9 +60,35 @@ const snapBoard: { board: Board; initial: Build } = {
   },
 };
 
-/** `?sandbox=breadboard` or `?sandbox=snap` opens a free-build board, for development and tests. */
+// A half-size board with a centre gap and power rails (chapters 3–5), its battery in the top rails.
+const halfBoard: { board: Board; initial: Build } = {
+  board: { kind: 'breadboard', layout: { columns: 30, centreGap: true, rails: true } },
+  initial: {
+    parts: [
+      {
+        id: 'battery',
+        spec: newSpec('battery'),
+        at: [
+          { kind: 'rail', rail: 'top+', position: 1 },
+          { kind: 'rail', rail: 'top-', position: 1 },
+        ],
+        fixed: true,
+      },
+    ],
+  },
+};
+
+/**
+ * `?sandbox=breadboard`, `?sandbox=half` or `?sandbox=snap` opens a free-build board, for
+ * development and tests.
+ */
+const sandboxes: Readonly<Record<string, { board: Board; initial: Build }>> = {
+  breadboard,
+  half: halfBoard,
+  snap: snapBoard,
+};
 const sandboxParam = new URLSearchParams(window.location.search).get('sandbox');
-const sandbox = sandboxParam === 'snap' ? snapBoard : sandboxParam === null ? null : breadboard;
+const sandbox = sandboxParam === null ? null : (sandboxes[sandboxParam] ?? breadboard);
 
 type Screen = { readonly kind: 'levels' } | { readonly kind: 'level'; readonly index: number };
 

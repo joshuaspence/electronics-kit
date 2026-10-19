@@ -40,6 +40,44 @@ main {
   fill: var(--hole);
 }
 
+.rail line {
+  stroke-width: 3;
+}
+
+.lead {
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.lead-plus {
+  stroke: #e5484d;
+}
+
+.lead-minus {
+  stroke: #2b2b2b;
+}
+
+.rail text {
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.rail-plus line {
+  stroke: #e5484d;
+}
+
+.rail-plus text {
+  fill: #e5484d;
+}
+
+.rail-minus line {
+  stroke: #3d8bfd;
+}
+
+.rail-minus text {
+  fill: #3d8bfd;
+}
+
 .board-snap .hole {
   fill: #c9c4b8;
   stroke: #8a8780;
