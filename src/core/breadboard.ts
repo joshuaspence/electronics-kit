@@ -84,6 +84,18 @@ export function holeName(hole: Hole): string {
   return hole.kind === 'terminal' ? `${hole.row}${hole.column}` : `${hole.rail}${hole.position}`;
 }
 
+/** The hole a `holeName` names, or nothing if it names none on this board. */
+export function parseHole(layout: BoardLayout, name: string): Hole | null {
+  const terminal = /^([a-j])([1-9]\d*)$/.exec(name);
+  const rail = /^((?:top|bottom)[+-])([1-9]\d*)$/.exec(name);
+  const hole: Hole | null = terminal
+    ? { kind: 'terminal', row: terminal[1] as TerminalRow, column: Number(terminal[2]) }
+    : rail
+      ? { kind: 'rail', rail: rail[1] as Rail, position: Number(rail[2]) }
+      : null;
+  return hole && isValidHole(layout, hole) ? hole : null;
+}
+
 function isWithin(index: number, count: number): boolean {
   return Number.isInteger(index) && index >= 1 && index <= count;
 }

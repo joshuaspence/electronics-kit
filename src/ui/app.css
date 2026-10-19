@@ -637,6 +637,30 @@ button[aria-pressed='true'] {
   gap: 16px;
 }
 
+/* In the sandbox, Share sits at the far end of the header. */
+.level-header .share {
+  margin-left: auto;
+}
+
+.share-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.share-link input {
+  font: inherit;
+  flex: 1;
+  min-width: 16em;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 2px solid var(--plastic-edge);
+  background: var(--board);
+  color: var(--ink);
+}
+
 .level-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
