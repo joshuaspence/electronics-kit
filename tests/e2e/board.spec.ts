@@ -163,6 +163,25 @@ test('pops an LED straight across the battery, and Undo brings it back', async (
   await expect(page.getByRole('status')).toHaveText('');
 });
 
+test('does not puff a blown LED again when it is picked up', async ({ page }) => {
+  await drag(page, page.locator('[data-tray="led"]'), await between(page, 'e1', 'e3'));
+  await expect(page.locator('.part-led.part-blown')).toHaveCount(1);
+
+  const led = await centre(page.locator('.part-led.part-blown .led-body'));
+  await page.mouse.move(led.x, led.y);
+  await page.mouse.down();
+  await page.mouse.move(led.x + 60, led.y + 60, { steps: 5 });
+  await expect(page.locator('.held .part-led')).toHaveCount(1);
+  const running = await page.evaluate(
+    () =>
+      [...document.querySelectorAll('.held .led-puff, .part-ghost .led-puff')].flatMap((puff) =>
+        puff.getAnimations(),
+      ).length,
+  );
+  expect(running).toBe(0);
+  await page.mouse.up();
+});
+
 test('turns an LED round with two rotations, and it goes dark', async ({ page }) => {
   await ledBehindResistor(page);
   await expect(page.locator('.part-led .led-glow')).not.toHaveAttribute('opacity', '0');

@@ -49,6 +49,15 @@ main {
   opacity: 0.3;
 }
 
+/*
+ * A blown LED puffs once, as it pops. The copies drawn while it is dragged are new elements, which
+ * would replay the puff; its grey body already shows it is blown.
+ */
+.held .led-puff,
+.part-ghost .led-puff {
+  animation: none;
+}
+
 .board-body {
   fill: var(--board);
   stroke: var(--board-edge);
