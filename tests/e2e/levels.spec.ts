@@ -85,6 +85,48 @@ async function save(page: Page, data: unknown) {
   );
 }
 
+/**
+ * Holds storage back from the next page load. The returned function lets it through and resolves
+ * once the load has closed it.
+ */
+async function holdStorage(page: Page): Promise<() => Promise<void>> {
+  await page.addInitScript(() => {
+    const open = IDBFactory.prototype.open;
+    let release!: () => void;
+    const released = new Promise<void>((resolve) => (release = resolve));
+    let closed!: () => void;
+    const loaded = new Promise<void>((resolve) => (closed = resolve));
+    const close = IDBDatabase.prototype.close;
+    IDBDatabase.prototype.close = function () {
+      close.call(this);
+      closed();
+    };
+    Object.assign(window, { releaseStorage: () => (release(), loaded) });
+    IDBFactory.prototype.open = function (name: string, version?: number) {
+      let real: IDBOpenDBRequest;
+      const held = {
+        get result() {
+          return real.result;
+        },
+        get error() {
+          return real.error;
+        },
+      } as IDBOpenDBRequest;
+      void released.then(() => {
+        real = open.call(this, name, version);
+        real.onupgradeneeded = (event) => held.onupgradeneeded?.call(real, event);
+        real.onsuccess = (event) => held.onsuccess?.call(real, event);
+        real.onerror = (event) => held.onerror?.call(real, event);
+      });
+      return held;
+    };
+  });
+  return () =>
+    page.evaluate(() =>
+      (window as unknown as { releaseStorage: () => Promise<void> }).releaseStorage(),
+    );
+}
+
 /** Finishes *Mind the gap*, with three stars, by adding its one missing wire. */
 async function finishMindTheGap(page: Page) {
   await page.locator('[data-level="loop-3"]').click();
@@ -174,38 +216,7 @@ test('opens the sandbox with the parts unlocked so far', async ({ page }) => {
 });
 
 test('keeps a sandbox build when saved progress arrives late', async ({ page }) => {
-  // Hold storage back until `releaseStorage()`, which resolves once the load has closed it.
-  await page.addInitScript(() => {
-    const open = IDBFactory.prototype.open;
-    let release!: () => void;
-    const released = new Promise<void>((resolve) => (release = resolve));
-    let closed!: () => void;
-    const loaded = new Promise<void>((resolve) => (closed = resolve));
-    const close = IDBDatabase.prototype.close;
-    IDBDatabase.prototype.close = function () {
-      close.call(this);
-      closed();
-    };
-    Object.assign(window, { releaseStorage: () => (release(), loaded) });
-    IDBFactory.prototype.open = function (name: string, version?: number) {
-      let real: IDBOpenDBRequest;
-      const held = {
-        get result() {
-          return real.result;
-        },
-        get error() {
-          return real.error;
-        },
-      } as IDBOpenDBRequest;
-      void released.then(() => {
-        real = open.call(this, name, version);
-        real.onupgradeneeded = (event) => held.onupgradeneeded?.call(real, event);
-        real.onsuccess = (event) => held.onsuccess?.call(real, event);
-        real.onerror = (event) => held.onerror?.call(real, event);
-      });
-      return held;
-    };
-  });
+  const releaseStorage = await holdStorage(page);
   await page.goto('./');
 
   await page.getByRole('button', { name: 'Sandbox' }).click();
@@ -213,13 +224,21 @@ test('keeps a sandbox build when saved progress arrives late', async ({ page }) 
   await expect(page.locator('.board .part-bulb:not(.part-ghost)')).toHaveCount(1);
 
   // Let the load land and re-render the app, then give React two frames to show it.
-  await page.evaluate(() =>
-    (window as unknown as { releaseStorage: () => Promise<void> }).releaseStorage(),
-  );
+  await releaseStorage();
   await page.evaluate(
     () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
   );
   await expect(page.locator('.board .part-bulb:not(.part-ghost)')).toHaveCount(1);
+});
+
+test('offers to change player only once saved players arrive', async ({ page }) => {
+  // A player added or chosen before then would be lost when the saved players replaced them.
+  const releaseStorage = await holdStorage(page);
+  await page.goto('./');
+  await expect(page.getByRole('button', { name: 'Change player' })).toBeDisabled();
+
+  await releaseStorage();
+  await expect(page.getByRole('button', { name: 'Change player' })).toBeEnabled();
 });
 
 test('finishes a level, earns stars and moves on', async ({ page }) => {

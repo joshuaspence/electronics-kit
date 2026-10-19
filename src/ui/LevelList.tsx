@@ -12,7 +12,8 @@ interface LevelListProps {
   profile: Profile;
   onPlay: (level: Level) => void;
   onSandbox: () => void;
-  onPlayers: () => void;
+  /** Null until saved players arrive, which would undo a change made before them. */
+  onPlayers: (() => void) | null;
 }
 
 /**
@@ -41,7 +42,7 @@ export function LevelList({
           {profile.avatar}
         </span>
         {strings.playingAs(profile.name)}
-        <button type="button" onClick={onPlayers}>
+        <button type="button" onClick={onPlayers ?? undefined} disabled={!onPlayers}>
           {strings.changePlayer}
         </button>
       </p>

@@ -259,7 +259,7 @@ export function App() {
           initial: fullBoard.initial,
         })
       }
-      onPlayers={() => setScreen({ kind: 'players' })}
+      onPlayers={loaded ? () => setScreen({ kind: 'players' }) : null}
     />
   );
 }
