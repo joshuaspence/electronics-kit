@@ -20,7 +20,7 @@ import type { PartAllowance } from '../core/levels';
 import { Board, type Ghost } from './Board';
 import { geometryFor, type Orientation, orientationOf, type Point, secondLeg } from './geometry';
 import { strings } from './strings';
-import { playSnap, playWarning } from './sound';
+import { playChime, playSnap, playWarning } from './sound';
 import { Tray } from './Tray';
 import { useEditor } from './useEditor';
 
@@ -42,10 +42,12 @@ interface WorkbenchProps {
   onChange?: (build: Build) => void;
   /** What one of Volty's hints points at: a part to place, or a placed part to take away. */
   hint?: { readonly place?: PlacedPart; readonly removeId?: string } | undefined;
+  /** The level's goal has been met: chime as it happens, unless muted. */
+  finished?: boolean;
 }
 
 /** The board, the parts tray and the editing tools, wired to a BuildEditor. */
-export function Workbench({ board, tray, initial, onChange, hint }: WorkbenchProps) {
+export function Workbench({ board, tray, initial, onChange, hint, finished }: WorkbenchProps) {
   const { editor, build, newId, apply, setControl, undo, redo } = useEditor(board, tray, initial);
   // Report only real changes to the build, not a parent passing a new callback.
   const onChangeRef = useRef(onChange);
@@ -93,6 +95,15 @@ export function Workbench({ board, tray, initial, onChange, hint }: WorkbenchPro
     }
     wasShorted.current = shorted;
   }, [shorted, muted]);
+
+  // Chime once as the level is finished, the same way.
+  const wasFinished = useRef(false);
+  useEffect(() => {
+    if (finished && !wasFinished.current && !muted) {
+      playChime();
+    }
+    wasFinished.current = finished ?? false;
+  }, [finished, muted]);
 
   const find = (id: string) => build.parts.find((p) => p.id === id);
   const selected = selectedId === null ? undefined : find(selectedId);
