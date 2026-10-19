@@ -1,4 +1,9 @@
-import { type PointerEvent as ReactPointerEvent, type Ref, useState } from 'react';
+import {
+  type PointerEvent as ReactPointerEvent,
+  type Ref,
+  useState,
+  type WheelEvent as ReactWheelEvent,
+} from 'react';
 import type { Build, Location, PartSpec } from '../core/build';
 import type { BoardGeometry, Point } from './geometry';
 import { PartShape } from './PartShape';
@@ -37,6 +42,14 @@ interface BoardProps {
   hintedId: string | null;
   onHolePointerDown: (location: Location, event: ReactPointerEvent) => void;
   onPartPointerDown: (id: string, event: ReactPointerEvent) => void;
+  /**
+   * The part of a zoomable board in view, as a viewBox `[x, y, width, height]` in board units;
+   * otherwise the whole board is shown.
+   */
+  view?: readonly [number, number, number, number] | undefined;
+  /** A press on the board itself, between holes and parts: on a zoomable board, a pan. */
+  onBackgroundPointerDown?: ((event: ReactPointerEvent) => void) | undefined;
+  onWheel?: ((event: ReactWheelEvent) => void) | undefined;
 }
 
 /**
@@ -60,6 +73,9 @@ export function Board({
   hintedId,
   onHolePointerDown,
   onPartPointerDown,
+  view,
+  onBackgroundPointerDown,
+  onWheel,
 }: BoardProps) {
   const [hoverStrip, setHoverStrip] = useState<string | null>(null);
   const lit = (strip: string) => (targetStrips ? targetStrips.has(strip) : strip === hoverStrip);
@@ -105,13 +121,24 @@ export function Board({
   return (
     <svg
       ref={ref}
-      className={snap ? 'board board-snap' : 'board'}
-      viewBox={`0 0 ${width} ${height}`}
+      className={['board', snap && 'board-snap', view && 'board-zoomable']
+        .filter(Boolean)
+        .join(' ')}
+      viewBox={view ? view.join(' ') : `0 0 ${width} ${height}`}
       role="img"
       aria-label={strings.boardLabel}
       onPointerLeave={() => setHoverStrip(null)}
+      onWheel={onWheel}
     >
-      <rect className="board-body" x={0} y={0} width={width} height={height} rx={16} />
+      <rect
+        className="board-body"
+        x={0}
+        y={0}
+        width={width}
+        height={height}
+        rx={16}
+        onPointerDown={onBackgroundPointerDown}
+      />
       {rails}
       {!snap && holes}
       {build.parts.map((part) => {

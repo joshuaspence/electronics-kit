@@ -205,6 +205,11 @@ h2 {
   }
 }
 
+/* A zoomed board shows a window onto itself, so nothing outside the window may spill out. */
+.board-zoomable {
+  overflow: hidden;
+}
+
 /* The part in hand: lifted off the board with a shadow, never in the way of the pointer. */
 .held {
   pointer-events: none;

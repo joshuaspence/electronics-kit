@@ -321,3 +321,47 @@ test.describe('half-size board', () => {
     await expect(page.locator('.board .part-bulb .flow')).toHaveCount(0);
   });
 });
+
+test.describe('full-size board', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('./?sandbox=full');
+  });
+
+  const viewBox = async (page: Page) =>
+    (await page.locator('svg.board').getAttribute('viewBox'))!.split(' ').map(Number);
+
+  test('zooms in and out, but not out past its full height', async ({ page }) => {
+    await expect(page.getByRole('button', { name: 'Zoom out' })).toBeDisabled();
+    const [, , width] = await viewBox(page);
+    await page.getByRole('button', { name: 'Zoom in' }).click();
+    expect((await viewBox(page))[2]).toBeLessThan(width!);
+    await page.getByRole('button', { name: 'Zoom out' }).click();
+    expect((await viewBox(page))[2]).toBeCloseTo(width!, 5);
+  });
+
+  test('pans by dragging the board, and places parts where the pointer is after', async ({
+    page,
+  }) => {
+    expect((await viewBox(page))[0]).toBe(0);
+
+    // Drag the bare board leftwards, between rows, to bring columns further right into view.
+    const board = (await page.locator('svg.board').boundingBox())!;
+    const y = (await centre(page.locator('[data-hole="e10"]'))).y + 20;
+    await page.mouse.move(board.x + board.width * 0.8, y);
+    await page.mouse.down();
+    await page.mouse.move(board.x + board.width * 0.2, y, { steps: 10 });
+    await page.mouse.up();
+    const [left, , width] = await viewBox(page);
+    expect(left).toBeGreaterThan(0);
+
+    // A column that has panned into view still takes a part dropped on it. Holes start 120
+    // board units in (margin and battery room) and are 40 apart.
+    const column = Math.round((left! + width! / 2 - 120) / 40) + 1;
+    await drag(
+      page,
+      page.locator('[data-tray="bulb"]'),
+      await between(page, `e${column}`, `e${column + 2}`),
+    );
+    await expect(page.locator('.board .part-bulb:not(.part-ghost)')).toHaveCount(1);
+  });
+});

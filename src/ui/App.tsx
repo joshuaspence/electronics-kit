@@ -78,13 +78,20 @@ const halfBoard: { board: Board; initial: Build } = {
   },
 };
 
+// A full-size board, 63 columns with both rail pairs: too big to show whole, so it pans and zooms.
+const fullBoard: { board: Board; initial: Build } = {
+  board: { kind: 'breadboard', layout: { columns: 63, centreGap: true, rails: 'both' } },
+  initial: halfBoard.initial,
+};
+
 /**
- * `?sandbox=breadboard`, `?sandbox=half` or `?sandbox=snap` opens a free-build board, for
- * development and tests.
+ * `?sandbox=breadboard`, `?sandbox=half`, `?sandbox=full` or `?sandbox=snap` opens a free-build
+ * board, for development and tests.
  */
 const sandboxes: Readonly<Record<string, { board: Board; initial: Build }>> = {
   breadboard,
   half: halfBoard,
+  full: fullBoard,
   snap: snapBoard,
 };
 const sandboxParam = new URLSearchParams(window.location.search).get('sandbox');
@@ -124,7 +131,13 @@ export function App() {
       <main className="fit-screen">
         <h1>{strings.title}</h1>
         <p>{sandbox === snapBoard ? strings.helloSnap : strings.helloBoard}</p>
-        <Workbench board={sandbox.board} tray={tray} initial={sandbox.initial} meter />
+        <Workbench
+          board={sandbox.board}
+          tray={tray}
+          initial={sandbox.initial}
+          meter
+          zoomable={sandbox === fullBoard}
+        />
       </main>
     );
   }
