@@ -20,6 +20,7 @@ import { flowSpeed } from '../core/flow';
 import type { PartAllowance } from '../core/levels';
 import { Board, type Ghost } from './Board';
 import {
+  type BoardGeometry,
   geometryFor,
   type Orientation,
   type Point,
@@ -58,6 +59,41 @@ const ZOOM_STEP = 1.25;
 
 /** A zoomable board's window: wider than tall, like a landscape tablet. */
 const VIEW_ASPECT = 1.5;
+
+/** A zoomable board's window: `zoom` times its full height, centred on `centre`. */
+interface View {
+  readonly zoom: number;
+  readonly centre: Point;
+}
+
+/** The window `view` shows onto the board, as a viewBox `[x, y, width, height]` kept within it. */
+function viewBox(board: BoardGeometry, { zoom, centre }: View): [number, number, number, number] {
+  const height = board.height / zoom;
+  const width = Math.min(board.width, height * VIEW_ASPECT);
+  const clamp = (v: number, size: number, full: number) =>
+    Math.min(Math.max(v - size / 2, 0), full - size);
+  return [
+    clamp(centre.x, width, board.width),
+    clamp(centre.y, height, board.height),
+    width,
+    height,
+  ];
+}
+
+/**
+ * `view` with its centre moved to where the window actually is. A centre left beyond where the
+ * window can go would make the next pan do nothing until it had made up the difference.
+ */
+function clamped(board: BoardGeometry, view: View): View {
+  const [x, y, width, height] = viewBox(board, view);
+  return { zoom: view.zoom, centre: { x: x + width / 2, y: y + height / 2 } };
+}
+
+/** `view` zoomed by `factor`, from the board's full height to `MAX_ZOOM` times closer. */
+function zoomed(board: BoardGeometry, view: View, factor: number): View {
+  const zoom = Math.min(MAX_ZOOM, Math.max(1, Math.round(view.zoom * factor * 100) / 100));
+  return clamped(board, { ...view, zoom });
+}
 
 interface WorkbenchProps {
   board: BoardModel;
@@ -101,27 +137,11 @@ export function Workbench({
   useEffect(() => onChangeRef.current?.(build), [build]);
   const geometry = useMemo(() => geometryFor(board), [board]);
 
-  // A zoomable board shows a window onto itself, `zoom` times its full height, centred on
-  // `centre` and kept within the board.
-  const [zoom, setZoom] = useState(1);
-  const [centre, setCentre] = useState<Point>({ x: 0, y: geometry.height / 2 });
-  const viewSize = () => {
-    const height = geometry.height / zoom;
-    return { width: Math.min(geometry.width, height * VIEW_ASPECT), height };
-  };
-  const viewFor = (at: Point): readonly [number, number, number, number] => {
-    const { width, height } = viewSize();
-    const clamp = (v: number, size: number, full: number) =>
-      Math.min(Math.max(v - size / 2, 0), full - size);
-    return [
-      clamp(at.x, width, geometry.width),
-      clamp(at.y, height, geometry.height),
-      width,
-      height,
-    ];
-  };
-  const zoomBy = (factor: number) =>
-    setZoom((z) => Math.min(MAX_ZOOM, Math.max(1, Math.round(z * factor * 100) / 100)));
+  // A zoomable board opens on its left end.
+  const [view, setView] = useState<View>(() =>
+    clamped(geometry, { zoom: 1, centre: { x: 0, y: geometry.height / 2 } }),
+  );
+  const zoomBy = (factor: number) => setView((v) => zoomed(geometry, v, factor));
   /** Where a pan has moved the window's centre to, in board units. */
   const pannedCentre = (pan: Drag & { type: 'pan' }): Point => ({
     x: pan.centre.x - (pan.client.x - pan.start.x) * pan.perPixel,
@@ -133,6 +153,24 @@ export function Workbench({
   const [orientation, setOrientation] = useState<Orientation>('right');
   const [muted, setMuted] = useState(false);
   const [meterOn, setMeterOn] = useState(false);
+
+  // React's own wheel listeners are passive, so they can't stop the page scrolling (or, with a
+  // pinch, zooming) under the board as it zooms. A sideways swipe has no `deltaY`, and isn't a zoom.
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!zoomable || !svg) {
+      return;
+    }
+    const onWheel = (event: WheelEvent) => {
+      if (event.deltaY === 0) {
+        return;
+      }
+      event.preventDefault();
+      setView((v) => zoomed(geometry, v, event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP));
+    };
+    svg.addEventListener('wheel', onWheel, { passive: false });
+    return () => svg.removeEventListener('wheel', onWheel);
+  }, [zoomable, geometry]);
 
   /** Applies an edit, with a snap when a part lands in the board. */
   const edit = (change: Edit) => {
@@ -293,7 +331,8 @@ export function Workbench({
         }
       }
       if (drag?.type === 'pan') {
-        setCentre(pannedCentre({ ...drag, client: { x: event.clientX, y: event.clientY } }));
+        const centre = pannedCentre({ ...drag, client: { x: event.clientX, y: event.clientY } });
+        setView((v) => clamped(geometry, { ...v, centre }));
         setDrag(null);
       } else if (drag) {
         // Drop where the pointer is released, not where the last render saw it: a fast drag can
@@ -460,18 +499,23 @@ export function Workbench({
         hintedId={hint?.removeId ?? null}
         onHolePointerDown={onHolePointerDown}
         onPartPointerDown={onPartPointerDown}
-        view={zoomable ? viewFor(drag?.type === 'pan' ? pannedCentre(drag) : centre) : undefined}
+        view={
+          zoomable
+            ? viewBox(
+                geometry,
+                drag?.type === 'pan' ? { ...view, centre: pannedCentre(drag) } : view,
+              )
+            : undefined
+        }
         onBackgroundPointerDown={
           zoomable
             ? (event) => {
                 const client = { x: event.clientX, y: event.clientY };
-                const perPixel = viewSize().width / (svgRef.current?.clientWidth || 1);
-                setDrag({ type: 'pan', start: client, client, centre, perPixel });
+                // The board's on-screen scale, whichever of its width or height bounds it.
+                const perPixel = 1 / (svgRef.current?.getScreenCTM()?.a ?? 1);
+                setDrag({ type: 'pan', start: client, client, centre: view.centre, perPixel });
               }
             : undefined
-        }
-        onWheel={
-          zoomable ? (event) => zoomBy(event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP) : undefined
         }
       />
       <div className="tools" role="toolbar" aria-label={strings.toolsLabel}>
@@ -483,10 +527,14 @@ export function Workbench({
         </button>
         {zoomable && (
           <>
-            <button type="button" onClick={() => zoomBy(ZOOM_STEP)} disabled={zoom >= MAX_ZOOM}>
+            <button
+              type="button"
+              onClick={() => zoomBy(ZOOM_STEP)}
+              disabled={view.zoom >= MAX_ZOOM}
+            >
               {strings.zoomIn}
             </button>
-            <button type="button" onClick={() => zoomBy(1 / ZOOM_STEP)} disabled={zoom <= 1}>
+            <button type="button" onClick={() => zoomBy(1 / ZOOM_STEP)} disabled={view.zoom <= 1}>
               {strings.zoomOut}
             </button>
           </>

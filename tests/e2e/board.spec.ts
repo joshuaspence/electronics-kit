@@ -330,6 +330,37 @@ test.describe('full-size board', () => {
   const viewBox = async (page: Page) =>
     (await page.locator('svg.board').getAttribute('viewBox'))!.split(' ').map(Number);
 
+  /** The board point under a screen point, mapped through the board's transform. */
+  const boardPoint = (page: Page, x: number, y: number) =>
+    page.locator('svg.board').evaluate(
+      (svg: SVGSVGElement, [x, y]) => {
+        const p = new DOMPoint(x, y).matrixTransform(svg.getScreenCTM()!.inverse());
+        return { x: p.x, y: p.y };
+      },
+      [x, y],
+    );
+
+  /**
+   * Drags the bare board `dx` pixels sideways, from its middle between rows e and f, and checks
+   * the board point it was pressed on ends up under the pointer, until an edge stops it.
+   */
+  async function pan(page: Page, dx: number) {
+    const board = (await page.locator('svg.board').boundingBox())!;
+    const x = board.x + board.width / 2;
+    const y = (await centre(page.locator('[data-hole="e1"]'))).y + 20;
+    const pressed = await page.evaluate(
+      ([x, y]) => document.elementFromPoint(x!, y!)?.getAttribute('class'),
+      [x, y],
+    );
+    expect(pressed).toBe('board-body');
+    const start = await boardPoint(page, x, y);
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + dx, y, { steps: 5 });
+    await page.mouse.up();
+    return { start, end: await boardPoint(page, x + dx, y) };
+  }
+
   test('zooms in and out, but not out past its full height', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'Zoom out' })).toBeDisabled();
     const [, , width] = await viewBox(page);
@@ -363,5 +394,52 @@ test.describe('full-size board', () => {
       await between(page, `e${column}`, `e${column + 2}`),
     );
     await expect(page.locator('.board .part-bulb:not(.part-ghost)')).toHaveCount(1);
+  });
+
+  test('pans with the first small drag, and back at once after overshooting an edge', async ({
+    page,
+  }) => {
+    const first = await pan(page, -100);
+    expect(first.end.x).toBeCloseTo(first.start.x, 0);
+    expect((await viewBox(page))[0]).toBeGreaterThan(0);
+
+    // Past the left edge, the board stops; the next drag the other way moves it straight away.
+    await pan(page, 400);
+    expect((await viewBox(page))[0]).toBe(0);
+    const back = await pan(page, -100);
+    expect(back.end.x).toBeCloseTo(back.start.x, 0);
+  });
+
+  test('keeps to the pointer where the screen is too short for its width', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 560 });
+    const box = (await page.locator('svg.board').boundingBox())!;
+    const [, , width, height] = await viewBox(page);
+    expect(box.width / box.height).toBeCloseTo(width! / height!, 2);
+
+    const { start, end } = await pan(page, -100);
+    expect(end.x).toBeCloseTo(start.x, 0);
+  });
+
+  test('zooms out with the wheel without scrolling the page, but not with a sideways swipe', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 560 });
+    const scrollable = await page.evaluate(
+      () => document.documentElement.scrollHeight > window.innerHeight,
+    );
+    expect(scrollable).toBe(true);
+    const zoomIn = page.getByRole('button', { name: 'Zoom in' });
+    await zoomIn.click();
+    const [, , oneStep] = await viewBox(page);
+    await zoomIn.click();
+    const board = await centre(page.locator('svg.board'));
+    await page.mouse.move(board.x, board.y);
+    const scrollY = await page.evaluate(() => window.scrollY);
+
+    // Scrolling down would scroll the page too, if the board didn't stop it.
+    await page.mouse.wheel(100, 0);
+    await page.mouse.wheel(0, 100);
+    await expect.poll(async () => (await viewBox(page))[2]).toBeCloseTo(oneStep!, 5);
+    expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
   });
 });

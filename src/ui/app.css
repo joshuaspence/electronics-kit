@@ -205,8 +205,14 @@ h2 {
   }
 }
 
-/* A zoomed board shows a window onto itself, so nothing outside the window may spill out. */
+/*
+ * A zoomed board shows a window onto itself, so nothing outside the window may spill out. Sized by
+ * its viewBox even where `max-height` bounds it, it has no strips beside the window to spill into.
+ */
 .board-zoomable {
+  width: auto;
+  max-width: 100%;
+  margin-inline: auto;
   overflow: hidden;
 }
 
