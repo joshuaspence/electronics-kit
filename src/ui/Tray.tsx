@@ -11,10 +11,12 @@ interface TrayProps {
   onPickUp: (spec: PartSpec, event: ReactPointerEvent) => void;
   /** On a snap board wires go between posts rather than holes. */
   snap: boolean;
+  /** The part the guided tutorial says to pick up next, which pulses. */
+  guided?: PartAllowance['kind'] | undefined;
 }
 
 /** The parts the child can still place. Wires are drawn on the board, so they aren't picked up. */
-export function Tray({ tray, remaining, onPickUp, snap }: TrayProps) {
+export function Tray({ tray, remaining, onPickUp, snap, guided }: TrayProps) {
   return (
     <ul className="tray" aria-label={strings.trayLabel}>
       {tray.map(({ kind }) => {
@@ -31,7 +33,7 @@ export function Tray({ tray, remaining, onPickUp, snap }: TrayProps) {
           <li key={kind}>
             <button
               type="button"
-              className="tray-item"
+              className={kind === guided ? 'tray-item tray-item-guided' : 'tray-item'}
               data-tray={kind}
               disabled={left === 0}
               onPointerDown={(event) => left > 0 && onPickUp(newSpec(kind), event)}

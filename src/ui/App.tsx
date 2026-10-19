@@ -259,6 +259,7 @@ export function App() {
         onNext={next === null ? null : () => setScreen({ kind: 'level', index: next })}
         onBack={() => setScreen({ kind: 'levels' })}
         meter={meterUnlocked(levels, progress.stars, players.unlockAll)}
+        guide={(progress.stars[level.id] ?? 0) === 0}
       />
     );
   }

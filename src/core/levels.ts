@@ -89,6 +89,11 @@ export interface Level {
    * Tests check that every level can be finished this way; hints can show its parts.
    */
   readonly solution: Solution;
+  /**
+   * Volty walks a child through this level step by step on their first try, and on request after
+   * (`src/core/tutorial.ts`, docs/design.md §6).
+   */
+  readonly tutorial?: boolean;
 }
 
 export interface Solution {

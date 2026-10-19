@@ -20,6 +20,7 @@ export const chapter1: readonly Level[] = [
   {
     id: 'loop-1',
     chapter: 1,
+    tutorial: true,
     board: { kind: 'snap', rows: 2, columns: 3 },
     parts: [battery],
     goal: { kind: 'light-up', lights: 1 },

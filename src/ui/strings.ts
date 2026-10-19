@@ -102,6 +102,17 @@ export const strings = {
     'fades-too-fast':
       'It goes dark as soon as you let go. Something beside the bulb needs to store electricity and keep it glowing.',
   },
+  showMeHow: 'Show me how',
+  tutorial: {
+    bulb: 'Let’s build it together! Drag the bulb out of the parts bin and drop it where I’ve shown it.',
+    firstWire:
+      'Now a wire. Put your finger on one end of the wire I’ve shown, and drag to the other end.',
+    nextWire: 'One more wire, where I’ve shown it, to finish the loop back to the battery.',
+    place: (kind: PartKind) => `Now put ${partInSentence[kind].a} where I’ve shown it.`,
+    remove: (kind: PartKind) =>
+      `That ${partInSentence[kind].noun} isn’t where I showed. Tap it, then press Remove.`,
+    tryIt: 'Everything’s in place. Try it out!',
+  },
   hintPlace: (kind: PartKind) => `Try putting ${partInSentence[kind].a} where I’ve shown it.`,
   hintRemove: (kind: PartKind) =>
     `That ${partInSentence[kind].noun} is getting in the way. Try removing it.`,
