@@ -355,6 +355,10 @@ tests/e2e/   Playwright
   16.4+**.
 - **Devices:** primarily tablets in landscape and Chromebooks; secondarily desktops and phones in
   landscape (with a "better on a bigger screen" note). Portrait shows a rotate prompt.
+  - Both are CSS only (`src/ui/ScreenNotes.tsx`), so turning the device shows or hides them with
+    no re-render. The note is on the level list of a landscape screen 500 px tall or less. The
+    rotate prompt covers everything on a portrait screen 600 px wide or less, a phone held upright.
+    A tablet in portrait is wide enough for the stacked layout, so it plays as it is.
 - **Low-end baseline:** an **iPad 9th gen (A13)** and a **4 GB Intel Celeron Chromebook**.
   - **60 fps** while dragging; simulation plus rendering under 8 ms per frame for a 30-part circuit.
   - **First load under 1 MB** gzipped JS+CSS, interactive in under 3 s on school Wi-Fi.

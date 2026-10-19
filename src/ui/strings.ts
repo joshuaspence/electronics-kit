@@ -19,6 +19,9 @@ const partInSentence: Record<PartKind, { readonly noun: string; readonly a: stri
 // Player-facing text, in Australian English (docs/design.md §6).
 export const strings = {
   title: 'Electronics Kit',
+  turnSideways: 'Turn your screen sideways to play.',
+  smallScreen:
+    'Electronics Kit is easier to play on a tablet or a computer, where the board is bigger.',
   boardLabel: 'Breadboard',
   trayLabel: 'Parts',
   toolsLabel: 'Tools',
