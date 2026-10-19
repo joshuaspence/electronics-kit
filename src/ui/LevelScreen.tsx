@@ -68,7 +68,7 @@ export function LevelScreen({ level, onFinish, onNext, onBack }: LevelScreenProp
   );
 
   return (
-    <main className="level">
+    <main className="level fit-screen">
       <header className="level-header">
         <button type="button" onClick={onBack}>
           {strings.backToLevels}

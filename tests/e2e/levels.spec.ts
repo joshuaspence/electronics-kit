@@ -1,5 +1,9 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { levels } from '../../src/levels';
+import { chapter1 } from '../../src/levels/chapter1';
+import { chapter2 } from '../../src/levels/chapter2';
+import { chapter3 } from '../../src/levels/chapter3';
+import { chapter4 } from '../../src/levels/chapter4';
 
 async function centre(locator: Locator) {
   const box = await locator.boundingBox();
@@ -101,7 +105,7 @@ test.describe('finishing', () => {
 
 test('does not count a short circuit as a win', async ({ page }) => {
   await page.locator('[data-level="loop-5"]').click();
-  await expect(page.locator('.part-battery.part-hot')).toHaveCount(1);
+  await expect(page.locator('.board .part-battery.part-hot')).toHaveCount(1);
 
   // Wiring the bulb in while the shortcut is still there lights nothing: the short takes it all.
   await wire(page, 'p2-1', 'p3-3');
@@ -116,17 +120,17 @@ test('controls a bulb with a switch on the breadboard', async ({ page }) => {
   await drag(page, page.locator('[data-tray="switch"]'), await between(page, 'e3', 'e5'));
   await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'f5', 'f7'));
   await wire(page, 'j7', 'j1');
-  await expect(page.locator('.part-bulb .flow')).toHaveCount(0);
+  await expect(page.locator('.board .part-bulb .flow')).toHaveCount(0);
   // The circuit is right, but the level finishes only when the child switches the bulb on.
   await expect(page.getByText('You did it!')).toHaveCount(0);
-  await page.locator('.part-switch:not(.part-ghost) .switch-body').click();
-  await expect(page.locator('.part-bulb .flow')).toHaveCount(1);
+  await page.locator('.board .part-switch:not(.part-ghost) .switch-body').click();
+  await expect(page.locator('.board .part-bulb .flow')).toHaveCount(1);
   await expect(page.getByText('You did it!')).toBeVisible();
 });
 
 test('turns a backwards LED round to finish the level', async ({ page }) => {
   await page.locator('[data-level="led-2"]').click();
-  await expect(page.locator('.part-led .led-glow')).toHaveAttribute('opacity', '0');
+  await expect(page.locator('.board .part-led .led-glow')).toHaveAttribute('opacity', '0');
 
   // Volty's first hint says what is wrong: the LED is the wrong way round.
   await page.getByRole('button', { name: 'Ask Volty for a hint' }).click();
@@ -134,10 +138,10 @@ test('turns a backwards LED round to finish the level', async ({ page }) => {
     page.getByRole('status').filter({ hasText: 'only lets electricity through one way' }),
   ).toBeVisible();
 
-  await page.locator('.part-led .led-body').click();
+  await page.locator('.board .part-led .led-body').click();
   await page.getByRole('button', { name: 'Rotate' }).click();
   await page.getByRole('button', { name: 'Rotate' }).click();
-  await expect(page.locator('.part-led .led-glow')).not.toHaveAttribute('opacity', '0');
+  await expect(page.locator('.board .part-led .led-glow')).not.toHaveAttribute('opacity', '0');
   await expect(page.getByText('You did it!')).toBeVisible();
 });
 
@@ -150,7 +154,7 @@ test('lights two bulbs brightly side by side from the rails', async ({ page }) =
   await expect(page.getByText('You did it!')).toHaveCount(0);
   await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'd3', 'd5'));
   await wire(page, 'e5', 'top-5');
-  await expect(page.locator('.part-bulb .bulb-glow[opacity="0.8"]')).toHaveCount(2);
+  await expect(page.locator('.board .part-bulb .bulb-glow[opacity="0.8"]')).toHaveCount(2);
   await expect(page.getByText('You did it!')).toBeVisible();
 });
 
@@ -163,11 +167,11 @@ test('needs both switches on, one click at a time', async ({ page }) => {
   await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'g7', 'g9'));
   await wire(page, 'j9', 'j1');
 
-  const switches = page.locator('.part-switch:not(.part-ghost) .switch-body');
+  const switches = page.locator('.board .part-switch:not(.part-ghost) .switch-body');
   await switches.nth(0).click();
-  await expect(page.locator('.part-bulb .flow')).toHaveCount(0);
+  await expect(page.locator('.board .part-bulb .flow')).toHaveCount(0);
   await switches.nth(1).click();
-  await expect(page.locator('.part-bulb .flow')).toHaveCount(1);
+  await expect(page.locator('.board .part-bulb .flow')).toHaveCount(1);
   await expect(page.getByText('You did it!')).toBeVisible();
 });
 
@@ -220,14 +224,14 @@ test.describe('Volty', () => {
 
     await askVolty(page);
     await expect(page.getByRole('status').filter({ hasText: 'complete loop' })).toBeVisible();
-    await expect(page.locator('.part-ghost.part-hinted')).toHaveCount(0);
+    await expect(page.locator('.board .part-ghost.part-hinted')).toHaveCount(0);
 
     await askVolty(page);
     await expect(page.getByText('Try putting a wire where I’ve shown it.')).toBeVisible();
-    await expect(page.locator('.part-wire.part-ghost.part-hinted')).toHaveCount(1);
+    await expect(page.locator('.board .part-wire.part-ghost.part-hinted')).toHaveCount(1);
 
     await wire(page, 'p1-1', 'p2-4');
-    await expect(page.locator('.part-ghost.part-hinted')).toHaveCount(0);
+    await expect(page.locator('.board .part-ghost.part-hinted')).toHaveCount(0);
     await expect(page.getByLabel('2 of 3 stars')).toBeVisible();
   });
 
@@ -248,3 +252,15 @@ test.describe('Volty', () => {
     await expect(page.getByText('Stuck? Tap me for a hint!')).toBeVisible();
   });
 });
+
+// The board shrinks to leave room for the tray and tools, so nothing on a level is off the screen.
+for (const chapter of [chapter1, chapter2, chapter3, chapter4]) {
+  const level = chapter[0]!;
+  test(`fits ${level.id} on the screen`, async ({ page }) => {
+    await page.locator(`[data-level="${level.id}"]`).click();
+    await expect(page.getByRole('button', { name: 'Undo' })).toBeInViewport({ ratio: 1 });
+    expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(
+      page.viewportSize()!.height,
+    );
+  });
+}

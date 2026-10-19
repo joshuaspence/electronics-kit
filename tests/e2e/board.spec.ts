@@ -29,6 +29,13 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Electronics Kit' })).toBeVisible();
 });
 
+test('fits the board and its tools on the screen', async ({ page }) => {
+  await expect(page.getByRole('button', { name: 'Undo' })).toBeInViewport({ ratio: 1 });
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(
+    page.viewportSize()!.height,
+  );
+});
+
 test('highlights the strip of a touched hole', async ({ page }) => {
   await page.locator('[data-hole="a5"]').dispatchEvent('pointerdown');
 
@@ -41,11 +48,11 @@ test('highlights the strip of a touched hole', async ({ page }) => {
 test('places a bulb from the tray, and undo takes it away', async ({ page }) => {
   await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'e1', 'e3'));
 
-  await expect(page.locator('.part-bulb:not(.part-ghost)')).toHaveCount(1);
+  await expect(page.locator('.board .part-bulb:not(.part-ghost)')).toHaveCount(1);
   await expect(page.locator('[data-tray="bulb"]')).toContainText('×1');
 
   await page.getByRole('button', { name: 'Undo' }).click();
-  await expect(page.locator('.part-bulb')).toHaveCount(0);
+  await expect(page.locator('.board .part-bulb')).toHaveCount(0);
   await expect(page.locator('[data-tray="bulb"]')).toContainText('×2');
 });
 
@@ -53,7 +60,7 @@ test('lights a bulb placed across the battery', async ({ page }) => {
   // The battery's legs are in columns 1 and 3, so a bulb from column 1 to column 3 completes the
   // loop through the strips.
   await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'e1', 'e3'));
-  await expect(page.locator('.part-bulb .bulb-glow')).toHaveAttribute('opacity', '0.8');
+  await expect(page.locator('.board .part-bulb .bulb-glow')).toHaveAttribute('opacity', '0.8');
 });
 
 test('draws a wire from hole to hole', async ({ page }) => {
@@ -63,16 +70,16 @@ test('draws a wire from hole to hole', async ({ page }) => {
     await centre(page.locator('[data-hole="c8"]')),
   );
 
-  await expect(page.locator('.part-wire:not(.part-ghost)')).toHaveCount(1);
+  await expect(page.locator('.board .part-wire:not(.part-ghost)')).toHaveCount(1);
   await expect(page.locator('[data-tray="wire"]')).toContainText('×5');
 });
 
 test('flips a switch with a tap', async ({ page }) => {
   await drag(page, page.locator('[data-tray="switch"]'), await between(page, 'g4', 'g6'));
-  const knob = page.locator('.part-switch:not(.part-ghost) .switch-knob');
+  const knob = page.locator('.board .part-switch:not(.part-ghost) .switch-knob');
   const before = await knob.getAttribute('cx');
 
-  await page.locator('.part-switch:not(.part-ghost) .switch-body').click();
+  await page.locator('.board .part-switch:not(.part-ghost) .switch-body').click();
   await expect(knob).not.toHaveAttribute('cx', before ?? '');
 });
 
@@ -96,7 +103,7 @@ test('carries a part under the pointer and shows where it will connect', async (
 
   await page.mouse.up();
   await expect(page.locator('.held')).toHaveCount(0);
-  await expect(page.locator('.part-bulb:not(.part-ghost)')).toHaveCount(1);
+  await expect(page.locator('.board .part-bulb:not(.part-ghost)')).toHaveCount(1);
 });
 
 test('fades a placed part where it was while it is being moved', async ({ page }) => {
@@ -105,10 +112,10 @@ test('fades a placed part where it was while it is being moved', async ({ page }
   await page.mouse.move(bulb.x, bulb.y);
   await page.mouse.down();
   await page.mouse.move(bulb.x + 40, bulb.y + 40, { steps: 5 });
-  await expect(page.locator('.part-moving')).toHaveCount(1);
+  await expect(page.locator('.board .part-moving')).toHaveCount(1);
   await expect(page.locator('.held .part-bulb')).toHaveCount(1);
   await page.mouse.up();
-  await expect(page.locator('.part-moving')).toHaveCount(0);
+  await expect(page.locator('.board .part-moving')).toHaveCount(0);
 });
 
 test('drops where the pointer is released, even before the last move re-renders', async ({
@@ -128,7 +135,7 @@ test('drops where the pointer is released, even before the last move re-renders'
   }, target);
   await page.mouse.up();
 
-  await expect(page.locator('.part-bulb:not(.part-ghost)')).toHaveCount(1);
+  await expect(page.locator('.board .part-bulb:not(.part-ghost)')).toHaveCount(1);
 });
 
 /**
@@ -147,27 +154,27 @@ async function ledBehindResistor(page: Page) {
 
 test('lights an LED with its long leg towards the battery’s +', async ({ page }) => {
   await ledBehindResistor(page);
-  await expect(page.locator('.part-led .led-glow')).not.toHaveAttribute('opacity', '0');
-  await expect(page.locator('.part-led .flow')).toHaveCount(1);
+  await expect(page.locator('.board .part-led .led-glow')).not.toHaveAttribute('opacity', '0');
+  await expect(page.locator('.board .part-led .flow')).toHaveCount(1);
 });
 
 test('pops an LED straight across the battery, and Undo brings it back', async ({ page }) => {
   await drag(page, page.locator('[data-tray="led"]'), await between(page, 'e1', 'e3'));
-  await expect(page.locator('.part-led.part-blown')).toHaveCount(1);
-  await expect(page.locator('.part-led .flow')).toHaveCount(0);
+  await expect(page.locator('.board .part-led.part-blown')).toHaveCount(1);
+  await expect(page.locator('.board .part-led .flow')).toHaveCount(0);
   await expect(page.getByRole('status')).toContainText('Pop!');
 
   // The pop belongs to the placing, so one Undo takes both back.
   await page.getByRole('button', { name: 'Undo' }).click();
-  await expect(page.locator('.part-led:not(.part-ghost)')).toHaveCount(0);
+  await expect(page.locator('.board .part-led:not(.part-ghost)')).toHaveCount(0);
   await expect(page.getByRole('status')).toHaveText('');
 });
 
 test('does not puff a blown LED again when it is picked up', async ({ page }) => {
   await drag(page, page.locator('[data-tray="led"]'), await between(page, 'e1', 'e3'));
-  await expect(page.locator('.part-led.part-blown')).toHaveCount(1);
+  await expect(page.locator('.board .part-led.part-blown')).toHaveCount(1);
 
-  const led = await centre(page.locator('.part-led.part-blown .led-body'));
+  const led = await centre(page.locator('.board .part-led.part-blown .led-body'));
   await page.mouse.move(led.x, led.y);
   await page.mouse.down();
   await page.mouse.move(led.x + 60, led.y + 60, { steps: 5 });
@@ -184,25 +191,25 @@ test('does not puff a blown LED again when it is picked up', async ({ page }) =>
 
 test('turns an LED round with two rotations, and it goes dark', async ({ page }) => {
   await ledBehindResistor(page);
-  await expect(page.locator('.part-led .led-glow')).not.toHaveAttribute('opacity', '0');
+  await expect(page.locator('.board .part-led .led-glow')).not.toHaveAttribute('opacity', '0');
 
   // Tapping the LED selects it; each Rotate turns it a quarter about its middle.
-  await page.locator('.part-led .led-body').click();
+  await page.locator('.board .part-led .led-body').click();
   await page.getByRole('button', { name: 'Rotate' }).click();
   await page.getByRole('button', { name: 'Rotate' }).click();
-  await expect(page.locator('.part-led .led-glow')).toHaveAttribute('opacity', '0');
-  await expect(page.locator('.part-led .flow')).toHaveCount(0);
+  await expect(page.locator('.board .part-led .led-glow')).toHaveAttribute('opacity', '0');
+  await expect(page.locator('.board .part-led .flow')).toHaveCount(0);
 });
 
 test('shows current flowing through a lit bulb, and none through a loose one', async ({ page }) => {
   await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'e5', 'e7'));
-  await expect(page.locator('.part-bulb:not(.part-ghost)')).toHaveCount(1);
-  await expect(page.locator('.part-bulb .flow')).toHaveCount(0);
+  await expect(page.locator('.board .part-bulb:not(.part-ghost)')).toHaveCount(1);
+  await expect(page.locator('.board .part-bulb .flow')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Undo' }).click();
   await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'e1', 'e3'));
-  await expect(page.locator('.part-bulb .flow')).toHaveCount(1);
-  await expect(page.locator('.part-battery .flow')).toHaveCount(1);
+  await expect(page.locator('.board .part-bulb .flow')).toHaveCount(1);
+  await expect(page.locator('.board .part-battery .flow')).toHaveCount(1);
 });
 
 test('warns about a short circuit across the battery', async ({ page }) => {
@@ -214,11 +221,11 @@ test('warns about a short circuit across the battery', async ({ page }) => {
     await centre(page.locator('[data-hole="c3"]')),
   );
 
-  await expect(page.locator('.part-battery.part-hot')).toHaveCount(1);
+  await expect(page.locator('.board .part-battery.part-hot')).toHaveCount(1);
   await expect(page.getByRole('status')).toContainText('short circuit');
 
   await page.getByRole('button', { name: 'Undo' }).click();
-  await expect(page.locator('.part-hot')).toHaveCount(0);
+  await expect(page.locator('.board .part-hot')).toHaveCount(0);
   await expect(page.getByRole('status')).toHaveText('');
 });
 
@@ -230,8 +237,8 @@ test.describe('snap board', () => {
   test('lights a bulb wired to the battery post to post', async ({ page }) => {
     // The battery sits between posts 1-1 and 1-2; the bulb goes on the row below.
     await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'p2-1', 'p2-2'));
-    await expect(page.locator('.part-bulb:not(.part-ghost)')).toHaveCount(1);
-    await expect(page.locator('.part-bulb .flow')).toHaveCount(0);
+    await expect(page.locator('.board .part-bulb:not(.part-ghost)')).toHaveCount(1);
+    await expect(page.locator('.board .part-bulb .flow')).toHaveCount(0);
 
     // A post takes any number of parts, so wires can share the battery's and the bulb's posts.
     await drag(
@@ -244,8 +251,8 @@ test.describe('snap board', () => {
       page.locator('[data-hole="p1-2"]'),
       await centre(page.locator('[data-hole="p2-2"]')),
     );
-    await expect(page.locator('.part-wire:not(.part-ghost)')).toHaveCount(2);
-    await expect(page.locator('.part-bulb .flow')).toHaveCount(1);
+    await expect(page.locator('.board .part-wire:not(.part-ghost)')).toHaveCount(2);
+    await expect(page.locator('.board .part-bulb .flow')).toHaveCount(1);
   });
 });
 
@@ -262,18 +269,18 @@ test.describe('half-size board', () => {
     );
 
   test('powers a bulb from the rails the battery is plugged into', async ({ page }) => {
-    await expect(page.locator('.part-battery .lead')).toHaveCount(2);
+    await expect(page.locator('.board .part-battery .lead')).toHaveCount(2);
     await wire(page, 'top+5', 'a5');
     await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'b5', 'b7'));
     await wire(page, 'c7', 'top-7');
-    await expect(page.locator('.part-bulb .flow')).toHaveCount(1);
+    await expect(page.locator('.board .part-bulb .flow')).toHaveCount(1);
   });
 
   test('keeps the two halves of a column apart across the centre gap', async ({ page }) => {
     await wire(page, 'top+5', 'f5');
     await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'b5', 'b7'));
     await wire(page, 'c7', 'top-7');
-    await expect(page.locator('.part-bulb:not(.part-ghost)')).toHaveCount(1);
-    await expect(page.locator('.part-bulb .flow')).toHaveCount(0);
+    await expect(page.locator('.board .part-bulb:not(.part-ghost)')).toHaveCount(1);
+    await expect(page.locator('.board .part-bulb .flow')).toHaveCount(0);
   });
 });

@@ -2,6 +2,7 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { PartSpec } from '../core/build';
 import { newSpec } from '../core/catalogue';
 import type { PartAllowance } from '../core/levels';
+import { PartShape } from './PartShape';
 import { strings } from './strings';
 
 interface TrayProps {
@@ -35,6 +36,9 @@ export function Tray({ tray, remaining, onPickUp, snap }: TrayProps) {
               disabled={left === 0}
               onPointerDown={(event) => left > 0 && onPickUp(newSpec(kind), event)}
             >
+              <svg className="tray-icon" viewBox="-28 -16 56 32" aria-hidden="true">
+                <PartShape spec={newSpec(kind)} from={{ x: -26, y: 0 }} to={{ x: 26, y: 0 }} />
+              </svg>
               {strings.parts[kind]} <span className="tray-count">×{left}</span>
             </button>
           </li>

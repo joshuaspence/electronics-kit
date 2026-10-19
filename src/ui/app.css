@@ -1,18 +1,42 @@
+/*
+ * The workbench is a green self-healing cutting mat, as on a hobby bench, and the board is the
+ * white plastic of a real breadboard sitting on it. The mat is the one bold thing; everything on it
+ * stays plain so the circuit is what stands out.
+ */
 :root {
-  --bg: #f4efe6;
-  --ink: #2b2a28;
-  --board: #fbfaf7;
-  --board-edge: #d8d2c6;
-  --hole: #5c5a55;
-  --hole-active: #f28c28;
+  --mat: #2e6b57;
+  --mat-line: #3f7f69;
+  --mat-line-major: #5c9a82;
+  --on-mat: #f1f5f0;
+  --ink: #1e2925;
+  --board: #fbfbf8;
+  --board-edge: #d6dad2;
+  --hole: #3a403c;
+  --hole-active: #ffd23f;
+  --plastic: #eef0eb;
+  --plastic-edge: #b9bfb6;
   color-scheme: light;
-  font-family: system-ui, sans-serif;
+  font-family: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  font-size: 18px;
+  line-height: 1.45;
 }
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--ink);
+  min-height: 100vh;
+  color: var(--on-mat);
+  /* A 1 cm grid with a heavier line every fifth, like the mat's printed squares. */
+  background-color: var(--mat);
+  background-image:
+    linear-gradient(var(--mat-line-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mat-line-major) 1px, transparent 1px),
+    linear-gradient(var(--mat-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mat-line) 1px, transparent 1px);
+  background-size:
+    200px 200px,
+    200px 200px,
+    40px 40px,
+    40px 40px;
 }
 
 main {
@@ -21,19 +45,54 @@ main {
   padding: 16px;
 }
 
+h1 {
+  font-size: 1.75rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+h2 {
+  font-size: 1.3rem;
+  margin: 1.5em 0 0.5em;
+}
+
+:focus-visible {
+  outline: 3px solid var(--hole-active);
+  outline-offset: 2px;
+}
+
 .board {
   display: block;
   width: 100%;
   height: auto;
-  /* Keep the whole board on screen on a landscape tablet (docs/design.md §9). */
-  max-height: calc(100vh - 320px);
+  /* Shrinks to the height the screen has left once the tray and tools are laid out. */
+  flex: 0 1 auto;
+  min-height: 0;
   touch-action: none;
   /* A part being dragged is drawn under the pointer even before it reaches the board. */
   overflow: visible;
+  /* The board sits on the mat, a little raised. */
+  filter: drop-shadow(0 4px 0 rgb(0 0 0 / 20%));
 }
 
-/* Dragging across the board must never select its labels. */
+/*
+ * A level fills the screen and no more, so the whole board and its tools stay on screen on a
+ * landscape tablet (docs/design.md §9). `dvh` leaves out the browser's own toolbars.
+ */
+.fit-screen {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100vh;
+  height: 100dvh;
+}
+
 .workbench {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* Dragging across the board must never select its labels. */
   user-select: none;
   -webkit-user-select: none;
 }
@@ -64,8 +123,11 @@ main {
   stroke-width: 2;
 }
 
+/* A hole is a dark socket with a pale rim, recessed into the plastic. */
 .hole {
   fill: var(--hole);
+  stroke: var(--board-edge);
+  stroke-width: 3;
 }
 
 .rail line {
@@ -106,9 +168,10 @@ main {
   fill: #3d8bfd;
 }
 
+/* Snap posts are bright metal studs. */
 .board-snap .hole {
-  fill: #c9c4b8;
-  stroke: #8a8780;
+  fill: #cfd4cd;
+  stroke: #8b928a;
   stroke-width: 4;
 }
 
@@ -117,21 +180,30 @@ main {
   fill: var(--hole-active);
 }
 
+/* Buttons are chunky plastic keys: a darker lip below that disappears as they're pressed. */
 button {
   font: inherit;
+  font-weight: 700;
   min-height: 44px;
   padding: 8px 16px;
-  border-radius: 12px;
-  border: 2px solid var(--board-edge);
-  background: var(--board);
+  border-radius: 10px;
+  border: 2px solid var(--plastic-edge);
+  border-bottom-width: 5px;
+  background: var(--plastic);
   color: var(--ink);
+  cursor: pointer;
+}
+
+button:active:not(:disabled) {
+  border-bottom-width: 2px;
+  transform: translateY(3px);
 }
 
 button:disabled {
-  opacity: 0.4;
+  opacity: 0.45;
+  cursor: default;
 }
 
-.tray,
 .tools {
   display: flex;
   flex-wrap: wrap;
@@ -141,8 +213,37 @@ button:disabled {
   list-style: none;
 }
 
+/* The tray is a parts bin: one compartment per part, each showing what's in it. */
+.tray {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 6px;
+  margin: 12px 0;
+  padding: 6px;
+  list-style: none;
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background: #d9ddd5;
+  box-shadow: inset 0 2px 4px rgb(0 0 0 / 25%);
+  color: var(--ink);
+}
+
 .tray-item {
   touch-action: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+}
+
+.tray-icon {
+  width: 56px;
+  height: 32px;
+  overflow: visible;
+  pointer-events: none;
 }
 
 .tray-info {
@@ -150,10 +251,11 @@ button:disabled {
   align-items: center;
   gap: 0.3em;
   min-height: 44px;
-  padding: 0 8px;
+  padding: 0 10px;
 }
 
 .tray-count {
+  font-weight: 400;
   opacity: 0.7;
 }
 
@@ -301,11 +403,19 @@ button:disabled {
   pointer-events: none;
 }
 
+/* Room is kept for the warning so the board doesn't jump; it shows as a yellow label when set. */
 .warning {
-  min-height: 1.5em;
-  margin: 0;
-  color: #b23a3a;
-  font-weight: 600;
+  min-height: 1.6em;
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.warning:not(:empty) {
+  width: fit-content;
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: var(--hole-active);
+  color: var(--ink);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -327,22 +437,27 @@ button:disabled {
 }
 
 .level-goal {
-  font-size: 1.15em;
+  font-size: 1.1rem;
+  max-width: 60ch;
+  margin: 8px 0 0;
 }
 
 .success {
   /* Floats over the bottom of the screen so the finished circuit stays in view. */
   position: fixed;
+  /* Above the board, whose drop shadow gives it a layer of its own. */
+  z-index: 2;
   left: 50%;
   bottom: 16px;
   transform: translateX(-50%);
   width: min(640px, calc(100% - 32px));
   box-sizing: border-box;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 20%);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 35%);
   padding: 12px 16px;
-  border-radius: 16px;
-  background: #fff6d6;
-  border: 2px solid #ffd84d;
+  border-radius: 12px;
+  background: var(--board);
+  border-top: 8px solid var(--hole-active);
+  color: var(--ink);
 }
 
 .success h2 {
@@ -361,21 +476,19 @@ button:disabled {
 }
 
 .stars {
-  color: #f2a900;
+  color: #e0a800;
   font-size: 1.4em;
   letter-spacing: 2px;
   margin-left: 8px;
 }
 
 .stars-missing {
-  color: var(--board-edge);
+  color: var(--plastic-edge);
 }
 
 .primary {
-  background: #2f7de1;
-  border-color: #2f7de1;
-  color: #fff;
-  font-weight: 600;
+  background: var(--hole-active);
+  border-color: #b8931b;
 }
 
 .level-list {
@@ -408,11 +521,13 @@ button:disabled {
   padding: 8px 16px;
   border-radius: 12px;
   background: var(--board);
+  color: var(--ink);
   border: 2px solid var(--board-edge);
 }
 
 .volty {
   position: fixed;
+  z-index: 2;
   right: 16px;
   bottom: 16px;
   display: flex;
@@ -432,6 +547,7 @@ button:disabled {
   padding: 10px 14px;
   border-radius: 16px 16px 4px;
   background: #fff;
+  color: var(--ink);
   border: 2px solid var(--board-edge);
   box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
 }
@@ -446,7 +562,8 @@ button:disabled {
 }
 
 .volty-label {
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--on-mat);
 }
 
 .volty-body {
@@ -518,6 +635,7 @@ button:disabled {
 
 .confetti {
   position: fixed;
+  z-index: 3;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
