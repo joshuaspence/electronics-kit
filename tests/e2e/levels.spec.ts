@@ -58,6 +58,55 @@ test('opens the sandbox with the parts unlocked so far', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Chapter 1: Make a loop' })).toBeVisible();
 });
 
+test('keeps a sandbox build when saved progress arrives late', async ({ page }) => {
+  // Hold storage back until `releaseStorage()`, which resolves once the load has closed it.
+  await page.addInitScript(() => {
+    const open = IDBFactory.prototype.open;
+    let release!: () => void;
+    const released = new Promise<void>((resolve) => (release = resolve));
+    let closed!: () => void;
+    const loaded = new Promise<void>((resolve) => (closed = resolve));
+    const close = IDBDatabase.prototype.close;
+    IDBDatabase.prototype.close = function () {
+      close.call(this);
+      closed();
+    };
+    Object.assign(window, { releaseStorage: () => (release(), loaded) });
+    IDBFactory.prototype.open = function (name: string, version?: number) {
+      let real: IDBOpenDBRequest;
+      const held = {
+        get result() {
+          return real.result;
+        },
+        get error() {
+          return real.error;
+        },
+      } as IDBOpenDBRequest;
+      void released.then(() => {
+        real = open.call(this, name, version);
+        real.onupgradeneeded = (event) => held.onupgradeneeded?.call(real, event);
+        real.onsuccess = (event) => held.onsuccess?.call(real, event);
+        real.onerror = (event) => held.onerror?.call(real, event);
+      });
+      return held;
+    };
+  });
+  await page.goto('./');
+
+  await page.getByRole('button', { name: 'Sandbox' }).click();
+  await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'e1', 'e3'));
+  await expect(page.locator('.board .part-bulb:not(.part-ghost)')).toHaveCount(1);
+
+  // Let the load land and re-render the app, then give React two frames to show it.
+  await page.evaluate(() =>
+    (window as unknown as { releaseStorage: () => Promise<void> }).releaseStorage(),
+  );
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+  await expect(page.locator('.board .part-bulb:not(.part-ghost)')).toHaveCount(1);
+});
+
 test('finishes a level, earns stars and moves on', async ({ page }) => {
   await page.locator('[data-level="loop-3"]').click();
   await expect(page.getByRole('heading', { name: 'Mind the gap' })).toBeVisible();

@@ -96,7 +96,8 @@ const sandbox = sandboxParam === null ? null : (sandboxes[sandboxParam] ?? bread
 type Screen =
   | { readonly kind: 'levels' }
   | { readonly kind: 'level'; readonly index: number }
-  | { readonly kind: 'sandbox' };
+  // The tray is fixed when the sandbox opens: a new tray means a new editor, emptying the board.
+  | { readonly kind: 'sandbox'; readonly tray: readonly PartAllowance[] };
 
 export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: 'levels' });
@@ -142,13 +143,7 @@ export function App() {
   }
 
   if (screen.kind === 'sandbox') {
-    return (
-      <SandboxScreen
-        tray={sandboxTray(levels, progress.stars)}
-        meter
-        onBack={() => setScreen({ kind: 'levels' })}
-      />
-    );
+    return <SandboxScreen tray={screen.tray} meter onBack={() => setScreen({ kind: 'levels' })} />;
   }
 
   if (screen.kind === 'level') {
@@ -171,7 +166,7 @@ export function App() {
       levels={levels}
       progress={progress}
       onPlay={(level) => setScreen({ kind: 'level', index: levels.indexOf(level) })}
-      onSandbox={() => setScreen({ kind: 'sandbox' })}
+      onSandbox={() => setScreen({ kind: 'sandbox', tray: sandboxTray(levels, progress.stars) })}
     />
   );
 }
