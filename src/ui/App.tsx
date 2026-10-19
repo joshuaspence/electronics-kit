@@ -9,6 +9,7 @@ import {
   mergePlayers,
   NO_PLAYERS,
   type Players,
+  setUnlockAll,
   switchProfile,
   updateProgress,
 } from '../core/profiles';
@@ -19,6 +20,7 @@ import { LevelList } from './LevelList';
 import { LevelScreen } from './LevelScreen';
 import { SandboxScreen } from './SandboxScreen';
 import { PlayersScreen } from './PlayersScreen';
+import { TeacherScreen } from './TeacherScreen';
 import { loadSavedPlayers, saveSavedPlayers } from './progressStore';
 import { strings } from './strings';
 import { Workbench } from './Workbench';
@@ -108,13 +110,18 @@ type Screen =
       readonly initial: Build;
       readonly badLink?: boolean;
     }
-  | { readonly kind: 'players' };
+  | { readonly kind: 'players' }
+  | { readonly kind: 'grown-ups' };
 
 /**
  * The sandbox a share link's fragment (`#c=…`, docs/design.md §2) opens, offering the parts
  * unlocked by `stars`.
  */
-function shareScreen(hash: string, stars: Readonly<Record<string, number>>): Screen {
+function shareScreen(
+  hash: string,
+  stars: Readonly<Record<string, number>>,
+  unlockAll: boolean,
+): Screen {
   let shared: Build | null = null;
   try {
     shared = decodeCircuit(
@@ -125,7 +132,7 @@ function shareScreen(hash: string, stars: Readonly<Record<string, number>>): Scr
   } catch {
     // A fragment that isn't valid percent-encoding is a bad link like any other.
   }
-  const tray = sandboxTray(levels, stars);
+  const tray = sandboxTray(levels, stars, unlockAll);
   return shared
     ? { kind: 'sandbox', tray, initial: shared }
     : { kind: 'sandbox', tray, initial: fullBoard.initial, badLink: true };
@@ -163,7 +170,7 @@ export function App() {
   }, []);
   if (loaded && link !== null) {
     setLink(null);
-    setScreen(shareScreen(link, progress.stars));
+    setScreen(shareScreen(link, progress.stars, players.unlockAll));
   }
 
   useEffect(() => {
@@ -173,8 +180,8 @@ export function App() {
     }
   }, [loaded, players]);
 
-  // Only earning stars or changing players saves, so saved data this version can't read survives
-  // until then.
+  // Only earning stars, changing players or a grown-ups' setting saves, so saved data this version
+  // can't read survives until then.
   const change = (update: (players: Players) => Players) => {
     unsaved.current = true;
     setPlayers(update);
@@ -231,6 +238,16 @@ export function App() {
     );
   }
 
+  if (screen.kind === 'grown-ups') {
+    return (
+      <TeacherScreen
+        unlockAll={players.unlockAll}
+        onUnlockAll={(on) => change((p) => setUnlockAll(p, on))}
+        onBack={() => setScreen({ kind: 'levels' })}
+      />
+    );
+  }
+
   if (screen.kind === 'level') {
     const level = levels[screen.index]!;
     const next = screen.index + 1 < levels.length ? screen.index + 1 : null;
@@ -241,7 +258,7 @@ export function App() {
         onFinish={(stars) => finish(level.id, stars)}
         onNext={next === null ? null : () => setScreen({ kind: 'level', index: next })}
         onBack={() => setScreen({ kind: 'levels' })}
-        meter={meterUnlocked(levels, progress.stars)}
+        meter={meterUnlocked(levels, progress.stars, players.unlockAll)}
       />
     );
   }
@@ -255,11 +272,12 @@ export function App() {
       onSandbox={() =>
         setScreen({
           kind: 'sandbox',
-          tray: sandboxTray(levels, progress.stars),
+          tray: sandboxTray(levels, progress.stars, players.unlockAll),
           initial: fullBoard.initial,
         })
       }
       onPlayers={loaded ? () => setScreen({ kind: 'players' }) : null}
+      onGrownUps={loaded ? () => setScreen({ kind: 'grown-ups' }) : null}
     />
   );
 }

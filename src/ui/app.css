@@ -857,9 +857,34 @@ button[aria-pressed='true'] {
 }
 
 .version {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   margin-top: 32px;
   font-size: 0.85em;
+}
+
+.version-text {
   opacity: 0.6;
+}
+
+/* Quiet, so a child isn't drawn to it, but still a real button. */
+.version button {
+  font-size: inherit;
+  opacity: 0.8;
+}
+
+.gate,
+.teacher-settings {
+  max-width: 40rem;
+}
+
+.gate input {
+  font: inherit;
+  width: 4em;
+  padding: 6px 8px;
+  margin: 0 8px 0 4px;
 }
 
 .update {

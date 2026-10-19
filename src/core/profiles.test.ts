@@ -8,6 +8,7 @@ import {
   NAME_LENGTH,
   NO_PLAYERS,
   savePlayers,
+  setUnlockAll,
   switchProfile,
   updateProgress,
 } from './profiles';
@@ -20,8 +21,17 @@ describe('loadPlayers', () => {
     expect(currentProfile(players).progress.stars).toEqual({ 'loop-1': 3, 'loop-2': 1 });
   });
 
+  it('loads version 2 players with nothing unlocked, and keeps the teacher’s unlock in version 3', () => {
+    const v2 = { version: 2, current: 'p1', profiles: [{ id: 'p1', name: 'Ana', stars: {} }] };
+    expect(loadPlayers(v2).unlockAll).toBe(false);
+    expect(loadPlayers({ ...v2, unlockAll: true }).unlockAll).toBe(false);
+    expect(loadPlayers({ ...v2, version: 3, unlockAll: true }).unlockAll).toBe(true);
+    expect(loadPlayers({ ...v2, version: 3, unlockAll: 'yes' }).unlockAll).toBe(false);
+  });
+
   it('round-trips players through saving and JSON', () => {
     let players = updateProgress(NO_PLAYERS, (p) => recordStars(p, 'loop-1', 2));
+    players = setUnlockAll(players, true);
     players = addProfile(players, 'Mia', AVATARS[3]);
     players = updateProgress(players, (p) => recordStars(p, 'loop-3', 3));
     expect(loadPlayers(JSON.parse(JSON.stringify(savePlayers(players))))).toEqual(players);

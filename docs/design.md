@@ -27,13 +27,14 @@ the decision and the main reason for it. When the design changes, update this fi
   only after saved data has loaded, merging anything earned in the meantime into whoever is
   playing. If storage is refused (private windows, locked-down devices) the game plays on without
   saving.
-- Saved data carries a **schema version**; migrations live in `core/` and are unit-tested so that
-  an update never wipes progress (`src/core/profiles.ts`, `progress.ts`). Progress is the best
-  stars per level, and each profile keeps its own. Version 1 was one child's progress; it loads as
-  a single profile, "Player 1", keeping every star. Version 2 is the profiles (id, name, avatar,
-  stars) and which is playing. Data that can't be read (corrupt, or written by a newer version)
-  loads as one player with no progress and is only overwritten once something is saved;
-  unreadable entries are dropped one by one, and a profile's blank name or unknown avatar mended.
+- Saved data carries a **schema version**; migrations live in `core/` and are unit-tested so that an
+  update never wipes progress (`src/core/profiles.ts`, `progress.ts`). Progress is the best stars
+  per level, and each profile keeps its own. Version 1 was one child's progress; it loads as a
+  single profile, "Player 1", keeping every star. Version 2 is the profiles (id, name, avatar,
+  stars) and which is playing. Version 3 adds the device's `unlockAll`; a version 2 save loads with
+  it off. Data that can't be read (corrupt, or written by a newer version) loads as one player with
+  no progress and is only overwritten once something is saved; unreadable entries are dropped one by
+  one, and a profile's blank name or unknown avatar mended.
 - **Profiles** (`src/ui/PlayersScreen.tsx`): the level list says who's playing, with **Change
   player** to pick another or add one by name (up to 20 characters) and one of eight emoji
   pictures, so a child who can't spell their name yet still knows theirs. A new player starts
@@ -49,7 +50,14 @@ the decision and the main reason for it. When the design changes, update this fi
   empty saying the link didn't work. Opening a link, or pasting one into a tab already showing the
   game, opens the sandbox with its circuit; parts the child hasn't unlocked come with it, but the
   tray offers no more of them. **Share** copies the link and shows it to copy by hand too.
-- Later: export/import progress as a file, and a teacher "unlock all" mode behind a parental gate.
+- **Teacher "unlock all"** (`src/ui/TeacherScreen.tsx`): a quiet **For grown-ups** button in the
+  level list's footer opens a gate, a sum of two numbers from 21 to 49 typed in
+  (`src/core/gate.ts`), asked afresh each time the screen opens and after each wrong answer. Past
+  it, one switch unlocks everything for every player on the device: every part any level offers in
+  the sandbox, and the multimeter. Every level is open from the start anyway, so it skips nothing
+  and takes no stars. The gate stops a child changing it by accident; an older child could work it
+  out, which is fine, since all it can do is open more of the game.
+- Later: export/import progress as a file.
 - Out of scope: multiplayer, cloud sync, leaderboards, teacher dashboards.
 
 ## 3. Game structure
@@ -395,5 +403,4 @@ Each milestone is a stack of small PRs (under ~1,500 changed lines each).
   `#c=` share URLs.
 - **M4: Time-based parts.** Capacitors in the UI, the blinker chip, buzzer, motor, light sensor and
   slow motion; chapters 6–7.
-- **Later:** export/import progress, teacher "unlock all", translations, recorded hints, iPad
-  home-screen polish.
+- **Later:** export/import progress, translations, recorded hints, iPad home-screen polish.
