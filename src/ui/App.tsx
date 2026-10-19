@@ -106,20 +106,16 @@ type Screen =
     };
 
 /**
- * The sandbox a share link (`#c=…`, docs/design.md §2) opens, with its circuit and the parts
- * unlocked by `stars`, or nothing if the fragment isn't a share link.
+ * The sandbox a share link's fragment (`#c=…`, docs/design.md §2) opens, offering the parts
+ * unlocked by `stars`.
  */
-function shareScreen(stars: Readonly<Record<string, number>>): Screen | null {
-  const hash = window.location.hash;
-  if (!hash.startsWith('#c=')) {
-    return null;
-  }
+function shareScreen(hash: string, stars: Readonly<Record<string, number>>): Screen {
   let shared: Build | null = null;
   try {
     shared = decodeCircuit(
       fullBoard.board.layout,
       fullBoard.initial,
-      decodeURIComponent(hash.slice(3)),
+      decodeURIComponent(hash.slice('#c='.length)),
     );
   } catch {
     // A fragment that isn't valid percent-encoding is a bad link like any other.
@@ -130,41 +126,37 @@ function shareScreen(stars: Readonly<Record<string, number>>): Screen | null {
     : { kind: 'sandbox', tray, initial: fullBoard.initial, badLink: true };
 }
 
+const shareLink = () => (window.location.hash.startsWith('#c=') ? window.location.hash : null);
+
 export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: 'levels' });
   const [progress, setProgress] = useState<Progress>(NO_PROGRESS);
 
   // Saved progress arrives a moment after the first render; keep anything earned in between, and
-  // save only once it has arrived so a quick finish can't overwrite it. A share link waits for it
-  // too, so its tray offers every part unlocked so far.
+  // save only once it has arrived so a quick finish can't overwrite it.
   const [loaded, setLoaded] = useState(false);
   const unsaved = useRef(false);
   useEffect(() => {
     void loadSavedProgress().then((saved) => {
       setProgress((p) => mergeProgress(saved, p));
       setLoaded(true);
-      const shared = shareScreen(saved.stars);
-      if (shared) {
-        setScreen(shared);
-      }
     });
   }, []);
 
-  // A share link pasted into a tab already showing the game changes only the fragment, which
-  // doesn't reload the page, so open the shared circuit here too.
+  // A share link opens once saved progress has arrived, so its tray offers every part unlocked so
+  // far. One pasted into a tab already showing the game changes only the fragment, which doesn't
+  // reload the page, so listen for that from the start rather than miss one while loading.
+  const [link, setLink] = useState(shareLink);
   useEffect(() => {
-    if (!loaded) {
-      return;
-    }
-    const onHashChange = () => {
-      const shared = shareScreen(progress.stars);
-      if (shared) {
-        setScreen(shared);
-      }
-    };
+    const onHashChange = () => setLink(shareLink());
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
-  }, [loaded, progress.stars]);
+  }, []);
+  if (loaded && link !== null) {
+    setLink(null);
+    setScreen(shareScreen(link, progress.stars));
+  }
+
   useEffect(() => {
     if (loaded && unsaved.current) {
       unsaved.current = false;
