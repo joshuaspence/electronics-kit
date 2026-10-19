@@ -152,6 +152,19 @@ async function ledBehindResistor(page: Page) {
   );
 }
 
+test('shows a resistor’s value in its colour bands', async ({ page }) => {
+  await drag(page, page.locator('[data-tray="resistor"]'), await between(page, 'e5', 'e8'));
+  // The kit's 100 Ω: brown, black, brown, then a gold tolerance band.
+  const bands = page.locator('.board .part-resistor:not(.part-ghost) .resistor-band');
+  await expect(bands).toHaveCount(4);
+  expect(await bands.evaluateAll((els) => els.map((el) => el.getAttribute('fill')))).toEqual([
+    '#7a4a24',
+    '#1b1b1b',
+    '#7a4a24',
+    '#c9a227',
+  ]);
+});
+
 test('lights an LED with its long leg towards the battery’s +', async ({ page }) => {
   await ledBehindResistor(page);
   await expect(page.locator('.board .part-led .led-glow')).not.toHaveAttribute('opacity', '0');
