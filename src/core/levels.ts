@@ -12,6 +12,12 @@ export const LIT_BRIGHTNESS = 0.25;
 const BRIGHT_BRIGHTNESS = 0.9;
 
 /**
+ * Below lit, a light still visibly glows down to this brightness. Three kit bulbs in a row glow at
+ * about 0.19; a light in a broken loop carries only the solver's leakage, far below this.
+ */
+const GLOW_BRIGHTNESS = 0.05;
+
+/**
  * What a level asks for. Goals are checked against the simulated circuit, never a fixed layout,
  * so any correct circuit wins (docs/design.md §3). No goal is met while a battery is shorted.
  */
@@ -166,6 +172,8 @@ interface Lights {
   readonly lit: number;
   /** Lit at nearly full brightness: how many a `bright` goal counts. */
   readonly bright: number;
+  /** Glowing faintly, too dim to count as lit, so current is flowing through them. */
+  readonly glowing: number;
   readonly shorted: boolean;
   /** An LED has popped, so it stays dark however it is wired. */
   readonly blown: boolean;
@@ -186,9 +194,11 @@ function litLights(circuit: Circuit): Lights {
   let blown = false;
   let overdriven = false;
   let backwards = false;
+  let glowing = 0;
   const count = (brightness: number) => {
     lit += brightness >= LIT_BRIGHTNESS ? 1 : 0;
     bright += brightness >= BRIGHT_BRIGHTNESS ? 1 : 0;
+    glowing += brightness >= GLOW_BRIGHTNESS && brightness < LIT_BRIGHTNESS ? 1 : 0;
   };
   for (const part of circuit.parts) {
     const reading = solution.parts.get(part.id)!;
@@ -218,7 +228,7 @@ function litLights(circuit: Circuit): Lights {
         break;
     }
   }
-  return { lit, bright, shorted, blown, overdriven, backwards };
+  return { lit, bright, glowing, shorted, blown, overdriven, backwards };
 }
 
 /**
@@ -235,7 +245,8 @@ function whyDark(lights: Lights): GoalFailure {
   if (lights.backwards) {
     return 'led-backwards';
   }
-  return 'too-few-lit';
+  // A faint glow means the loop is complete but shared too thinly, not that it is broken.
+  return lights.glowing > 0 ? 'too-dim' : 'too-few-lit';
 }
 
 /** Whether the LED `id` would pop with its legs the other way round. */

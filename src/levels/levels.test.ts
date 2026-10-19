@@ -114,6 +114,40 @@ describe('strips-2', () => {
   });
 });
 
+describe('pair-2', () => {
+  it('says three bulbs in a row are too dim, not that the loop is broken', () => {
+    const level = levels.find((l) => l.id === 'pair-2')!;
+    const at = (a: Location, b: Location) => [a, b] as const;
+    const hole = (row: 'a' | 'b' | 'c' | 'd' | 'e', column: number): Location => ({
+      kind: 'terminal',
+      row,
+      column,
+    });
+    const rail = (name: 'top+' | 'top-', position: number): Location => ({
+      kind: 'rail',
+      rail: name,
+      position,
+    });
+    const place = (id: string, kind: 'bulb' | 'wire', legs: readonly [Location, Location]) => ({
+      id,
+      spec: newSpec(kind),
+      at: legs,
+      fixed: false,
+    });
+    const inARow = {
+      parts: [
+        ...level.parts,
+        place('plus', 'wire', at(rail('top+', 3), hole('a', 3))),
+        place('b1', 'bulb', at(hole('b', 3), hole('b', 5))),
+        place('b2', 'bulb', at(hole('c', 5), hole('c', 7))),
+        place('b3', 'bulb', at(hole('d', 7), hole('d', 9))),
+        place('minus', 'wire', at(hole('e', 9), rail('top-', 9))),
+      ],
+    };
+    expect(hintFor(level, inARow, 0)).toEqual({ kind: 'nudge', reason: 'too-dim' });
+  });
+});
+
 /** The same for the same two locations, either way round. */
 function legsKey(at: readonly [Location, Location]): string {
   return at.map(locationKey).sort().join(' ');

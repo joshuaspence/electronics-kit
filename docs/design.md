@@ -69,7 +69,8 @@ the decision and the main reason for it. When the design changes, update this fi
   failed check says why (short circuit, too few lit, too dim, an LED popped, would pop or is the
   wrong way round, not controlled, no switch, not every control) so hints can respond to it. An
   LED that would pop, with every control on or turned round, counts as dark, so Volty asks for a
-  resistor before saying to switch it on or turn it round.
+  resistor before saying to switch it on or turn it round. A light glowing faintly but too dim to
+  count as lit means a complete loop shared too thinly, so it says too dim, not too few lit.
 - **No level needs two buttons held at once:** a mouse or touchpad has one pointer, and Chromebooks
   are a primary target (§9). Levels about needing several controls use switches.
 - **Level data** (`src/levels/`): each level has a board, its starting parts (fixed, or movable

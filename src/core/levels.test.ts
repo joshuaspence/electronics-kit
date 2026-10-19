@@ -46,8 +46,9 @@ describe('checkGoal: light-up', () => {
     });
   });
 
-  it('counts only bulbs bright enough to be lit', () => {
-    // Four bulbs in series share 3 V: each gets well under a quarter of its rated power.
+  it('counts only bulbs bright enough to be lit, and says a faint glow is too dim', () => {
+    // Four bulbs in series share 3 V: each gets well under a quarter of its rated power. The loop
+    // is complete, so the reason is that they're dim, not that it's broken.
     const chain = circuit(
       bulb('a', ['+', '1']),
       bulb('b', ['1', '2']),
@@ -56,7 +57,7 @@ describe('checkGoal: light-up', () => {
     );
     expect(checkGoal({ kind: 'light-up', lights: 1 }, chain)).toEqual({
       met: false,
-      reason: 'too-few-lit',
+      reason: 'too-dim',
     });
   });
 
