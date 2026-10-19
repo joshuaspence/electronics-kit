@@ -203,11 +203,16 @@ h2 {
     grid-area: board;
     height: 100%;
   }
+
+  .workbench > .board-zoomable {
+    height: auto;
+    max-height: 100%;
+  }
 }
 
 /*
  * A zoomed board shows a window onto itself, so nothing outside the window may spill out. Sized by
- * its viewBox even where `max-height` bounds it, it has no strips beside the window to spill into.
+ * its viewBox however it's bounded, it has no strips beside the window to spill into.
  */
 .board-zoomable {
   width: auto;
