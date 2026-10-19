@@ -173,8 +173,10 @@ the current. An unlockable **multimeter** shows volts and milliamps for older ch
 - **Placement:** drag a part from the tray and its legs snap to the nearest valid holes (fixed leg
   spacing per part); rotate with a button; draw wires by dragging hole to hole. Battery packs sit
   off the board with leads into the rails.
-- **Interaction** (`src/ui/Workbench.tsx`). A part is held by its middle while dragged, with a ghost
-  where it will land; dropping off the board or on a taken hole just puts nothing down. Dragging a
+- **Interaction** (`src/ui/Workbench.tsx`). A part is held by its middle while dragged: drawn
+  lifted under the pointer from the moment it leaves the tray, with a ghost where it will land and
+  the strips it would join lit up; dropping off the board or on a taken hole just puts nothing
+  down. A placed part being moved fades where it was. Dragging never selects text. Dragging a
   placed part moves it; tapping it selects it for **Rotate** and **Remove**, and also flips a
   switch. A button is pressed only while held. **Rotate** turns the selected part a quarter
   clockwise about its middle, so two turns swap its legs: that is how an LED is turned round.

@@ -76,6 +76,41 @@ test('flips a switch with a tap', async ({ page }) => {
   await expect(knob).not.toHaveAttribute('cx', before ?? '');
 });
 
+test('carries a part under the pointer and shows where it will connect', async ({ page }) => {
+  const start = await centre(page.locator('[data-tray="bulb"]'));
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+
+  // Off the tray but not yet over the board, the part is already in hand.
+  await page.mouse.move(start.x + 150, start.y + 40, { steps: 5 });
+  await expect(page.locator('.held .part-bulb')).toHaveCount(1);
+  await expect(page.locator('.hole-active')).toHaveCount(0);
+
+  // Over the board, the columns it would join light up, and nothing is selected by the drag.
+  const target = await between(page, 'e1', 'e3');
+  await page.mouse.move(target.x, target.y, { steps: 10 });
+  await expect(page.locator('[data-hole="a1"]')).toHaveClass(/hole-active/);
+  await expect(page.locator('[data-hole="a3"]')).toHaveClass(/hole-active/);
+  await expect(page.locator('[data-hole="a2"]')).not.toHaveClass(/hole-active/);
+  expect(await page.evaluate(() => window.getSelection()?.toString())).toBe('');
+
+  await page.mouse.up();
+  await expect(page.locator('.held')).toHaveCount(0);
+  await expect(page.locator('.part-bulb:not(.part-ghost)')).toHaveCount(1);
+});
+
+test('fades a placed part where it was while it is being moved', async ({ page }) => {
+  await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'e5', 'e7'));
+  const bulb = await centre(page.locator('[data-part] .bulb-body'));
+  await page.mouse.move(bulb.x, bulb.y);
+  await page.mouse.down();
+  await page.mouse.move(bulb.x + 40, bulb.y + 40, { steps: 5 });
+  await expect(page.locator('.part-moving')).toHaveCount(1);
+  await expect(page.locator('.held .part-bulb')).toHaveCount(1);
+  await page.mouse.up();
+  await expect(page.locator('.part-moving')).toHaveCount(0);
+});
+
 test('drops where the pointer is released, even before the last move re-renders', async ({
   page,
 }) => {
