@@ -20,6 +20,7 @@ export const strings = {
   backToLevels: 'Levels',
   success: 'You did it!',
   why: 'Why?',
+  tellMore: 'Tell me more',
   nextLevel: 'Next level',
   starsLabel: (stars: number) => `${stars} of 3 stars`,
   chapter: (n: number, title: string) => `Chapter ${n}: ${title}`,

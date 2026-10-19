@@ -42,6 +42,11 @@ test('finishes a level, earns stars and moves on', async ({ page }) => {
   await expect(page.getByText('You did it!')).toBeVisible();
   await expect(page.getByLabel('3 of 3 stars')).toBeVisible();
 
+  const more = page.getByText('A loop with a gap is called an open circuit.', { exact: false });
+  await expect(more).toBeHidden();
+  await page.getByText('Tell me more').click();
+  await expect(more).toBeVisible();
+
   await page.getByRole('button', { name: 'Next level' }).click();
   await expect(page.getByRole('heading', { name: 'Double bright' })).toBeVisible();
 

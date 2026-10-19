@@ -239,6 +239,17 @@ button:disabled {
   margin: 0 0 4px;
 }
 
+.more summary {
+  /* A finger-sized target, like the buttons. Padding rather than flex, which hides the triangle. */
+  padding: 12px 0;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.more p {
+  margin-top: 0;
+}
+
 .stars {
   color: #f2a900;
   font-size: 1.4em;
