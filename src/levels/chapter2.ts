@@ -8,7 +8,7 @@ import type { Level } from '../core/levels';
 
 const board: Board = {
   kind: 'breadboard',
-  layout: { columns: 10, centreGap: false, rails: false },
+  layout: { columns: 10, centreGap: false, rails: 'none' },
 };
 const hole = (row: TerminalRow, column: number): Location => ({ kind: 'terminal', row, column });
 

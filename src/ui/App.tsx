@@ -27,7 +27,7 @@ const tray: readonly PartAllowance[] = [
 ];
 
 const breadboard: { board: Board; initial: Build } = {
-  board: { kind: 'breadboard', layout: { columns: 10, centreGap: false, rails: false } },
+  board: { kind: 'breadboard', layout: { columns: 10, centreGap: false, rails: 'none' } },
   initial: {
     parts: [
       {
@@ -62,7 +62,7 @@ const snapBoard: { board: Board; initial: Build } = {
 
 // A half-size board with a centre gap and power rails (chapters 3–5), its battery in the top rails.
 const halfBoard: { board: Board; initial: Build } = {
-  board: { kind: 'breadboard', layout: { columns: 30, centreGap: true, rails: true } },
+  board: { kind: 'breadboard', layout: { columns: 30, centreGap: true, rails: 'both' } },
   initial: {
     parts: [
       {

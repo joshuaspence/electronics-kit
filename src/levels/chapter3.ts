@@ -3,12 +3,12 @@ import type { Rail, TerminalRow } from '../core/breadboard';
 import { newSpec } from '../core/catalogue';
 import type { Level } from '../core/levels';
 
-// Chapter 3: series and parallel, on a slice of a half-size board with rails (docs/design.md §3,
-// §5). Fifteen columns keep the holes a comfortable size on a tablet.
+// Chapter 3: series and parallel, on 15 columns of a half-size board with only its top rails, which
+// keeps the board short enough for tablet-sized holes (docs/design.md §3, §5).
 
 const board: Board = {
   kind: 'breadboard',
-  layout: { columns: 15, centreGap: true, rails: true },
+  layout: { columns: 15, centreGap: true, rails: 'top' },
 };
 const hole = (row: TerminalRow, column: number): Location => ({ kind: 'terminal', row, column });
 const rail = (name: Rail, position: number): Location => ({ kind: 'rail', rail: name, position });

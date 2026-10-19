@@ -150,19 +150,19 @@ function gridGeometry(
 type BreadboardRow = TerminalRow | Rail | null;
 
 /**
- * A breadboard's rows from top to bottom. A half-size board has a rail pair above and below, set
- * apart by a blank row, and a blank row for the centre gap; a rail hole sits in the same column as
- * the terminals beside it.
+ * A breadboard's rows from top to bottom. A half-size board has a rail pair above, and with `both`
+ * below too, each set apart by a blank row, and a blank row for the centre gap; a rail hole sits in
+ * the same column as the terminals beside it.
  */
 function breadboardRows(layout: BoardLayout): readonly BreadboardRow[] {
   const top = TERMINAL_ROWS.slice(0, 5);
   const bottom = TERMINAL_ROWS.slice(5);
   return [
-    ...(layout.rails ? (['top+', 'top-', null] as const) : []),
+    ...(layout.rails !== 'none' ? (['top+', 'top-', null] as const) : []),
     ...top,
     ...(layout.centreGap ? [null] : []),
     ...bottom,
-    ...(layout.rails ? ([null, 'bottom-', 'bottom+'] as const) : []),
+    ...(layout.rails === 'both' ? ([null, 'bottom-', 'bottom+'] as const) : []),
   ];
 }
 
@@ -175,7 +175,7 @@ function breadboardGeometry(board: Board & { kind: 'breadboard' }): BoardGeometr
       columns: layout.columns,
       pitch: BREADBOARD.pitch,
       margin: BREADBOARD.margin,
-      extraLeft: layout.rails ? BATTERY_ROOM : 0,
+      extraLeft: layout.rails === 'none' ? 0 : BATTERY_ROOM,
       toCell: (location) => {
         if (location.kind === 'snap') {
           throw new RangeError('A snap post is not on a breadboard');

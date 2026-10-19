@@ -4,7 +4,7 @@ import { geometryFor, quarterTurn, turned } from './geometry';
 
 const geometry = geometryFor({
   kind: 'breadboard',
-  layout: { columns: 10, centreGap: false, rails: false },
+  layout: { columns: 10, centreGap: false, rails: 'none' },
 });
 const hole = (name: string): Location => {
   const location = geometry.locations.find((l) => geometry.name(l) === name);
