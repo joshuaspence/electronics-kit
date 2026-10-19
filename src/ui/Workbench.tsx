@@ -1,5 +1,6 @@
 import {
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
   useEffect,
   useMemo,
   useRef,
@@ -52,10 +53,23 @@ interface WorkbenchProps {
   hint?: { readonly place?: PlacedPart; readonly removeId?: string } | undefined;
   /** The level's goal has been met: chime as it happens, unless muted. */
   finished?: boolean;
+  /**
+   * Shown at the foot of the column beside the board, such as Volty, so the layout keeps room for
+   * it rather than letting it cover the tools.
+   */
+  aside?: ReactNode;
 }
 
 /** The board, the parts tray and the editing tools, wired to a BuildEditor. */
-export function Workbench({ board, tray, initial, onChange, hint, finished }: WorkbenchProps) {
+export function Workbench({
+  board,
+  tray,
+  initial,
+  onChange,
+  hint,
+  finished,
+  aside,
+}: WorkbenchProps) {
   const { editor, build, newId, apply, setControl, undo, redo } = useEditor(board, tray, initial);
   // Report only real changes to the build, not a parent passing a new callback.
   const onChangeRef = useRef(onChange);
@@ -407,6 +421,7 @@ export function Workbench({ board, tray, initial, onChange, hint, finished }: Wo
           {muted ? strings.soundOff : strings.soundOn}
         </button>
       </div>
+      {aside && <div className="workbench-aside">{aside}</div>}
     </div>
   );
 }

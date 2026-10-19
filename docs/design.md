@@ -167,8 +167,10 @@ the current. An unlockable **multimeter** shows volts and milliamps for older ch
   need, and on a landscape screen the parts bin, tools and Volty stand in a column beside the
   board, with the goal beside the title, so the board takes whatever height is left. At 1180×820
   that gives 47.1 px between half-size holes (about 9 mm on an iPad), 65 px on the mini board and
-  274 px between snap posts. A narrow or portrait screen stacks them as before. The sandbox's
-  half-size board keeps both rail pairs.
+  274 px between snap posts. Volty has a row of his own at the foot of that column, laid out with
+  the rest rather than fixed to a corner, so on a short landscape screen he can't cover the tools.
+  A narrow or portrait screen stacks them as before, with Volty in the bottom-right corner. The
+  sandbox's half-size board keeps both rail pairs.
 - **Snap board** (chapter 1): a grid of big metal posts (`{ kind: 'snap', rows, columns }`), 110
   board units apart against the breadboard's 40. Every part reaches the next post; wires go from any
   post to any other. A post takes any number of parts and is drawn above them, so a wire can always

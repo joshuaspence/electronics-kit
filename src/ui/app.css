@@ -112,13 +112,39 @@ h2 {
   .workbench {
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr);
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto auto auto 1fr;
     grid-template-areas:
       'tray warning'
       'tray board'
-      'tools board';
+      'tools board'
+      'aside board';
     column-gap: 16px;
     align-items: start;
+  }
+
+  /*
+   * Volty has a row of his own at the foot of the column, so however tall the bin and tools are he
+   * never covers them. His bubble floats out over the board, where taps pass through it.
+   */
+  .workbench > .workbench-aside {
+    grid-area: aside;
+    align-self: end;
+  }
+
+  .workbench-aside .volty {
+    position: relative;
+    right: auto;
+    bottom: auto;
+  }
+
+  .workbench-aside .volty-bubble {
+    position: absolute;
+    left: 100%;
+    bottom: 40px;
+    margin: 0;
+    width: max-content;
+    max-width: 360px;
+    border-radius: 16px 16px 16px 4px;
   }
 
   .workbench > .tray {
@@ -576,36 +602,19 @@ button:disabled {
 }
 
 /*
- * Volty stands at the bottom of the column beside the board, clear of its holes, and speaks to the
- * right; where everything stacks he moves to the bottom-right corner.
+ * Where everything stacks, Volty stands in the bottom-right corner; beside the board he has a row
+ * of his own at the foot of the column instead (see the landscape workbench above).
  */
 .volty {
   position: fixed;
   z-index: 2;
-  left: 16px;
+  right: 16px;
   bottom: 16px;
   display: flex;
-  flex-direction: row-reverse;
   align-items: flex-end;
   gap: 8px;
   max-width: min(420px, calc(100% - 32px));
   pointer-events: none;
-}
-
-.volty .volty-bubble {
-  border-radius: 16px 16px 16px 4px;
-}
-
-@media (max-width: 760px), (orientation: portrait) {
-  .volty {
-    left: auto;
-    right: 16px;
-    flex-direction: row;
-  }
-
-  .volty .volty-bubble {
-    border-radius: 16px 16px 4px;
-  }
 }
 
 /* Only the button: the bubble can cover board holes on a landscape tablet, so taps pass through it. */

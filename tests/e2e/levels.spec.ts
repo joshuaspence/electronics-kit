@@ -219,6 +219,31 @@ test.describe('Volty', () => {
   const askVolty = (page: Page) =>
     page.getByRole('button', { name: 'Ask Volty for a hint' }).click();
 
+  // On a short landscape screen the column beside the board is nearly full, and Volty used to be
+  // fixed to the corner on top of its lowest tools. A three-part tray makes the column tallest.
+  for (const [width, height] of [
+    [844, 390],
+    [1180, 600],
+  ] as const) {
+    test(`never covers the tools, on a ${width}×${height} screen`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.locator('[data-level="switch-1"]').click();
+      const volty = (await page
+        .getByRole('button', { name: 'Ask Volty for a hint' })
+        .boundingBox())!;
+      const tools = await page.getByRole('toolbar', { name: 'Tools' }).getByRole('button').all();
+      for (const tool of tools) {
+        const box = (await tool.boundingBox())!;
+        const overlaps =
+          box.x < volty.x + volty.width &&
+          volty.x < box.x + box.width &&
+          box.y < volty.y + volty.height &&
+          volty.y < box.y + box.height;
+        expect(overlaps, await tool.innerText()).toBe(false);
+      }
+    });
+  }
+
   test('nudges first, then shows a part, and a hint costs a star', async ({ page }) => {
     await page.locator('[data-level="loop-3"]').click();
 

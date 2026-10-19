@@ -117,14 +117,16 @@ export function LevelScreen({ level, onFinish, onNext, onBack }: LevelScreenProp
               ? { removeId: hint.part.id }
               : undefined
         }
+        aside={
+          stars === null && (
+            <Volty
+              says={hint ? hintText(hint) : idle ? strings.stuck : null}
+              offering={idle}
+              onAsk={askVolty}
+            />
+          )
+        }
       />
-      {stars === null && (
-        <Volty
-          says={hint ? hintText(hint) : idle ? strings.stuck : null}
-          offering={idle}
-          onAsk={askVolty}
-        />
-      )}
     </main>
   );
 }
