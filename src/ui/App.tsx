@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Board, Build } from '../core/build';
 import { newSpec } from '../core/catalogue';
 import { meterUnlocked, type PartAllowance, sandboxTray } from '../core/levels';
+import { decodeCircuit, encodeCircuit } from '../core/share';
 import {
   mergeProgress,
   NO_PROGRESS,
@@ -97,22 +98,73 @@ type Screen =
   | { readonly kind: 'levels' }
   | { readonly kind: 'level'; readonly index: number }
   // The tray is fixed when the sandbox opens: a new tray means a new editor, emptying the board.
-  | { readonly kind: 'sandbox'; readonly tray: readonly PartAllowance[] };
+  | {
+      readonly kind: 'sandbox';
+      readonly tray: readonly PartAllowance[];
+      readonly initial: Build;
+      readonly badLink?: boolean;
+    };
+
+/**
+ * The sandbox a share link (`#c=…`, docs/design.md §2) opens, with its circuit and the parts
+ * unlocked by `stars`, or nothing if the fragment isn't a share link.
+ */
+function shareScreen(stars: Readonly<Record<string, number>>): Screen | null {
+  const hash = window.location.hash;
+  if (!hash.startsWith('#c=')) {
+    return null;
+  }
+  let shared: Build | null = null;
+  try {
+    shared = decodeCircuit(
+      fullBoard.board.layout,
+      fullBoard.initial,
+      decodeURIComponent(hash.slice(3)),
+    );
+  } catch {
+    // A fragment that isn't valid percent-encoding is a bad link like any other.
+  }
+  const tray = sandboxTray(levels, stars);
+  return shared
+    ? { kind: 'sandbox', tray, initial: shared }
+    : { kind: 'sandbox', tray, initial: fullBoard.initial, badLink: true };
+}
 
 export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: 'levels' });
   const [progress, setProgress] = useState<Progress>(NO_PROGRESS);
 
   // Saved progress arrives a moment after the first render; keep anything earned in between, and
-  // save only once it has arrived so a quick finish can't overwrite it.
+  // save only once it has arrived so a quick finish can't overwrite it. A share link waits for it
+  // too, so its tray offers every part unlocked so far.
   const [loaded, setLoaded] = useState(false);
   const unsaved = useRef(false);
   useEffect(() => {
     void loadSavedProgress().then((saved) => {
       setProgress((p) => mergeProgress(saved, p));
       setLoaded(true);
+      const shared = shareScreen(saved.stars);
+      if (shared) {
+        setScreen(shared);
+      }
     });
   }, []);
+
+  // A share link pasted into a tab already showing the game changes only the fragment, which
+  // doesn't reload the page, so open the shared circuit here too.
+  useEffect(() => {
+    if (!loaded) {
+      return;
+    }
+    const onHashChange = () => {
+      const shared = shareScreen(progress.stars);
+      if (shared) {
+        setScreen(shared);
+      }
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, [loaded, progress.stars]);
   useEffect(() => {
     if (loaded && unsaved.current) {
       unsaved.current = false;
@@ -143,7 +195,17 @@ export function App() {
   }
 
   if (screen.kind === 'sandbox') {
-    return <SandboxScreen tray={screen.tray} meter onBack={() => setScreen({ kind: 'levels' })} />;
+    return (
+      <SandboxScreen
+        // A new circuit, such as another share link, starts the sandbox afresh.
+        key={`${encodeCircuit(screen.initial)}:${screen.badLink ?? false}`}
+        tray={screen.tray}
+        meter
+        initial={screen.initial}
+        badLink={screen.badLink ?? false}
+        onBack={() => setScreen({ kind: 'levels' })}
+      />
+    );
   }
 
   if (screen.kind === 'level') {
@@ -166,7 +228,13 @@ export function App() {
       levels={levels}
       progress={progress}
       onPlay={(level) => setScreen({ kind: 'level', index: levels.indexOf(level) })}
-      onSandbox={() => setScreen({ kind: 'sandbox', tray: sandboxTray(levels, progress.stars) })}
+      onSandbox={() =>
+        setScreen({
+          kind: 'sandbox',
+          tray: sandboxTray(levels, progress.stars),
+          initial: fullBoard.initial,
+        })
+      }
     />
   );
 }

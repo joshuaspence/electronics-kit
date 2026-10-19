@@ -35,6 +35,11 @@ export const strings = {
   sandbox: 'Sandbox',
   sandboxIntro:
     'Build anything you like with the parts you’ve unlocked. Finish levels to unlock more.',
+  share: 'Share',
+  linkCopied: 'Link copied! Send it to a friend to show them your circuit:',
+  copyLink: 'Copy this link to show someone your circuit:',
+  badShareLink:
+    'That share link didn’t work, so here’s an empty board. Ask for the link again, or build your own.',
   success: 'You did it!',
   why: 'Why?',
   tellMore: 'Tell me more',

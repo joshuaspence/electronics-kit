@@ -32,7 +32,15 @@ the decision and the main reason for it. When the design changes, update this fi
   only overwritten once the child finishes a level; unreadable entries are dropped one by one.
 - **M1:** one implicit profile. **M3:** several local profiles (name + avatar, no passwords) for
   shared family and classroom devices, and **share links** that encode a circuit in the URL
-  fragment (`#c=<compressed>`), which never reaches a server.
+  fragment (`#c=<code>`), which never reaches a server.
+- **Share links** (`src/core/share.ts`) carry a sandbox circuit as short text rather than
+  compressed bytes, so `src/core` needs no compression API: a version, then a token per part the
+  child placed, `<kind>.<hole>.<hole>[.<value>]` joined by `_` (`1_w.top+3.a3_r.b3.b6.100`). The
+  battery isn't in it; the sandbox places it. A code from another version, with a hole off the
+  board, two legs in one hole or anything else malformed is refused whole, and the sandbox opens
+  empty saying the link didn't work. Opening a link, or pasting one into a tab already showing the
+  game, opens the sandbox with its circuit; parts the child hasn't unlocked come with it, but the
+  tray offers no more of them. **Share** copies the link and shows it to copy by hand too.
 - Later: export/import progress as a file, and a teacher "unlock all" mode behind a parental gate.
 - Out of scope: multiplayer, cloud sync, leaderboards, teacher dashboards.
 

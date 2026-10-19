@@ -44,6 +44,59 @@ test('lists the levels by chapter', async ({ page }) => {
   await expect(page.locator('[data-level]')).toHaveCount(levels.length);
 });
 
+test('shares a sandbox circuit in a link that opens it again', async ({ page, context }) => {
+  await page.getByRole('button', { name: 'Sandbox' }).click();
+  // A bulb from the + rail's column 3 strip to column 5, with its wire from the + rail.
+  await wire(page, 'top+3', 'a3');
+  await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'b3', 'b5'));
+  await page.getByRole('button', { name: 'Share' }).click();
+
+  const link = await page.getByRole('textbox', { name: 'Share' }).inputValue();
+  expect(link).toContain('#c=1_');
+
+  // The link opens the sandbox with the same circuit on the board.
+  const opened = await context.newPage();
+  await opened.goto(link);
+  await expect(opened.getByRole('heading', { name: 'Sandbox' })).toBeVisible();
+  await expect(opened.locator('.board .part-bulb:not(.part-ghost)')).toHaveCount(1);
+  await expect(opened.locator('.board .part-wire:not(.part-ghost)')).toHaveCount(1);
+});
+
+test('opens a share link with the parts unlocked so far', async ({ page, context }) => {
+  // Saved progress that has finished *switch-1*, which unlocks the switch.
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve, reject) => {
+        const open = indexedDB.open('electronics-kit', 1);
+        open.onupgradeneeded = () => open.result.createObjectStore('progress');
+        open.onsuccess = () => {
+          const db = open.result;
+          const put = db
+            .transaction('progress', 'readwrite')
+            .objectStore('progress')
+            .put({ version: 1, stars: { 'switch-1': 3 } }, 'progress');
+          put.onsuccess = () => (db.close(), resolve());
+          put.onerror = () => reject(put.error);
+        };
+        open.onerror = () => reject(open.error);
+      }),
+  );
+
+  // A fresh page reads the link before saved progress arrives, and waits for it.
+  const opened = await context.newPage();
+  await opened.goto('./#c=1_b.b3.b5');
+  await expect(opened.locator('.board .part-bulb:not(.part-ghost)')).toHaveCount(1);
+  await expect(opened.locator('[data-tray="switch"]')).toBeVisible();
+});
+
+test('says when a share link can’t be read, and opens an empty sandbox', async ({ page }) => {
+  // The game is already open, so this changes only the fragment, like a link pasted into its tab.
+  await page.goto('./#c=1_x.a1.a3');
+  await expect(page.getByRole('heading', { name: 'Sandbox' })).toBeVisible();
+  await expect(page.getByText('That share link didn’t work')).toBeVisible();
+  await expect(page.locator('.board .part-bulb')).toHaveCount(0);
+});
+
 test('opens the sandbox with the parts unlocked so far', async ({ page }) => {
   await page.getByRole('button', { name: 'Sandbox' }).click();
   await expect(page.getByRole('heading', { name: 'Sandbox' })).toBeVisible();

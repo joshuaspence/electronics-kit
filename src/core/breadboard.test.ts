@@ -6,6 +6,7 @@ import {
   holesInStrip,
   holesOf,
   isValidHole,
+  parseHole,
   stripOf,
   type TerminalRow,
 } from './breadboard';
@@ -14,6 +15,23 @@ const mini: BoardLayout = { columns: 10, centreGap: false, rails: 'none' };
 const half: BoardLayout = { columns: 30, centreGap: true, rails: 'both' };
 
 const terminal = (column: number, row: TerminalRow): Hole => ({ kind: 'terminal', column, row });
+
+describe('parseHole', () => {
+  it('reads back every hole holeName names', () => {
+    for (const hole of holesOf(half)) {
+      expect(parseHole(half, holeName(hole))).toEqual(hole);
+    }
+  });
+
+  it('names nothing that is not a hole on this board', () => {
+    expect(parseHole(half, 'k3')).toBeNull();
+    expect(parseHole(half, 'a0')).toBeNull();
+    expect(parseHole(half, 'a31')).toBeNull();
+    expect(parseHole(mini, 'top+1')).toBeNull();
+    expect(parseHole(half, 'middle+1')).toBeNull();
+    expect(parseHole(half, '')).toBeNull();
+  });
+});
 
 describe('rails', () => {
   it('runs only along the top on a board with top rails', () => {
