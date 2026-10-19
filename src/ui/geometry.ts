@@ -7,7 +7,23 @@ export interface Point {
   readonly y: number;
 }
 
-export type Orientation = 'across' | 'down';
+/** Which way a part's second leg is from its first, as seen on screen. */
+export type Orientation = 'right' | 'down' | 'left' | 'up';
+
+/** One row or column in each direction: rows grow downwards and columns rightwards. */
+export const STEPS: Readonly<Record<Orientation, { rows: number; columns: number }>> = {
+  right: { rows: 0, columns: 1 },
+  down: { rows: 1, columns: 0 },
+  left: { rows: 0, columns: -1 },
+  up: { rows: -1, columns: 0 },
+};
+
+const CLOCKWISE: readonly Orientation[] = ['right', 'down', 'left', 'up'];
+
+/** A quarter turn clockwise. */
+export function turned(orientation: Orientation): Orientation {
+  return CLOCKWISE[(CLOCKWISE.indexOf(orientation) + 1) % CLOCKWISE.length]!;
+}
 
 /**
  * Where everything on a board is drawn, for either kind of board. Locations sit on a grid of rows
@@ -170,16 +186,26 @@ export function secondLeg(
   orientation: Orientation,
 ): Location | null {
   const span = geometry.legSpan(kind);
-  return orientation === 'across'
-    ? geometry.offset(first, 0, span)
-    : geometry.offset(first, span, 0);
+  const step = STEPS[orientation];
+  return geometry.offset(first, step.rows * span, step.columns * span);
 }
 
-/** The orientation of a placed part, from where its legs are. */
-export function orientationOf(
+/**
+ * A placed part's legs turned a quarter clockwise about its middle, so two turns swap its legs and
+ * four bring it back. With an odd span the middle falls between locations, so each turn's shift is
+ * rounded towards zero, which the four turns' shifts cancel out.
+ */
+export function quarterTurn(
   geometry: BoardGeometry,
-  first: Location,
-  second: Location,
-): Orientation {
-  return geometry.delta(first, second).rows === 0 ? 'across' : 'down';
+  [first, second]: readonly [Location, Location],
+): readonly [Location, Location] | null {
+  const { rows, columns } = geometry.delta(first, second);
+  const next = { rows: columns, columns: -rows };
+  const start = geometry.offset(
+    first,
+    Math.trunc((rows - next.rows) / 2),
+    Math.trunc((columns - next.columns) / 2),
+  );
+  const end = start && geometry.offset(start, next.rows, next.columns);
+  return start && end ? [start, end] : null;
 }

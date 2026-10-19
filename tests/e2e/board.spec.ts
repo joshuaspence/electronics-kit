@@ -103,6 +103,18 @@ test('lights an LED with its long leg on the battery’s + column', async ({ pag
   await expect(page.locator('.part-led .flow')).toHaveCount(1);
 });
 
+test('turns an LED round with two rotations, and it goes dark', async ({ page }) => {
+  await drag(page, page.locator('[data-tray="led"]'), await between(page, 'e1', 'e3'));
+  await expect(page.locator('.part-led .led-glow')).toHaveAttribute('opacity', '0.9');
+
+  // Tapping the LED selects it; each Rotate turns it a quarter about its middle.
+  await page.locator('.part-led .led-body').click();
+  await page.getByRole('button', { name: 'Rotate' }).click();
+  await page.getByRole('button', { name: 'Rotate' }).click();
+  await expect(page.locator('.part-led .led-glow')).toHaveAttribute('opacity', '0');
+  await expect(page.locator('.part-led .flow')).toHaveCount(0);
+});
+
 test('shows current flowing through a lit bulb, and none through a loose one', async ({ page }) => {
   await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'e5', 'e7'));
   await expect(page.locator('.part-bulb:not(.part-ghost)')).toHaveCount(1);
