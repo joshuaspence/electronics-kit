@@ -140,6 +140,20 @@ export function litNow(circuit: Circuit): number {
 }
 
 /**
+ * The multimeter unlocks once any level of this chapter is finished: chapter 3 is where brightness
+ * becomes a question numbers can answer (docs/design.md §4).
+ */
+export const METER_CHAPTER = 3;
+
+/** Whether the multimeter is unlocked, given the stars earned so far. */
+export function meterUnlocked(
+  levels: readonly Level[],
+  stars: Readonly<Record<string, number>>,
+): boolean {
+  return levels.some((level) => level.chapter >= METER_CHAPTER && (stars[level.id] ?? 0) > 0);
+}
+
+/**
  * Stars for a finished level, 1 to 3: one for finishing, one for placing no more than par parts
  * and one for using no hints. Speed never counts.
  */

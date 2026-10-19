@@ -104,6 +104,33 @@ h2 {
   -webkit-user-select: none;
 }
 
+/* The multimeter: a yellow body with an LCD showing the selected part's reading. */
+/* One line, so the column beside the board still fits a short landscape screen with Volty under it. */
+.meter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 10px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 4px solid var(--hole-active);
+  background: #c7d3a6;
+  color: #1c2414;
+  box-shadow: inset 0 2px 4px rgb(0 0 0 / 25%);
+  max-width: 220px;
+}
+
+.meter-part {
+  font-size: 0.85rem;
+}
+
+.meter-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 /*
  * On a landscape screen the parts bin and tools stand in a column beside the board rather than
  * above and below it, so the board can be taller: its height sets the size of its holes.
@@ -112,11 +139,12 @@ h2 {
   .workbench {
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr);
-    grid-template-rows: auto auto auto 1fr;
+    grid-template-rows: auto auto auto auto 1fr;
     grid-template-areas:
       'tray warning'
       'tray board'
       'tools board'
+      'meter board'
       'aside board';
     column-gap: 16px;
     align-items: start;
@@ -154,10 +182,16 @@ h2 {
     margin-top: 0;
   }
 
+  /* Two to a row, so the column stays short enough for the meter below it. */
   .workbench > .tools {
     grid-area: tools;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     margin: 0;
+  }
+
+  .workbench > .meter {
+    grid-area: meter;
   }
 
   .workbench > .warning {
@@ -278,6 +312,12 @@ button:disabled {
   cursor: default;
 }
 
+/* A toggle that is on, such as the meter, lights up like a strip that will connect. */
+button[aria-pressed='true'] {
+  background: var(--hole-active);
+  border-color: #b8931b;
+}
+
 .tools {
   display: flex;
   flex-wrap: wrap;
@@ -352,6 +392,12 @@ button:disabled {
 
 .battery-body {
   fill: #2b2a28;
+}
+
+/* A part's labels are part of its picture: a tap on one is a tap on the part. */
+.body-label,
+.led-anode {
+  pointer-events: none;
 }
 
 .body-label {

@@ -149,7 +149,14 @@ to an implicit ground keeps loose parts and separate circuits solvable. A batter
 less resistance than the battery itself. Bulb brightness is power over rated power, capped at 1.
 
 **Presentation: no numbers by default.** Current is shown as **flowing dots** whose speed follows
-the current. An unlockable **multimeter** shows volts and milliamps for older children.
+the current. An unlockable **multimeter** shows volts and milliamps for older children. It
+unlocks once any chapter 3 level is finished (`meterUnlocked`), and is always there in the
+sandbox. Switched on with the **Meter** toggle, it reads whichever part is selected: the volts
+across it and the current through it, live as switches flip. Tapping selects a part, so there is
+no probe to place; two probes on two points would be closer to a real meter but fiddly on a tablet
+for a young child. While the meter is on, tapping selects the level's own fixed parts too, so they
+can be measured, but **Rotate** and **Remove** stay off for them; with the meter off they aren't
+selected at all, so **Rotate** still turns the parts that come out of the tray.
 
 ## 5. Breadboard
 
