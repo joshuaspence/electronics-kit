@@ -423,3 +423,21 @@ describe('finishedNow', () => {
     expect(finishedNow(goal, dark, solveDc(dark))).toBe(false);
   });
 });
+
+describe('checkGoal: blink', () => {
+  const goal = { kind: 'blink', lights: 1 } as const;
+  const chip: Part = { id: 'k', kind: 'blinker', pins: ['+', 'x'], periodSeconds: 1 };
+
+  it('is met by a bulb behind a blinker chip', () => {
+    expect(checkGoal(goal, circuit(chip, bulb('b', ['x', '-'])))).toEqual({ met: true });
+  });
+
+  it('is not met by a bulb that stays lit, or one beside the chip rather than behind it', () => {
+    expect(checkGoal(goal, circuit(bulb('b', ['+', '-'])))).toEqual({
+      met: false,
+      reason: 'not-blinking',
+    });
+    const beside = circuit({ ...chip, pins: ['+', '-'] } as Part, bulb('b', ['+', '-']));
+    expect(checkGoal(goal, beside)).toEqual({ met: false, reason: 'short-circuit' });
+  });
+});

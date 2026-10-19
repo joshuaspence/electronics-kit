@@ -546,6 +546,22 @@ button[aria-pressed='true'] {
   accent-color: #f6b221;
 }
 
+.blinker-body {
+  fill: #26282a;
+}
+
+.blinker-notch {
+  fill: #4a4e52;
+}
+
+.blinker-light {
+  fill: #5a3a3a;
+}
+
+.blinker-on {
+  fill: #ff5a4f;
+}
+
 .motor-body {
   fill: #b8bcc2;
 }

@@ -350,6 +350,20 @@ test('keeps a bulb glowing from a capacitor after the button is let go', async (
   await expect(page.getByText('You did it!')).toBeVisible();
 });
 
+test('blinks a bulb with a blinker chip', async ({ page }) => {
+  await page.locator('[data-level="out-7"]').click();
+  await wire(page, 'top+3', 'a3');
+  await drag(page, page.locator('[data-tray="blinker"]'), await between(page, 'b3', 'b5'));
+  await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'c5', 'c7'));
+  await wire(page, 'a7', 'top-7');
+  await expect(page.getByText('You did it!')).toBeVisible();
+
+  // The chip's light goes off and comes back on as it switches itself.
+  const on = page.locator('.board .blinker-on');
+  await expect(on).toHaveCount(0);
+  await expect(on).toHaveCount(1);
+});
+
 test('saves an LED with a resistor', async ({ page }) => {
   await page.locator('[data-level="res-1"]').click();
 

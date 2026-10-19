@@ -233,6 +233,9 @@ export function Workbench({
       brightness.set(part.id, buzzerSounds(part, reading) ? 1 : 0);
     } else if (part.kind === 'motor') {
       brightness.set(part.id, motorSpeed(part, reading));
+    } else if (part.kind === 'blinker') {
+      // Its little light shows it switched on and passing current, so it is dark out of a loop.
+      brightness.set(part.id, Math.abs(reading.current) >= 0.001 ? 1 : 0);
     } else if (part.kind === 'capacitor') {
       brightness.set(part.id, Math.min(1, Math.abs(reading.voltage) / fullVolts));
     } else if (part.kind === 'battery' && isShorted(part, reading)) {

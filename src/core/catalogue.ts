@@ -11,7 +11,8 @@ import type { PartKind } from './circuit';
  * (5 Ω) and leaves it dark in the dark (10 kΩ). It starts at half light, a dim room where neither a
  * bulb nor a buzzer in a row with it works, so the child turns the light up to see it work. A
  * capacitor is a big 0.2 F one, so beside a bulb it keeps the bulb lit for over a second once the
- * battery is cut off, fading as it empties (a time constant of 2.2 s through the bulb's 10 Ω and its own 1 Ω).
+ * battery is cut off, fading as it empties (a time constant of 2.2 s through the bulb's 10 Ω and
+ * its own 1 Ω). A blinker chip is on for half a second, then off for half a second.
  */
 export function newSpec(kind: PartKind): PartSpec {
   switch (kind) {
@@ -29,6 +30,8 @@ export function newSpec(kind: PartKind): PartSpec {
       return { kind, ohms: 150, onVolts: 2 };
     case 'motor':
       return { kind, ohms: 5, startAmps: 0.15, ratedAmps: 0.5 };
+    case 'blinker':
+      return { kind, periodSeconds: 1 };
     case 'light-sensor':
       return { kind, brightOhms: 5, darkOhms: 10_000, light: 0.5 };
     case 'switch':

@@ -2,14 +2,15 @@ import type { Level } from '../core/levels';
 import { battery, halfBoard as board, hole, part, rail } from './halfBoard';
 
 // Chapter 7: inputs and outputs (docs/design.md §3). Buzzers and motors work like bulbs that make
-// a sound or turn, and switches, buttons and light sensors control them the same way.
+// a sound or turn, and switches, buttons and light sensors control them the same way. A blinker chip
+// switches itself on and off.
 
 /**
  * A loop from the + rail through a control in columns 3 to 5 and an output in 5 to 7, back to the
  * − rail.
  */
 const loop = (
-  control: 'switch' | 'button' | 'light-sensor',
+  control: 'switch' | 'button' | 'light-sensor' | 'blinker',
   output: 'buzzer' | 'motor' | 'bulb',
 ) => [
   part('w1', 'wire', rail('top+', 3), hole('a', 3)),
@@ -112,5 +113,33 @@ export const chapter7: readonly Level[] = [
     solution: {
       place: [...loop('button', 'bulb'), part('cap', 'capacitor', hole('d', 5), hole('d', 7))],
     },
+  },
+  {
+    id: 'out-7',
+    chapter: 7,
+    board,
+    parts: [battery],
+    goal: { kind: 'blink', lights: 1 },
+    tray: [
+      { kind: 'blinker', count: 1 },
+      { kind: 'bulb', count: 1 },
+      { kind: 'wire', count: 2 },
+    ],
+    par: 4,
+    solution: { place: loop('blinker', 'bulb') },
+  },
+  {
+    id: 'out-8',
+    chapter: 7,
+    board,
+    parts: [battery],
+    goal: { kind: 'blink', lights: 1 },
+    tray: [
+      { kind: 'blinker', count: 1 },
+      { kind: 'buzzer', count: 1 },
+      { kind: 'wire', count: 2 },
+    ],
+    par: 4,
+    solution: { place: loop('blinker', 'buzzer') },
   },
 ];

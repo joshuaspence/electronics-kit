@@ -58,7 +58,12 @@ export type Goal =
    * a control, and the DC solution with every control off must leave every light dark, so the
    * glow comes from what was stored and not from the battery.
    */
-  | { readonly kind: 'keep-glowing'; readonly lights: number; readonly seconds: number };
+  | { readonly kind: 'keep-glowing'; readonly lights: number; readonly seconds: number }
+  /**
+   * With every control on, at least `lights` lights are lit at some moments of a transient run and
+   * every light is dark at others: they blink, such as behind a blinker chip.
+   */
+  | { readonly kind: 'blink'; readonly lights: number };
 
 export interface PartAllowance {
   readonly kind: PartKind;
@@ -106,7 +111,8 @@ export type GoalFailure =
   | 'not-controlled'
   | 'no-control'
   | 'not-every-control'
-  | 'fades-too-fast';
+  | 'fades-too-fast'
+  | 'not-blinking';
 
 export function checkGoal(goal: Goal, circuit: Circuit): GoalResult {
   const on = withControls(circuit, true);
@@ -138,6 +144,8 @@ export function checkGoal(goal: Goal, circuit: Circuit): GoalResult {
       }
       return keepsGlowing(circuit, goal) ? { met: true } : { met: false, reason: 'fades-too-fast' };
     }
+    case 'blink':
+      return blinks(circuit, goal.lights) ? { met: true } : { met: false, reason: 'not-blinking' };
     case 'control-lights':
     case 'every-control': {
       const controls = circuit.parts.filter(isControl);
@@ -197,6 +205,25 @@ export function finishedNow(goal: Goal, circuit: Circuit, solution: CircuitSolut
 /** How long a circuit settles with its controls on before a `keep-glowing` goal turns them off. */
 const SETTLE_SECONDS = 3;
 
+/** How long a `blink` goal watches the circuit: two of the kit blinker's periods. */
+const BLINK_WATCH_SECONDS = 2;
+
+/** How often a `blink` goal looks at the lights while it watches. */
+const BLINK_SAMPLE_SECONDS = 0.05;
+
+function blinks(circuit: Circuit, lights: number): boolean {
+  const sim = new TransientSimulation(withControls(circuit, true));
+  const every = Math.round(BLINK_SAMPLE_SECONDS / TIME_STEP_SECONDS);
+  let lit = false;
+  let dark = false;
+  for (let t = 0; t < BLINK_WATCH_SECONDS; t += BLINK_SAMPLE_SECONDS) {
+    const now = litNow(sim.circuit, sim.run(every));
+    lit ||= now >= lights;
+    dark ||= now === 0;
+  }
+  return lit && dark;
+}
+
 function keepsGlowing(circuit: Circuit, goal: Goal & { kind: 'keep-glowing' }): boolean {
   const on = withControls(circuit, true);
   const sim = new TransientSimulation(on);
@@ -250,6 +277,7 @@ export function sandboxTray(
     'motor',
     'light-sensor',
     'capacitor',
+    'blinker',
   ];
   return [
     ...order.filter((kind) => unlocked.has(kind)).map((kind) => ({ kind, count: SANDBOX_PARTS })),

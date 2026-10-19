@@ -233,3 +233,26 @@ describe('inputsBetween', () => {
     expect(inputsBetween(rc(), { parts: rc().parts.slice(1) })).toBeNull();
   });
 });
+
+describe('blinker chips', () => {
+  const blinky: Circuit = {
+    parts: [
+      rc().parts[0]!,
+      { id: 'chip', kind: 'blinker', pins: ['+', 'x'], periodSeconds: 1 },
+      { id: 'bulb', kind: 'bulb', pins: ['x', '-'], ohms: 10, ratedWatts: 0.5 },
+    ],
+  };
+  const amps = (sim: TransientSimulation) => sim.solution.parts.get('bulb')!.current;
+
+  it('conducts for the first half of each period and not the second', () => {
+    expect(solveDc(blinky).parts.get('bulb')!.current).toBeGreaterThan(0.2);
+    const sim = new TransientSimulation(blinky);
+    expect(amps(sim)).toBeGreaterThan(0.2);
+    sim.run(stepsFor(0.25));
+    expect(amps(sim)).toBeGreaterThan(0.2);
+    sim.run(stepsFor(0.5));
+    expect(amps(sim)).toBeLessThan(1e-6);
+    sim.run(stepsFor(0.5));
+    expect(amps(sim)).toBeGreaterThan(0.2);
+  });
+});
