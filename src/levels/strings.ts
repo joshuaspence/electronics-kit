@@ -12,6 +12,7 @@ export interface LevelText {
 export const chapterTitles: Readonly<Record<number, string>> = {
   1: 'Make a loop',
   2: 'On and off',
+  3: 'Bright and dim',
 };
 
 export const levelText: Readonly<Record<string, LevelText>> = {
@@ -98,5 +99,23 @@ export const levelText: Readonly<Record<string, LevelText>> = {
     goal: 'Use two switches so the bulb only glows when both of them are on.',
     why: 'With the switches one after the other, turning either one off makes a gap. The bulb needs this switch and that one.',
     more: 'Switches in series make an AND: current flows only if every switch is on. Some big machines have two buttons, one for each hand, wired like this so they only start with both hands safely out of the way.',
+  },
+  'pair-1': {
+    title: 'Side by side',
+    goal: 'This board has power rails along the top: + and −. Make two bulbs glow brightly.',
+    why: 'Side by side, each bulb has its own path from + to −, so each one gets the battery’s whole push and glows brightly.',
+    more: 'Bulbs side by side are in parallel. Each has the full 3 volts across it, so each takes as much current as it would alone, and the battery supplies both: twice the current in total.',
+  },
+  'pair-2': {
+    title: 'Three’s a crowd',
+    goal: 'Light all three bulbs at once.',
+    why: 'In a row, three bulbs share the battery’s push three ways, too little for any of them to glow. Side by side, each gets it all.',
+    more: 'In series, the 3 volts are split between the bulbs, about 1 volt each, and the current falls to a third. Power goes with voltage times current, so each bulb gets about a ninth of its full power.',
+  },
+  'pair-3': {
+    title: 'Brighter together',
+    goal: 'These two bulbs are glowing, but only dimly. Rewire them so both glow brightly.',
+    why: 'One after the other, the bulbs shared the push and were dim. Side by side, each has its own path and glows brightly.',
+    more: 'This is why the lights in a house are wired in parallel. Every light gets the full voltage, and turning one off or taking one out leaves the others glowing.',
   },
 };

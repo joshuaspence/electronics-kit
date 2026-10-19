@@ -62,13 +62,15 @@ the decision and the main reason for it. When the design changes, update this fi
   placing no more than the level's par, one for using no hints. No level has time pressure.
 - **Goals** (`src/core/levels.ts`) are evaluated on the DC solution. A light, a bulb or an LED, is
   *lit* at a quarter of full brightness or more. `light-up` needs N lit lights with every switch
-  closed and button pressed; `control-lights` also needs every light dark with every switch open
-  and button released; `every-control` also needs them dark with any one switch open or button
-  released and the rest on. No goal is met while a battery is shorted, and a failed check says
-  why (short circuit, too few lit, an LED popped, would pop or is the wrong way round, not
-  controlled, no switch, not every control) so hints can respond to it. An LED that would pop,
-  with every control on or turned round, counts as dark, so Volty asks for a resistor before
-  saying to switch it on or turn it round.
+  closed and button pressed, or with `bright`, N at nine tenths or more (two kit bulbs in a row are
+  lit at under half, side by side at full); `control-lights` also needs every light dark with
+  every switch open and button released; `every-control` also needs them dark with any one switch
+  open or button released and the rest on. No goal is met while a battery is shorted, and a
+  failed check says why (short circuit, too few lit, too dim, an LED popped, would pop or is the
+  wrong way round, not controlled, no switch, not every control) so hints can respond to it. An
+  LED that would pop, with every control on or turned round, counts as dark, so Volty asks for a
+  resistor before saying to switch it on or turn it round. A light glowing faintly but too dim to
+  count as lit means a complete loop shared too thinly, so it says too dim, not too few lit.
 - **No level needs two buttons held at once:** a mouse or touchpad has one pointer, and Chromebooks
   are a primary target (§9). Levels about needing several controls use switches.
 - **Level data** (`src/levels/`): each level has a board, its starting parts (fixed, or movable
@@ -83,6 +85,9 @@ the decision and the main reason for it. When the design changes, update this fi
   column out* (a wire one column off), *Flick the switch*, *Press to glow* (a button), *All
   together* (one switch, two bulbs), *Out of the loop* (move a switch from beside the loop into it)
   and *Both switches* (two switches in series: an AND).
+- **Chapter 3 levels** (15 columns of a half-size board, the battery in the top rails): *Side by
+  side* (two bulbs bright: only parallel does it), *Three's a crowd* (three in a row are too dim
+  to count as lit) and *Brighter together* (rewire two dim bulbs in a row to be side by side).
 - **Finishing:** the first time the goal is met *and* the goal's bulbs are lit with the switches as
   the child left them (so a switch level finishes when they switch it on), a card floats over the
   bottom of the screen with the stars and the "Why?" text, leaving the working circuit in view, and

@@ -46,8 +46,9 @@ describe('checkGoal: light-up', () => {
     });
   });
 
-  it('counts only bulbs bright enough to be lit', () => {
-    // Four bulbs in series share 3 V: each gets well under a quarter of its rated power.
+  it('counts only bulbs bright enough to be lit, and says a faint glow is too dim', () => {
+    // Four bulbs in series share 3 V: each gets well under a quarter of its rated power. The loop
+    // is complete, so the reason is that they're dim, not that it's broken.
     const chain = circuit(
       bulb('a', ['+', '1']),
       bulb('b', ['1', '2']),
@@ -56,7 +57,7 @@ describe('checkGoal: light-up', () => {
     );
     expect(checkGoal({ kind: 'light-up', lights: 1 }, chain)).toEqual({
       met: false,
-      reason: 'too-few-lit',
+      reason: 'too-dim',
     });
   });
 
@@ -147,6 +148,22 @@ describe('checkGoal: every-control', () => {
   it('still needs the bulbs dark with everything off', () => {
     const c = circuit(button('p', ['y', 'z']), bulb('b', ['+', '-']));
     expect(checkGoal(goal, c)).toEqual({ met: false, reason: 'not-controlled' });
+  });
+});
+
+describe('checkGoal: bright lights', () => {
+  const goal = { kind: 'light-up', lights: 2, bright: true } as const;
+
+  it('is met by two bulbs side by side, each with the whole battery across it', () => {
+    expect(checkGoal(goal, circuit(bulb('a', ['+', '-']), bulb('b', ['+', '-'])))).toEqual({
+      met: true,
+    });
+  });
+
+  it('says two bulbs in a row are too dim, though they count as lit', () => {
+    const inARow = circuit(bulb('a', ['+', 'x']), bulb('b', ['x', '-']));
+    expect(checkGoal(goal, inARow)).toEqual({ met: false, reason: 'too-dim' });
+    expect(checkGoal({ kind: 'light-up', lights: 2 }, inARow)).toEqual({ met: true });
   });
 });
 
