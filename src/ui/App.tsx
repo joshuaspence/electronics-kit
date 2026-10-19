@@ -217,7 +217,9 @@ export function App() {
       <PlayersScreen
         players={players}
         onChoose={(id) => {
-          change((p) => switchProfile(p, id));
+          if (id !== players.current) {
+            change((p) => switchProfile(p, id));
+          }
           setScreen({ kind: 'levels' });
         }}
         onAdd={(name, avatar) => {

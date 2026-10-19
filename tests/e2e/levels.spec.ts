@@ -61,6 +61,30 @@ function saved(page: Page): Promise<unknown> {
   );
 }
 
+/** Replaces what the game has saved, once the page has made its store. */
+async function save(page: Page, data: unknown) {
+  // An empty store reads as `undefined`, not `null`.
+  await expect.poll(() => saved(page)).not.toBeNull();
+  await page.evaluate(
+    (data) =>
+      new Promise<void>((resolve) => {
+        const open = indexedDB.open('electronics-kit');
+        open.onsuccess = () => {
+          const db = open.result;
+          const put = db
+            .transaction('progress', 'readwrite')
+            .objectStore('progress')
+            .put(data, 'progress');
+          put.onsuccess = () => {
+            db.close();
+            resolve();
+          };
+        };
+      }),
+    data,
+  );
+}
+
 /** Finishes *Mind the gap*, with three stars, by adding its one missing wire. */
 async function finishMindTheGap(page: Page) {
   await page.locator('[data-level="loop-3"]').click();
@@ -392,30 +416,26 @@ test('keeps stars after a reload', async ({ page }) => {
 });
 
 test('keeps the stars a version 1 save had, as the first player', async ({ page }) => {
-  // Once the page has made its store (empty: `undefined`, not `null`), put one child's progress
-  // there as version 1 saved it.
-  await expect.poll(() => saved(page)).not.toBeNull();
-  await page.evaluate(
-    () =>
-      new Promise<void>((resolve) => {
-        const open = indexedDB.open('electronics-kit');
-        open.onsuccess = () => {
-          const db = open.result;
-          const put = db
-            .transaction('progress', 'readwrite')
-            .objectStore('progress')
-            .put({ version: 1, stars: { 'loop-3': 3 } }, 'progress');
-          put.onsuccess = () => {
-            db.close();
-            resolve();
-          };
-        };
-      }),
-  );
+  // One child's progress, as version 1 saved it.
+  await save(page, { version: 1, stars: { 'loop-3': 3 } });
 
   await page.reload();
   await expect(page.getByText('Playing as Player 1')).toBeVisible();
   await expect(page.locator('[data-level="loop-3"]').getByLabel('3 of 3 stars')).toBeVisible();
+});
+
+test('keeps saved data it can’t read when the player playing is chosen again', async ({ page }) => {
+  // Saved by a newer version, say, before going back to this one.
+  const newer = { version: 99, players: 'not ours' };
+  await save(page, newer);
+  await page.reload();
+
+  await page.getByRole('button', { name: 'Change player' }).click();
+  await page.getByRole('button', { name: /Player 1/ }).click();
+  await expect(page.getByText('Playing as Player 1')).toBeVisible();
+
+  // A save starts as the choice shows, so it would come before this read.
+  expect(await saved(page)).toEqual(newer);
 });
 
 test('adds a player with their own progress, and switches back', async ({ page }) => {
