@@ -34,7 +34,7 @@ import {
   type Orientation,
   type Point,
   quarterTurn,
-  secondLeg,
+  legsFrom,
   STEPS,
   turned,
 } from './geometry';
@@ -297,8 +297,8 @@ export function Workbench({
       x: pointer.x - step.columns * half,
       y: pointer.y - step.rows * half,
     });
-    const second = first && secondLeg(geometry, first, spec.kind, orientation);
-    return first && second ? [first, second] : null;
+    const span = geometry.legSpan(spec.kind);
+    return first && legsFrom(geometry, first, step.rows * span, step.columns * span);
   };
 
   /** Where a placed part's legs go when dragged from `start` to `pointer`, keeping their shape. */
@@ -310,8 +310,7 @@ export function Workbench({
       y: from.y + pointer.y - start.y,
     });
     const { rows, columns } = geometry.delta(a, b);
-    const second = first && geometry.offset(first, rows, columns);
-    return first && second ? [first, second] : null;
+    return first && legsFrom(geometry, first, rows, columns);
   };
 
   const placeAndSelect = (spec: PartSpec, at: Legs) => {
