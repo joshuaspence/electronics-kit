@@ -73,9 +73,11 @@ export function LevelScreen({ level, onFinish, onNext, onBack }: LevelScreenProp
         <button type="button" onClick={onBack}>
           {strings.backToLevels}
         </button>
-        <h1>{text.title}</h1>
+        <div>
+          <h1>{text.title}</h1>
+          <p className="level-goal">{text.goal}</p>
+        </div>
       </header>
-      <p className="level-goal">{text.goal}</p>
       {stars !== null && <Confetti />}
       {stars !== null && (
         <section className="success" aria-live="polite">
@@ -115,14 +117,16 @@ export function LevelScreen({ level, onFinish, onNext, onBack }: LevelScreenProp
               ? { removeId: hint.part.id }
               : undefined
         }
+        aside={
+          stars === null && (
+            <Volty
+              says={hint ? hintText(hint) : idle ? strings.stuck : null}
+              offering={idle}
+              onAsk={askVolty}
+            />
+          )
+        }
       />
-      {stars === null && (
-        <Volty
-          says={hint ? hintText(hint) : idle ? strings.stuck : null}
-          offering={idle}
-          onAsk={askVolty}
-        />
-      )}
     </main>
   );
 }

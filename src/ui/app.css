@@ -45,6 +45,12 @@ main {
   padding: 16px;
 }
 
+/* A level uses the whole width, so the board beside its column of tools can be as big as it can. */
+main.level {
+  max-width: 1280px;
+  padding: 12px 16px;
+}
+
 h1 {
   font-size: 1.75rem;
   line-height: 1.2;
@@ -87,6 +93,7 @@ h2 {
   height: 100dvh;
 }
 
+/* On a narrow or portrait screen there's no room beside the board, so everything stacks. */
 .workbench {
   flex: 1;
   min-height: 0;
@@ -95,6 +102,73 @@ h2 {
   /* Dragging across the board must never select its labels. */
   user-select: none;
   -webkit-user-select: none;
+}
+
+/*
+ * On a landscape screen the parts bin and tools stand in a column beside the board rather than
+ * above and below it, so the board can be taller: its height sets the size of its holes.
+ */
+@media (min-width: 761px) and (orientation: landscape) {
+  .workbench {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    grid-template-rows: auto auto auto 1fr;
+    grid-template-areas:
+      'tray warning'
+      'tray board'
+      'tools board'
+      'aside board';
+    column-gap: 16px;
+    align-items: start;
+  }
+
+  /*
+   * Volty has a row of his own at the foot of the column, so however tall the bin and tools are he
+   * never covers them. His bubble floats out over the board, where taps pass through it.
+   */
+  .workbench > .workbench-aside {
+    grid-area: aside;
+    align-self: end;
+  }
+
+  .workbench-aside .volty {
+    position: relative;
+    right: auto;
+    bottom: auto;
+  }
+
+  .workbench-aside .volty-bubble {
+    position: absolute;
+    left: 100%;
+    bottom: 40px;
+    margin: 0;
+    width: max-content;
+    max-width: 360px;
+    border-radius: 16px 16px 16px 4px;
+  }
+
+  .workbench > .tray {
+    grid-area: tray;
+    flex-direction: column;
+    align-items: stretch;
+    margin-top: 0;
+  }
+
+  .workbench > .tools {
+    grid-area: tools;
+    flex-direction: column;
+    margin: 0;
+  }
+
+  .workbench > .warning {
+    grid-area: warning;
+  }
+
+  /* Fills the rows the warning leaves; the drawing keeps its shape, centred in them. */
+  .workbench > .board {
+    grid-area: board;
+    height: 100%;
+  }
 }
 
 /* The part in hand: lifted off the board with a shadow, never in the way of the pointer. */
@@ -426,10 +500,12 @@ button:disabled {
   }
 }
 
+/* The Levels button, then the title with the goal under it: one compact block above the bench. */
 .level-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
+  margin-bottom: 8px;
 }
 
 .level-header h1 {
@@ -438,8 +514,8 @@ button:disabled {
 
 .level-goal {
   font-size: 1.1rem;
-  max-width: 60ch;
-  margin: 8px 0 0;
+  max-width: 70ch;
+  margin: 2px 0 0;
 }
 
 .success {
@@ -525,6 +601,10 @@ button:disabled {
   border: 2px solid var(--board-edge);
 }
 
+/*
+ * Where everything stacks, Volty stands in the bottom-right corner; beside the board he has a row
+ * of his own at the foot of the column instead (see the landscape workbench above).
+ */
 .volty {
   position: fixed;
   z-index: 2;
