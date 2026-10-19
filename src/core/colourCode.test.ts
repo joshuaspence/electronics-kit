@@ -22,6 +22,8 @@ describe('colourBands', () => {
   it('refuses values the code cannot show', () => {
     expect(() => colourBands(0.05)).toThrow(RangeError);
     expect(() => colourBands(1e11)).toThrow(RangeError);
+    // Rounds up to 100 GΩ, one power of ten past white.
+    expect(() => colourBands(9.96e10)).toThrow(RangeError);
     expect(() => colourBands(Number.NaN)).toThrow(RangeError);
   });
 });

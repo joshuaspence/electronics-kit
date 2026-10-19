@@ -24,7 +24,7 @@ export type BandColour = (typeof BAND_COLOURS)[number] | 'gold' | 'silver';
  * must be at least 0.1 Ω (silver, the smallest multiplier) and below 100 GΩ (white, the largest).
  */
 export function colourBands(ohms: number): readonly [BandColour, BandColour, BandColour, 'gold'] {
-  if (!Number.isFinite(ohms) || ohms < 0.1 || ohms >= 1e11) {
+  if (!Number.isFinite(ohms) || ohms < 0.1) {
     throw new RangeError(`No colour code for ${ohms} Ω`);
   }
   let exponent = Math.floor(Math.log10(ohms)) - 1;
@@ -34,7 +34,11 @@ export function colourBands(ohms: number): readonly [BandColour, BandColour, Ban
     digits = 10;
     exponent += 1;
   }
-  const multiplier: BandColour =
-    exponent === -1 ? 'gold' : exponent === -2 ? 'silver' : BAND_COLOURS[exponent]!;
+
+  // Checked after the carry, which can take a value just under 100 GΩ past white.
+  const multiplier = exponent === -1 ? 'gold' : exponent === -2 ? 'silver' : BAND_COLOURS[exponent];
+  if (multiplier === undefined) {
+    throw new RangeError(`No colour code for ${ohms} Ω`);
+  }
   return [BAND_COLOURS[Math.floor(digits / 10)]!, BAND_COLOURS[digits % 10]!, multiplier, 'gold'];
 }
