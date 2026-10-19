@@ -54,7 +54,9 @@ export type Goal =
   /**
    * At least `lights` lights are lit with every control on, and still lit `seconds` after every
    * control is turned off: something keeps them glowing, such as a charged capacitor. Checked on
-   * the transient run rather than the DC solution, which can't store anything.
+   * the transient run rather than the DC solution, which can't store anything. The circuit needs
+   * a control, and the DC solution with every control off must leave every light dark, so the
+   * glow comes from what was stored and not from the battery.
    */
   | { readonly kind: 'keep-glowing'; readonly lights: number; readonly seconds: number };
 
@@ -121,8 +123,21 @@ export function checkGoal(goal: Goal, circuit: Circuit): GoalResult {
       return goal.bright && onResult.bright < goal.lights
         ? { met: false, reason: 'too-dim' }
         : { met: true };
-    case 'keep-glowing':
+    case 'keep-glowing': {
+      // The glow has to come from something stored: with every control off, the DC solution,
+      // which stores nothing, must leave every light dark.
+      if (!circuit.parts.some(isControl)) {
+        return { met: false, reason: 'no-control' };
+      }
+      const off = litLights(withControls(circuit, false));
+      if (off.shorted) {
+        return { met: false, reason: 'short-circuit' };
+      }
+      if (off.lit > 0) {
+        return { met: false, reason: 'not-controlled' };
+      }
       return keepsGlowing(circuit, goal) ? { met: true } : { met: false, reason: 'fades-too-fast' };
+    }
     case 'control-lights':
     case 'every-control': {
       const controls = circuit.parts.filter(isControl);

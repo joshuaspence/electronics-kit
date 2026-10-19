@@ -265,6 +265,8 @@ export const levelText: Readonly<Record<string, LevelText>> = {
     more: 'A capacitor stores electric charge on two metal plates kept apart by a thin layer. Charged, it pushes current out like a tiny battery, but only until it is empty. Bigger capacitors hold more and keep the bulb glowing for longer.',
     hints: {
       'switch-off': 'Your circuit looks ready. Press and hold the button, then let go!',
+      'not-controlled':
+        'The bulb stays on even without the button. Put the button in the loop, before the bulb and the capacitor.',
     },
   },
 };

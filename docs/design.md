@@ -133,7 +133,9 @@ the decision and the main reason for it. When the design changes, update this fi
   text can replace Volty's nudges that talk about a bulb (`hints` in `src/levels/strings.ts`).
 - **Time-based goals:** `keep-glowing` needs the lights lit with every control on, and still lit
   a second after every control is turned off. It is checked on a transient run: three seconds with
-  the controls on to settle, then the controls off (`keepsGlowing` in `src/core/levels.ts`).
+  the controls on to settle, then the controls off (`keepsGlowing` in `src/core/levels.ts`). It
+  needs a control, and every light dark on the DC solution with the controls off, so the glow comes
+  from stored charge and not from a bulb wired straight to the battery.
 - **Finishing:** the first time the goal is met *and* the goal's bulbs are lit with the switches as
   the child left them (so a switch level finishes when they switch it on), by the solution the
   board shows, which for a circuit with a capacitor is the transient run's (`finishedNow`). A

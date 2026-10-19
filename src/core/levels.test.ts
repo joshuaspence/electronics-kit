@@ -390,6 +390,16 @@ describe('checkGoal: keep-glowing', () => {
     });
   });
 
+  it('needs a control, and the glow to come from stored charge rather than the battery', () => {
+    expect(checkGoal(goal, circuit(bulb('b', ['+', '-'])))).toEqual({
+      met: false,
+      reason: 'no-control',
+    });
+    // The button is there, but the bulb is wired straight to the battery beside it.
+    const bypassed = circuit(button(false), bulb('b', ['+', '-']), capacitor);
+    expect(checkGoal(goal, bypassed)).toEqual({ met: false, reason: 'not-controlled' });
+  });
+
   it('finishes only once the button is let go with the bulb still glowing', () => {
     const held = circuit(button(true), bulb('b', ['x', '-']), capacitor);
     expect(finishedNow(goal, held, solveDc(held))).toBe(false);
