@@ -655,3 +655,21 @@ test('lets a grown-up unlock everything, behind the sum, for good', async ({ pag
   await page.locator('[data-level="loop-1"]').click();
   await expect(page.getByRole('button', { name: 'Meter' })).toBeVisible();
 });
+
+// On a phone the holes are about 21 px apart, so a fingertip lands between them or at the edge.
+test('places a part dropped between holes or at the board’s edge on a phone', async ({ page }) => {
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.locator('[data-level="pair-1"]').click();
+  const bulbs = page.locator('.board .part-bulb:not(.part-ghost)');
+
+  // Diagonally between four holes: c3, c4, d3 and d4.
+  const c3 = await centre(post(page, 'c3'));
+  const d4 = await centre(post(page, 'd4'));
+  const between4 = { x: (c3.x + d4.x) / 2 + (d4.x - c3.x), y: (c3.y + d4.y) / 2 };
+  await drag(page, page.locator('[data-tray="bulb"]'), between4);
+  await expect(bulbs).toHaveCount(1);
+
+  // At the right-hand edge, where its second leg would be off the board: it slides back on.
+  await drag(page, page.locator('[data-tray="bulb"]'), await centre(post(page, 'h15')));
+  await expect(bulbs).toHaveCount(2);
+});

@@ -61,8 +61,13 @@ export interface BoardGeometry {
   legSpan(kind: PartKind): number;
 }
 
-/** How close, as a fraction of the pitch, a pointer must be to a location to snap to it. */
-const SNAP_FRACTION = 0.6;
+/**
+ * How close, as a fraction of the pitch, a pointer must be to a location to snap to it. A whole
+ * pitch, so every point among the holes snaps somewhere, even diagonally between four of them, in
+ * a blank row or across the centre gap: a fingertip on a phone covers several holes, and a drop
+ * that puts nothing down is the frustrating case (docs/design.md §5, forgiving snapping).
+ */
+const SNAP_FRACTION = 1;
 
 /** Breadboard holes: small and close, so a 10-column board fits a tablet. */
 const BREADBOARD = { pitch: 40, margin: 30, radius: 9 };
@@ -122,19 +127,24 @@ function gridGeometry(
     height: margin * 2 + pitch * (grid.rows - 1),
     position,
     nearest(point) {
+      // The cell the point is in may be blank (a gap row), so look at its neighbours too.
       const column = Math.round((point.x - left) / pitch) + 1;
       const row = Math.round((point.y - margin) / pitch);
-      if (!inGrid(row, column)) {
-        return null;
+      let best: { location: Location; distance: number } | null = null;
+      for (let r = row - 1; r <= row + 1; r++) {
+        for (let c = column - 1; c <= column + 1; c++) {
+          const location = inGrid(r, c) ? grid.fromCell(r, c) : null;
+          if (!location) {
+            continue;
+          }
+          const centre = position(location);
+          const distance = Math.hypot(centre.x - point.x, centre.y - point.y);
+          if (distance <= pitch * SNAP_FRACTION && (!best || distance < best.distance)) {
+            best = { location, distance };
+          }
+        }
       }
-      const location = grid.fromCell(row, column);
-      if (!location) {
-        return null;
-      }
-      const centre = position(location);
-      return Math.hypot(centre.x - point.x, centre.y - point.y) <= pitch * SNAP_FRACTION
-        ? location
-        : null;
+      return best?.location ?? null;
     },
     offset(location, rows, columns) {
       const { row, column } = grid.toCell(location);
@@ -236,16 +246,23 @@ function snapGeometry(board: Board & { kind: 'snap' }): BoardGeometry {
   );
 }
 
-/** Where the second leg goes for a part whose first leg is in `first`. */
-export function secondLeg(
+/**
+ * A part's legs, `rows` and `columns` apart, with the first leg at `first`, or if that puts the
+ * second off the board, slid back so the second leg is at `first` instead: dropped at the board's
+ * edge, a part lands on it rather than nowhere.
+ */
+export function legsFrom(
   geometry: BoardGeometry,
   first: Location,
-  kind: PartKind,
-  orientation: Orientation,
-): Location | null {
-  const span = geometry.legSpan(kind);
-  const step = STEPS[orientation];
-  return geometry.offset(first, step.rows * span, step.columns * span);
+  rows: number,
+  columns: number,
+): readonly [Location, Location] | null {
+  const second = geometry.offset(first, rows, columns);
+  if (second) {
+    return [first, second];
+  }
+  const back = geometry.offset(first, -rows, -columns);
+  return back && [back, first];
 }
 
 /**
