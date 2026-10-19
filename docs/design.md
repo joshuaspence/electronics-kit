@@ -216,6 +216,11 @@ the current. An unlockable **multimeter** shows volts and milliamps for older ch
 - **Flat, friendly vector art that stays recognisable**: an LED has a long and a short leg,
   resistors have colour bands. Everything is SVG, drawn in code, behind a `PartSkin` interface so
   real art can replace it later. Light theme only.
+- **A maker's bench** (`src/ui/app.css`): the screen is a green self-healing cutting mat with its
+  printed grid, the one bold element; the board is plain white plastic with recessed holes sitting
+  on it, the tray a parts bin with a picture of each part, and buttons chunky plastic keys. The
+  strips a dragged part would join light up signal yellow. Type is Atkinson Hyperlegible, designed
+  for legibility and self-hosted (`@fontsource`), so it makes no network calls.
 - Feedback: bulb glow, spinning motors, wobbling buzzers, flowing current dots, a confetti burst on
   success.
 - **Sound** effects synthesised with the Web Audio API (snap, a buzzer that follows the simulation,
