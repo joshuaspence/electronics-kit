@@ -165,9 +165,9 @@ test('pops an LED straight across the battery, and Undo brings it back', async (
 
 test('does not puff a blown LED again when it is picked up', async ({ page }) => {
   await drag(page, page.locator('[data-tray="led"]'), await between(page, 'e1', 'e3'));
-  await expect(page.locator('.part-led.part-blown')).toHaveCount(1);
+  await expect(page.locator('.board .part-led.part-blown')).toHaveCount(1);
 
-  const led = await centre(page.locator('.part-led.part-blown .led-body'));
+  const led = await centre(page.locator('.board .part-led.part-blown .led-body'));
   await page.mouse.move(led.x, led.y);
   await page.mouse.down();
   await page.mouse.move(led.x + 60, led.y + 60, { steps: 5 });
