@@ -52,12 +52,16 @@ export function hintFor(level: Level, build: Build, step: number): Hint {
   };
 }
 
-/** The same kind of part with its legs in the same two places, either way round. */
+/**
+ * The same kind of part with its legs in the same two places: either way round, unless the part
+ * has a + and a − (a battery or an LED), when the way round is what matters.
+ */
 function samePlace(a: PlacedPart, b: PlacedPart): boolean {
   if (a.spec.kind !== b.spec.kind) {
     return false;
   }
   const [a0, a1] = a.at.map(locationKey);
   const [b0, b1] = b.at.map(locationKey);
-  return (a0 === b0 && a1 === b1) || (a0 === b1 && a1 === b0);
+  const polarised = a.spec.kind === 'led' || a.spec.kind === 'battery';
+  return (a0 === b0 && a1 === b1) || (!polarised && a0 === b1 && a1 === b0);
 }

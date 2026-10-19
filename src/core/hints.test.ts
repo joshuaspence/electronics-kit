@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Build, PlacedPart } from './build';
+import { newSpec } from './catalogue';
 import { hintFor } from './hints';
 import type { Level } from './levels';
 
@@ -64,6 +65,26 @@ describe('hintFor', () => {
     expect(hintFor(level, withBulb, 1)).toEqual({
       kind: 'show-part',
       part: level.solution.place[1],
+    });
+  });
+
+  it('takes away an LED the wrong way round, since its way round matters', () => {
+    const led = (at: PlacedPart['at']): PlacedPart => ({
+      id: 'led',
+      spec: newSpec('led'),
+      at,
+      fixed: false,
+    });
+    const ledLevel: Level = {
+      ...level,
+      parts: [battery],
+      tray: [{ kind: 'led', count: 1 }],
+      solution: { place: [led([post(1, 1), post(1, 2)])] },
+    };
+    const backwards = led([post(1, 2), post(1, 1)]);
+    expect(hintFor(ledLevel, { parts: [battery, backwards] }, 1)).toEqual({
+      kind: 'remove-part',
+      part: backwards,
     });
   });
 
