@@ -153,8 +153,9 @@ the current. An unlockable **multimeter** shows volts and milliamps for older ch
   placed part moves it; tapping it selects it for **Rotate** and **Remove**, and also flips a
   switch. A button is pressed only while held. **Rotate** turns the selected part a quarter
   clockwise about its middle, so two turns swap its legs: that is how an LED is turned round.
-  With nothing selected it turns the parts that come out of the tray. Undo and redo are buttons, always visible. The board keeps to the
-  height of the screen so a landscape tablet shows all of it.
+  With nothing selected it turns the parts that come out of the tray. Undo and redo are buttons,
+  always visible. The board keeps to the height of the screen so a landscape tablet shows all of
+  it.
 - **Touch targets:** holes at least ~9 mm apart at default zoom, forgiving snapping, and a ghost
   preview before dropping.
 - **Mistakes are simulated, not blocked.** Only physically impossible placements (two legs in one
