@@ -146,7 +146,8 @@ test('leaves a fixed part unselected while there is no meter to read it', async 
   await expect(page.getByRole('button', { name: 'Rotate' })).toBeEnabled();
 });
 
-test('unlocks the multimeter once a chapter 3 level is finished', async ({ page }) => {
+/** Finishes *Side by side*, the first chapter 3 level, which unlocks the multimeter. */
+async function finishPair1(page: Page) {
   await page.locator('[data-level="pair-1"]').click();
   await expect(page.getByRole('button', { name: 'Meter' })).toHaveCount(0);
 
@@ -155,9 +156,26 @@ test('unlocks the multimeter once a chapter 3 level is finished', async ({ page 
   await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'd3', 'd5'));
   await wire(page, 'e5', 'top-5');
   await expect(page.getByText('You did it!')).toBeVisible();
+}
 
+test('unlocks the multimeter once a chapter 3 level is finished', async ({ page }) => {
+  await finishPair1(page);
   await page.getByRole('button', { name: 'Next level' }).click();
   await expect(page.getByRole('button', { name: 'Meter' })).toBeVisible();
+});
+
+// The meter adds a row to the column beside the board, under the tools and above Volty.
+test('fits a level with the meter on, on a 1180×600 screen', async ({ page }) => {
+  await finishPair1(page);
+  await page.getByRole('button', { name: 'Next level' }).click();
+  await page.setViewportSize({ width: 1180, height: 600 });
+  await page.getByRole('button', { name: 'Meter' }).click();
+  await page.locator('.board .part-battery .battery-body').click();
+  await expect(page.getByRole('status', { name: 'Multimeter' })).toContainText('Battery:');
+  await expect(page.getByRole('button', { name: 'Ask Volty for a hint' })).toBeInViewport({
+    ratio: 1,
+  });
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(600);
 });
 
 test('turns a backwards LED round to finish the level', async ({ page }) => {

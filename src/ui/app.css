@@ -105,14 +105,16 @@ h2 {
 }
 
 /* The multimeter: a yellow body with an LCD showing the selected part's reading. */
+/* One line, so the column beside the board still fits a short landscape screen with Volty under it. */
 .meter {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-top: 12px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 6px solid var(--hole-active);
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 10px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 4px solid var(--hole-active);
   background: #c7d3a6;
   color: #1c2414;
   box-shadow: inset 0 2px 4px rgb(0 0 0 / 25%);
@@ -124,7 +126,7 @@ h2 {
 }
 
 .meter-value {
-  font-size: 1.5rem;
+  font-size: 1.15rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
