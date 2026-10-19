@@ -31,8 +31,15 @@ describe('levels', () => {
 
       it('can be finished by following Volty’s hints after a misplaced part', () => {
         const editor = start();
-        const spare = level.tray.find(({ kind }) => editor.remaining(kind) > 0)!;
-        const spec = newSpec(spare.kind);
+        let kind = level.tray.find(({ kind }) => editor.remaining(kind) > 0)?.kind;
+
+        // With the whole tray already on the board, a part can only be misplaced by moving one.
+        if (!kind) {
+          const movable = level.parts.find((p) => !p.fixed)!;
+          expect(editor.apply({ kind: 'remove', id: movable.id })).toEqual({ ok: true });
+          kind = movable.spec.kind;
+        }
+        const spec = newSpec(kind);
         const solved = new Set(level.solution.place.map((p) => legsKey(p.at)));
         const { board } = level;
 
