@@ -50,6 +50,24 @@ export function Board({
 }: BoardProps) {
   const [activeStrip, setActiveStrip] = useState<string | null>(null);
   const { width, height } = geometry;
+
+  // Each power rail gets a red or blue stripe and a + or − at its right end, clear of the battery's
+  // leads on the left.
+  const rails = geometry.locations
+    .filter((location) => location.kind === 'rail' && location.position === 1)
+    .map((location) => {
+      const plus = location.kind === 'rail' && location.rail.endsWith('+');
+      const { x, y } = geometry.position(location);
+      const end = geometry.offset(location, 0, geometry.columns - 1)!;
+      return (
+        <g key={geometry.name(location)} className={plus ? 'rail rail-plus' : 'rail rail-minus'}>
+          <line x1={x} y1={y - 16} x2={geometry.position(end).x} y2={y - 16} />
+          <text x={geometry.position(end).x + 18} y={y + 5}>
+            {plus ? '+' : '−'}
+          </text>
+        </g>
+      );
+    });
   const holes = geometry.locations.map((location) => {
     const strip = geometry.stripKey(location);
     const { x, y } = geometry.position(location);
@@ -80,6 +98,7 @@ export function Board({
       onPointerLeave={() => setActiveStrip(null)}
     >
       <rect className="board-body" x={0} y={0} width={width} height={height} rx={16} />
+      {rails}
       {!snap && holes}
       {build.parts.map((part) => {
         const [a, b] = part.at;
@@ -98,6 +117,10 @@ export function Board({
               hot={hot.has(part.id)}
               selected={part.id === selectedId}
               hinted={part.id === hintedId}
+              beside={
+                part.spec.kind === 'battery' &&
+                part.at.every((l) => l.kind === 'rail' && l.position === 1)
+              }
             />
           </g>
         );

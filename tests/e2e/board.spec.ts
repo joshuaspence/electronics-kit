@@ -194,3 +194,32 @@ test.describe('snap board', () => {
     await expect(page.locator('.part-bulb .flow')).toHaveCount(1);
   });
 });
+
+test.describe('half-size board', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('./?sandbox=half');
+  });
+
+  const wire = async (page: Page, from: string, to: string) =>
+    drag(
+      page,
+      page.locator(`[data-hole="${from}"]`),
+      await centre(page.locator(`[data-hole="${to}"]`)),
+    );
+
+  test('powers a bulb from the rails the battery is plugged into', async ({ page }) => {
+    await expect(page.locator('.part-battery .lead')).toHaveCount(2);
+    await wire(page, 'top+5', 'a5');
+    await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'b5', 'b7'));
+    await wire(page, 'c7', 'top-7');
+    await expect(page.locator('.part-bulb .flow')).toHaveCount(1);
+  });
+
+  test('keeps the two halves of a column apart across the centre gap', async ({ page }) => {
+    await wire(page, 'top+5', 'f5');
+    await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'b5', 'b7'));
+    await wire(page, 'c7', 'top-7');
+    await expect(page.locator('.part-bulb:not(.part-ghost)')).toHaveCount(1);
+    await expect(page.locator('.part-bulb .flow')).toHaveCount(0);
+  });
+});

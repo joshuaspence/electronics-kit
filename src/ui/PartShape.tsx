@@ -1,5 +1,5 @@
 import type { PartSpec } from '../core/build';
-import type { Point } from './geometry';
+import { BATTERY_ROOM, type Point } from './geometry';
 import { strings } from './strings';
 
 /** Distance between flowing dots, in board units. */
@@ -19,6 +19,8 @@ interface PartShapeProps {
   hinted?: boolean;
   ghost?: boolean;
   selected?: boolean;
+  /** A battery plugged into the rails at the board's edge: the pack sits beside the board. */
+  beside?: boolean;
 }
 
 /**
@@ -35,6 +37,7 @@ export function PartShape({
   hinted = false,
   ghost,
   selected,
+  beside = false,
 }: PartShapeProps) {
   const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
   const className = [
@@ -58,11 +61,12 @@ export function PartShape({
     );
   }
 
+  // A battery beside the board has leads instead of legs running between its holes.
   return (
     <g className={className}>
-      <line className="leg" x1={from.x} y1={from.y} x2={to.x} y2={to.y} />
-      <Flow from={from} to={to} speed={flow} />
-      {body(spec, from, to, brightness)}
+      {!beside && <line className="leg" x1={from.x} y1={from.y} x2={to.x} y2={to.y} />}
+      {!beside && <Flow from={from} to={to} speed={flow} />}
+      {body(spec, from, to, brightness, beside)}
       {hot && (
         <text className="hot-label" x={mid.x} y={mid.y + 36}>
           {strings.hot}
@@ -72,7 +76,7 @@ export function PartShape({
   );
 }
 
-function body(spec: PartSpec, from: Point, to: Point, brightness: number) {
+function body(spec: PartSpec, from: Point, to: Point, brightness: number, beside: boolean) {
   const x = (from.x + to.x) / 2;
   const y = (from.y + to.y) / 2;
   switch (spec.kind) {
@@ -98,15 +102,32 @@ function body(spec: PartSpec, from: Point, to: Point, brightness: number) {
         </g>
       );
     }
-    case 'battery':
+    case 'battery': {
+      // Beside the board, the pack sits in the room left of the first column with a lead to each
+      // rail.
+      const bx = beside ? from.x - BATTERY_ROOM + 20 : x;
       return (
         <g>
-          <rect className="body battery-body" x={x - 26} y={y - 14} width={52} height={28} rx={5} />
-          <text className="body-label" x={x} y={y + 6}>
+          {beside && (
+            <>
+              <line className="lead lead-plus" x1={bx} y1={y} x2={from.x} y2={from.y} />
+              <line className="lead lead-minus" x1={bx} y1={y} x2={to.x} y2={to.y} />
+            </>
+          )}
+          <rect
+            className="body battery-body"
+            x={bx - 26}
+            y={y - 14}
+            width={52}
+            height={28}
+            rx={5}
+          />
+          <text className="body-label" x={bx} y={y + 6}>
             + −
           </text>
         </g>
       );
+    }
     case 'bulb':
       return (
         <g>
