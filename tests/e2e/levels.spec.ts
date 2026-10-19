@@ -124,6 +124,19 @@ test('controls a bulb with a switch on the breadboard', async ({ page }) => {
   await expect(page.getByText('You did it!')).toBeVisible();
 });
 
+test('lights two bulbs brightly side by side from the rails', async ({ page }) => {
+  await page.locator('[data-level="pair-1"]').click();
+
+  // A wire from the + rail into column 3, two bulbs from 3 to 5, and a wire from 5 to the − rail.
+  await wire(page, 'top+3', 'a3');
+  await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'b3', 'b5'));
+  await expect(page.getByText('You did it!')).toHaveCount(0);
+  await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'd3', 'd5'));
+  await wire(page, 'e5', 'top-5');
+  await expect(page.locator('.part-bulb .bulb-glow[opacity="0.8"]')).toHaveCount(2);
+  await expect(page.getByText('You did it!')).toBeVisible();
+});
+
 test('needs both switches on, one click at a time', async ({ page }) => {
   await page.locator('[data-level="switch-4"]').click();
 

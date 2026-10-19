@@ -6,12 +6,21 @@ import { bulbBrightness, isShorted, ledBrightness, ledPops, solveDc } from './dc
 export const LIT_BRIGHTNESS = 0.25;
 
 /**
+ * A light counts as bright at nearly full brightness. Two kit bulbs side by side across the
+ * battery are bright; two in a row share its push and glow at under half.
+ */
+const BRIGHT_BRIGHTNESS = 0.9;
+
+/**
  * What a level asks for. Goals are checked against the simulated circuit, never a fixed layout,
  * so any correct circuit wins (docs/design.md §3). No goal is met while a battery is shorted.
  */
 export type Goal =
-  /** At least `lights` lights are lit with every switch closed and every button pressed. */
-  | { readonly kind: 'light-up'; readonly lights: number }
+  /**
+   * At least `lights` lights are lit with every switch closed and every button pressed; with
+   * `bright`, lit at nearly full brightness.
+   */
+  | { readonly kind: 'light-up'; readonly lights: number; readonly bright?: boolean }
   /**
    * At least `lights` lights are lit with every switch closed and every button pressed, and none
    * is lit with every switch open and every button released. The circuit needs a switch or button.
@@ -62,6 +71,7 @@ export type GoalResult =
 export type GoalFailure =
   | 'short-circuit'
   | 'too-few-lit'
+  | 'too-dim'
   | 'led-blown'
   | 'led-overdriven'
   | 'led-backwards'
@@ -81,7 +91,9 @@ export function checkGoal(goal: Goal, circuit: Circuit): GoalResult {
 
   switch (goal.kind) {
     case 'light-up':
-      return { met: true };
+      return goal.bright && onResult.bright < goal.lights
+        ? { met: false, reason: 'too-dim' }
+        : { met: true };
     case 'control-lights':
     case 'every-control': {
       const controls = circuit.parts.filter(isControl);
@@ -152,6 +164,8 @@ function withControls(circuit: Circuit, on: boolean, except?: string): Circuit {
 
 interface Lights {
   readonly lit: number;
+  /** Lit at nearly full brightness: how many a `bright` goal counts. */
+  readonly bright: number;
   readonly shorted: boolean;
   /** An LED has popped, so it stays dark however it is wired. */
   readonly blown: boolean;
@@ -167,19 +181,24 @@ interface Lights {
 function litLights(circuit: Circuit): Lights {
   const solution = solveDc(circuit);
   let lit = 0;
+  let bright = 0;
   let shorted = false;
   let blown = false;
   let overdriven = false;
   let backwards = false;
+  const count = (brightness: number) => {
+    lit += brightness >= LIT_BRIGHTNESS ? 1 : 0;
+    bright += brightness >= BRIGHT_BRIGHTNESS ? 1 : 0;
+  };
   for (const part of circuit.parts) {
     const reading = solution.parts.get(part.id)!;
     switch (part.kind) {
       case 'bulb':
-        lit += bulbBrightness(part, reading) >= LIT_BRIGHTNESS ? 1 : 0;
+        count(bulbBrightness(part, reading));
         break;
       case 'led': {
         const pops = !part.blown && ledPops(reading);
-        lit += !pops && ledBrightness(part, reading) >= LIT_BRIGHTNESS ? 1 : 0;
+        count(pops ? 0 : ledBrightness(part, reading));
         blown ||= part.blown;
         overdriven ||= pops;
         if (!part.blown && reading.voltage < -part.forwardVolts) {
@@ -199,7 +218,7 @@ function litLights(circuit: Circuit): Lights {
         break;
     }
   }
-  return { lit, shorted, blown, overdriven, backwards };
+  return { lit, bright, shorted, blown, overdriven, backwards };
 }
 
 /**

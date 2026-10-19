@@ -150,6 +150,22 @@ describe('checkGoal: every-control', () => {
   });
 });
 
+describe('checkGoal: bright lights', () => {
+  const goal = { kind: 'light-up', lights: 2, bright: true } as const;
+
+  it('is met by two bulbs side by side, each with the whole battery across it', () => {
+    expect(checkGoal(goal, circuit(bulb('a', ['+', '-']), bulb('b', ['+', '-'])))).toEqual({
+      met: true,
+    });
+  });
+
+  it('says two bulbs in a row are too dim, though they count as lit', () => {
+    const inARow = circuit(bulb('a', ['+', 'x']), bulb('b', ['x', '-']));
+    expect(checkGoal(goal, inARow)).toEqual({ met: false, reason: 'too-dim' });
+    expect(checkGoal({ kind: 'light-up', lights: 2 }, inARow)).toEqual({ met: true });
+  });
+});
+
 describe('checkGoal: LEDs', () => {
   const goal = { kind: 'light-up', lights: 1 } as const;
   const led = (id: string, pins: Pins, blown = false): Part => ({

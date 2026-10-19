@@ -47,6 +47,8 @@ export const strings = {
   hints: {
     'too-few-lit':
       'Electricity needs a complete loop: out of one end of the battery, through the bulb and back into the other end.',
+    'too-dim':
+      'They’re glowing, but only dimly: one after the other, they share the battery’s push. Try giving each bulb its own path from one end of the battery to the other.',
     'led-blown':
       'That LED popped: too much electricity went through it. Press Undo to get it back, then give it something to slow the electricity down.',
     'led-overdriven':
