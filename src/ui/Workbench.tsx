@@ -18,7 +18,15 @@ import { bulbBrightness, isShorted, ledBrightness, solveDc } from '../core/dc';
 import { flowSpeed } from '../core/flow';
 import type { PartAllowance } from '../core/levels';
 import { Board, type Ghost } from './Board';
-import { geometryFor, type Orientation, orientationOf, type Point, secondLeg } from './geometry';
+import {
+  geometryFor,
+  type Orientation,
+  type Point,
+  quarterTurn,
+  secondLeg,
+  STEPS,
+  turned,
+} from './geometry';
 import { strings } from './strings';
 import { playChime, playSnap, playWarning } from './sound';
 import { Tray } from './Tray';
@@ -59,7 +67,7 @@ export function Workbench({ board, tray, initial, onChange, hint, finished }: Wo
   const svgRef = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [orientation, setOrientation] = useState<Orientation>('across');
+  const [orientation, setOrientation] = useState<Orientation>('right');
   const [muted, setMuted] = useState(false);
 
   /** Applies an edit, with a snap when a part lands in the board. */
@@ -122,11 +130,11 @@ export function Workbench({ board, tray, initial, onChange, hint, finished }: Wo
   /** Where a new part's legs go when the pointer holds it by its middle. */
   const newPartLegs = (spec: PartSpec, pointer: Point): Legs | null => {
     const half = (geometry.legSpan(spec.kind) * geometry.pitch) / 2;
-    const first = geometry.nearest(
-      orientation === 'across'
-        ? { x: pointer.x - half, y: pointer.y }
-        : { x: pointer.x, y: pointer.y - half },
-    );
+    const step = STEPS[orientation];
+    const first = geometry.nearest({
+      x: pointer.x - step.columns * half,
+      y: pointer.y - step.rows * half,
+    });
     const second = first && secondLeg(geometry, first, spec.kind, orientation);
     return first && second ? [first, second] : null;
   };
@@ -243,17 +251,15 @@ export function Workbench({ board, tray, initial, onChange, hint, finished }: Wo
 
   const rotate = () => {
     if (!selected) {
-      setOrientation((o) => (o === 'across' ? 'down' : 'across'));
+      setOrientation(turned);
       return;
     }
     if (selected.spec.kind === 'wire') {
       return;
     }
-    const [first, current] = selected.at;
-    const turned = orientationOf(geometry, first, current) === 'across' ? 'down' : 'across';
-    const second = secondLeg(geometry, first, selected.spec.kind, turned);
-    if (second) {
-      edit({ kind: 'move', id: selected.id, at: [first, second] });
+    const at = quarterTurn(geometry, selected.at);
+    if (at) {
+      edit({ kind: 'move', id: selected.id, at });
     }
   };
 
