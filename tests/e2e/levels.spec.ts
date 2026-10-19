@@ -40,6 +40,8 @@ function saved(page: Page): Promise<unknown> {
     () =>
       new Promise<unknown>((resolve) => {
         const open = indexedDB.open('electronics-kit');
+        // Creating the database here would leave the game's own open no upgrade to make its store.
+        open.onupgradeneeded = () => open.transaction?.abort();
         open.onerror = () => resolve(null);
         open.onsuccess = () => {
           const db = open.result;
