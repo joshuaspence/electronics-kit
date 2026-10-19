@@ -32,6 +32,9 @@ export const strings = {
   soundOn: 'Sound on',
   soundOff: 'Sound off',
   backToLevels: 'Levels',
+  sandbox: 'Sandbox',
+  sandboxIntro:
+    'Build anything you like with the parts you’ve unlocked. Finish levels to unlock more.',
   success: 'You did it!',
   why: 'Why?',
   tellMore: 'Tell me more',

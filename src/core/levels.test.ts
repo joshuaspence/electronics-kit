@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import type { Circuit, Part, Pins } from './circuit';
-import { checkGoal, type Level, litNow, METER_CHAPTER, meterUnlocked, starsFor } from './levels';
+import type { Circuit, Part, PartKind, Pins } from './circuit';
+import {
+  checkGoal,
+  type Level,
+  litNow,
+  METER_CHAPTER,
+  meterUnlocked,
+  sandboxTray,
+  starsFor,
+} from './levels';
 
 const battery: Part = {
   id: 'battery',
@@ -236,6 +244,34 @@ describe('meterUnlocked', () => {
     expect(meterUnlocked(levels, {})).toBe(false);
     expect(meterUnlocked(levels, { early: 3 })).toBe(false);
     expect(meterUnlocked(levels, { meter: 1 })).toBe(true);
+  });
+});
+
+describe('sandboxTray', () => {
+  const level = (id: string, kinds: readonly PartKind[]): Level => ({
+    id,
+    chapter: 1,
+    board: { kind: 'snap', rows: 2, columns: 2 },
+    parts: [],
+    goal: { kind: 'light-up', lights: 1 },
+    tray: kinds.map((kind) => ({ kind, count: 1 })),
+    par: 0,
+    solution: { place: [] },
+  });
+  const levels = [level('loop', ['bulb', 'wire']), level('leds', ['led', 'resistor', 'wire'])];
+  const kinds = (stars: Record<string, number>) =>
+    sandboxTray(levels, stars).map((allowance) => allowance.kind);
+
+  it('starts with bulbs and wires', () => {
+    expect(kinds({})).toEqual(['bulb', 'wire']);
+  });
+
+  it('grows with the parts of each level finished, wires last', () => {
+    expect(kinds({ leds: 1 })).toEqual(['bulb', 'led', 'resistor', 'wire']);
+  });
+
+  it('offers plenty of each', () => {
+    expect(sandboxTray(levels, {}).every((allowance) => allowance.count >= 8)).toBe(true);
   });
 });
 

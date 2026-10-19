@@ -51,7 +51,10 @@ the decision and the main reason for it. When the design changes, update this fi
   5. Resistors, and why LEDs need them
   6. Short circuits
   7. Inputs and outputs: buttons, light sensors, buzzers, motors, timers
-- The **sandbox** offers every part unlocked so far, so it grows with the child.
+- The **sandbox** offers every part unlocked so far, so it grows with the child: every kind a
+  finished level's tray offered, starting with chapter 1's bulbs and wires, eight of each part and
+  forty wires (`sandboxTray`). It opens from the level list, on the full-size board
+  (`src/levels/sandbox.ts`) with pan, zoom and the meter, and has no goal.
 - **Failure is explained and safe, never "game over".** A shorted battery gets a cartoon "hot!"
   warning; a backwards LED stays dark with a polarity hint; an over-driven LED pops with a comic puff
   and comes back on undo. A blown LED is part of the build (`blown`, open from then on), set by

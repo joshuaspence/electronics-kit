@@ -629,6 +629,14 @@ button[aria-pressed='true'] {
   border-color: #b8931b;
 }
 
+/* The game's title, with the way into the sandbox beside it. */
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .level-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
