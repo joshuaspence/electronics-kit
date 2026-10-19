@@ -1,30 +1,7 @@
-import type { Board, Location, PartSpec, PlacedPart } from '../core/build';
-import type { Rail, TerminalRow } from '../core/breadboard';
-import { newSpec } from '../core/catalogue';
 import type { Level } from '../core/levels';
+import { battery, halfBoard as board, hole, part, rail } from './halfBoard';
 
-// Chapter 3: series and parallel, on 15 columns of a half-size board with only its top rails, which
-// keeps the board short enough for tablet-sized holes (docs/design.md §3, §5).
-
-const board: Board = {
-  kind: 'breadboard',
-  layout: { columns: 15, centreGap: true, rails: 'top' },
-};
-const hole = (row: TerminalRow, column: number): Location => ({ kind: 'terminal', row, column });
-const rail = (name: Rail, position: number): Location => ({ kind: 'rail', rail: name, position });
-
-function part(
-  id: string,
-  kind: PartSpec['kind'],
-  from: Location,
-  to: Location,
-  fixed = false,
-): PlacedPart {
-  return { id, spec: newSpec(kind), at: [from, to], fixed };
-}
-
-// The battery is plugged into the top rails, so the + rail and − rail run the length of the board.
-const battery = part('battery', 'battery', rail('top+', 1), rail('top-', 1), true);
+// Chapter 3: series and parallel (docs/design.md §3).
 
 export const chapter3: readonly Level[] = [
   {

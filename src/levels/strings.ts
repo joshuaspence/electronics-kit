@@ -13,6 +13,7 @@ export const chapterTitles: Readonly<Record<number, string>> = {
   1: 'Make a loop',
   2: 'On and off',
   3: 'Bright and dim',
+  4: 'One way only',
 };
 
 export const levelText: Readonly<Record<string, LevelText>> = {
@@ -117,5 +118,23 @@ export const levelText: Readonly<Record<string, LevelText>> = {
     goal: 'These two bulbs are glowing, but only dimly. Rewire them so both glow brightly.',
     why: 'One after the other, the bulbs shared the push and were dim. Side by side, each has its own path and glows brightly.',
     more: 'This is why the lights in a house are wired in parallel. Every light gets the full voltage, and turning one off or taking one out leaves the others glowing.',
+  },
+  'led-1': {
+    title: 'Long leg, short leg',
+    goal: 'This is an LED. Its long leg, marked +, must face the battery’s + side. Make it glow.',
+    why: 'An LED only lets electricity through one way: in at its long leg and out at its short leg.',
+    more: 'LED stands for light-emitting diode. A diode is a one-way valve for current. The long leg is the anode (+) and the short leg, by the flat edge, is the cathode (−).',
+  },
+  'led-2': {
+    title: 'Wrong way round',
+    goal: 'This LED won’t glow. Work out why, then fix it. Tap it and press Rotate to turn it.',
+    why: 'The LED was in backwards, so it blocked the electricity. Turned round, it lets it through.',
+    more: 'Backwards, an LED is reverse-biased: the battery pushes against the way it conducts, so almost no current flows. That’s why a backwards LED stays dark rather than breaking.',
+  },
+  'led-3': {
+    title: 'Bulbs don’t mind',
+    goal: 'Make the bulb and the LED both glow.',
+    why: 'A bulb works whichever way round it goes, but an LED only works one way. Only the LED needed turning round.',
+    more: 'A bulb is just a thin wire that gets hot, and current can flow through a wire either way. An LED is made of two different materials joined together, and current only crosses the join in one direction.',
   },
 };

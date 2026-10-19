@@ -124,6 +124,23 @@ test('controls a bulb with a switch on the breadboard', async ({ page }) => {
   await expect(page.getByText('You did it!')).toBeVisible();
 });
 
+test('turns a backwards LED round to finish the level', async ({ page }) => {
+  await page.locator('[data-level="led-2"]').click();
+  await expect(page.locator('.part-led .led-glow')).toHaveAttribute('opacity', '0');
+
+  // Volty's first hint says what is wrong: the LED is the wrong way round.
+  await page.getByRole('button', { name: 'Ask Volty for a hint' }).click();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'only lets electricity through one way' }),
+  ).toBeVisible();
+
+  await page.locator('.part-led .led-body').click();
+  await page.getByRole('button', { name: 'Rotate' }).click();
+  await page.getByRole('button', { name: 'Rotate' }).click();
+  await expect(page.locator('.part-led .led-glow')).not.toHaveAttribute('opacity', '0');
+  await expect(page.getByText('You did it!')).toBeVisible();
+});
+
 test('lights two bulbs brightly side by side from the rails', async ({ page }) => {
   await page.locator('[data-level="pair-1"]').click();
 
