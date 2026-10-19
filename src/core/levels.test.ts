@@ -19,8 +19,8 @@ const bulb = (id: string, pins: Pins): Part => ({
 const wire = (id: string, pins: Pins): Part => ({ id, kind: 'wire', pins });
 const circuit = (...parts: Part[]): Circuit => ({ parts: [battery, ...parts] });
 
-describe('checkGoal: light-bulbs', () => {
-  const goal = { kind: 'light-bulbs', bulbs: 1 } as const;
+describe('checkGoal: light-up', () => {
+  const goal = { kind: 'light-up', lights: 1 } as const;
 
   it('is met by any complete loop through a bulb', () => {
     expect(checkGoal(goal, circuit(bulb('b', ['+', '-'])))).toEqual({ met: true });
@@ -54,7 +54,7 @@ describe('checkGoal: light-bulbs', () => {
       bulb('c', ['2', '3']),
       bulb('d', ['3', '-']),
     );
-    expect(checkGoal({ kind: 'light-bulbs', bulbs: 1 }, chain)).toEqual({
+    expect(checkGoal({ kind: 'light-up', lights: 1 }, chain)).toEqual({
       met: false,
       reason: 'too-few-lit',
     });
@@ -62,8 +62,8 @@ describe('checkGoal: light-bulbs', () => {
 
   it('needs the requested number of bulbs', () => {
     const two = circuit(bulb('a', ['+', '-']), bulb('b', ['+', '-']));
-    expect(checkGoal({ kind: 'light-bulbs', bulbs: 2 }, two)).toEqual({ met: true });
-    expect(checkGoal({ kind: 'light-bulbs', bulbs: 2 }, circuit(bulb('a', ['+', '-'])))).toEqual({
+    expect(checkGoal({ kind: 'light-up', lights: 2 }, two)).toEqual({ met: true });
+    expect(checkGoal({ kind: 'light-up', lights: 2 }, circuit(bulb('a', ['+', '-'])))).toEqual({
       met: false,
       reason: 'too-few-lit',
     });
@@ -78,8 +78,8 @@ describe('checkGoal: light-bulbs', () => {
   });
 });
 
-describe('checkGoal: control-bulbs', () => {
-  const goal = { kind: 'control-bulbs', bulbs: 1 } as const;
+describe('checkGoal: control-lights', () => {
+  const goal = { kind: 'control-lights', lights: 1 } as const;
 
   it('is met when a switch in the loop turns the bulb on and off', () => {
     const c = circuit(
@@ -124,7 +124,7 @@ describe('checkGoal: control-bulbs', () => {
 });
 
 describe('checkGoal: every-control', () => {
-  const goal = { kind: 'every-control', bulbs: 1 } as const;
+  const goal = { kind: 'every-control', lights: 1 } as const;
   const button = (id: string, pins: Pins): Part => ({ id, kind: 'button', pins, pressed: false });
 
   it('is met when the bulb needs both buttons in a row', () => {
@@ -136,7 +136,7 @@ describe('checkGoal: every-control', () => {
     const c = circuit(button('p', ['+', 'x']), button('q', ['+', 'x']), bulb('b', ['x', '-']));
     expect(checkGoal(goal, c)).toEqual({ met: false, reason: 'not-every-control' });
     // The same circuit does control the bulb, which is all control-bulbs asks.
-    expect(checkGoal({ kind: 'control-bulbs', bulbs: 1 }, c)).toEqual({ met: true });
+    expect(checkGoal({ kind: 'control-lights', lights: 1 }, c)).toEqual({ met: true });
   });
 
   it('is not met when one of the buttons is outside the loop', () => {
@@ -150,13 +150,65 @@ describe('checkGoal: every-control', () => {
   });
 });
 
+describe('checkGoal: LEDs', () => {
+  const goal = { kind: 'light-up', lights: 1 } as const;
+  const led = (id: string, pins: Pins, blown = false): Part => ({
+    id,
+    kind: 'led',
+    pins,
+    forwardVolts: 2,
+    ohms: 10,
+    ratedAmps: 0.02,
+    blown,
+  });
+  const resistor = (id: string, pins: Pins): Part => ({ id, kind: 'resistor', pins, ohms: 100 });
+
+  it('counts a lit LED as a light', () => {
+    const c = circuit(led('led', ['+', 'x']), resistor('r', ['x', '-']));
+    expect(checkGoal(goal, c)).toEqual({ met: true });
+    expect(litNow(c)).toBe(1);
+  });
+
+  it('says when an LED is dark because it is the wrong way round', () => {
+    const c = circuit(led('led', ['x', '+']), resistor('r', ['x', '-']));
+    expect(checkGoal(goal, c)).toEqual({ met: false, reason: 'led-backwards' });
+  });
+
+  it('says when an LED is dark because it has popped', () => {
+    const c = circuit(led('led', ['+', '-'], true));
+    expect(checkGoal(goal, c)).toEqual({ met: false, reason: 'led-blown' });
+  });
+
+  it('gives the usual reason for an LED that is dark only because the loop is broken', () => {
+    const c = circuit(led('led', ['+', 'x']), resistor('r', ['x', 'y']));
+    expect(checkGoal(goal, c)).toEqual({ met: false, reason: 'too-few-lit' });
+  });
+
+  it('does not count an LED that switching on would pop, and says it needs a resistor', () => {
+    // The switch is open, so the LED hasn't popped yet; switched on, it would.
+    const c = circuit(
+      { id: 's', kind: 'switch', pins: ['+', 'x'], closed: false },
+      led('led', ['x', '-']),
+    );
+    expect(checkGoal({ kind: 'control-lights', lights: 1 }, c)).toEqual({
+      met: false,
+      reason: 'led-overdriven',
+    });
+  });
+
+  it('asks for a resistor before turning round a backwards LED that turned round would pop', () => {
+    const c = circuit(led('led', ['-', '+']));
+    expect(checkGoal(goal, c)).toEqual({ met: false, reason: 'led-overdriven' });
+  });
+});
+
 describe('starsFor', () => {
   const level: Level = {
     id: 'loop-1',
     chapter: 1,
     board: { kind: 'snap', rows: 2, columns: 2 },
     parts: [],
-    goal: { kind: 'light-bulbs', bulbs: 1 },
+    goal: { kind: 'light-up', lights: 1 },
     tray: [{ kind: 'wire', count: 4 }],
     par: 2,
     solution: { place: [] },

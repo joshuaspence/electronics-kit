@@ -52,10 +52,10 @@ export function LevelScreen({ level, onFinish, onNext, onBack }: LevelScreenProp
         return;
       }
       const build = next;
-      // The goal must be met, and the bulbs must be glowing right now: a switch-controlled
+      // The goal must be met, and the lights must be glowing right now: a switch-controlled
       // circuit finishes when the child switches it on.
       const circuit = toCircuit(level.board, build);
-      if (!checkGoal(level.goal, circuit).met || litNow(circuit) < level.goal.bulbs) {
+      if (!checkGoal(level.goal, circuit).met || litNow(circuit) < level.goal.lights) {
         return;
       }
       // Parts the level started with don't count as placed, even if the child moved them.
