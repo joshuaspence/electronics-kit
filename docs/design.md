@@ -307,6 +307,15 @@ selected at all, so **Rotate** still turns the parts that come out of the tray.
   or one the child put where the solution has none, then a part to place (drawn faintly where it
   goes). Never an automatic solution. Any hint costs the "no hints" star. Tests check that following
   the hints alone finishes every level, from its start and from a build with a misplaced part.
+- **Guided tutorial** (`src/core/tutorial.ts`): on a level marked `tutorial`, so far only *Light it
+  up*, Volty walks a child through the solution a step at a time on their first try (no stars on
+  it yet). Each step shows where the next part goes, faintly, the way a hint does, pulses that part
+  in the bin, and says what to do: drag the bulb out, then draw each wire. It is worked out afresh
+  from the build after every change, so a child who goes their own way is guided back (a part in
+  the wrong place is pointed at to take away), and any circuit that meets the goal finishes the
+  level. Unlike a hint it costs no star, and while it runs Volty doesn't offer help as well.
+  **Show me how** replays it on a later try. On a short landscape screen Volty's bubble sits along
+  the top, over the title, so it never covers the posts and holes he is pointing at.
 - A **"Why?" card** after each level explains the concept in a sentence or two, with "Tell me more"
   using real terms (volts, current, resistance) for older children.
 - **Australian English.** All text lives in string files from day one so translation is possible.

@@ -573,7 +573,8 @@ test.describe('Volty', () => {
   test('offers help after 30 seconds without progress', async ({ page }) => {
     await page.clock.install();
     await page.goto('./');
-    await page.locator('[data-level="loop-1"]').click();
+    // Not Light it up: its tutorial is already guiding, so Volty has no need to offer.
+    await page.locator('[data-level="loop-2"]').click();
     await expect(page.getByText('Stuck? Tap me for a hint!')).toHaveCount(0);
     await page.clock.fastForward(31_000);
     await expect(page.getByText('Stuck? Tap me for a hint!')).toBeVisible();
@@ -688,4 +689,30 @@ test('keeps a small snap board a comfortable size, in the middle of its space', 
   const space = { left: tools.x + tools.width, right: page.viewportSize()!.width };
   const middle = board.x + board.width / 2;
   expect(Math.abs(middle - (space.left + space.right) / 2)).toBeLessThan(40);
+});
+
+test('guides a first try at Light it up, step by step, for no star', async ({ page }) => {
+  await page.locator('[data-level="loop-1"]').click();
+  const volty = page.locator('.volty-bubble');
+  await expect(volty).toContainText('Let’s build it together!');
+  await expect(page.locator('[data-tray="bulb"]')).toHaveClass(/tray-item-guided/);
+  // Where the bulb goes is shown faintly on the board.
+  await expect(page.locator('.board .part-hinted, .board .part-ghost')).not.toHaveCount(0);
+
+  await drag(page, page.locator('[data-tray="bulb"]'), await between(page, 'p2-1', 'p2-2'));
+  await expect(volty).toContainText('Now a wire.');
+  await wire(page, 'p1-1', 'p2-1');
+  await expect(volty).toContainText('One more wire');
+  await wire(page, 'p1-2', 'p2-2');
+
+  // Being guided isn't asking for a hint, so it keeps every star.
+  await expect(page.getByText('You did it!')).toBeVisible();
+  await expect(page.getByLabel('3 of 3 stars')).toBeVisible();
+
+  // Finished, the level starts unguided, with the tutorial a tap away.
+  await page.getByRole('button', { name: 'Levels' }).click();
+  await page.locator('[data-level="loop-1"]').click();
+  await expect(volty).toHaveCount(0);
+  await page.getByRole('button', { name: 'Show me how' }).click();
+  await expect(volty).toContainText('Let’s build it together!');
 });

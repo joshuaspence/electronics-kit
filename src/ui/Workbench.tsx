@@ -121,6 +121,8 @@ interface WorkbenchProps {
   onChange?: (build: Build, shown: CircuitSolution) => void;
   /** What one of Volty's hints points at: a part to place, or a placed part to take away. */
   hint?: { readonly place?: PlacedPart; readonly removeId?: string } | undefined;
+  /** The part the guided tutorial says to pick up from the tray next. */
+  guided?: PartAllowance['kind'] | undefined;
   /** The level's goal has been met: chime as it happens, unless muted. */
   finished?: boolean;
   /**
@@ -141,6 +143,7 @@ export function Workbench({
   initial,
   onChange,
   hint,
+  guided,
   finished,
   aside,
   meter = false,
@@ -524,6 +527,7 @@ export function Workbench({
         remaining={(kind) => editor.remaining(kind)}
         onPickUp={onPickUp}
         snap={board.kind === 'snap'}
+        guided={guided}
       />
       <p className="warning" role="status">
         {shorted ? strings.shortCircuit : blown > 0 ? strings.ledPopped : ''}

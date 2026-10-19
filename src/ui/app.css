@@ -1126,6 +1126,21 @@ button[aria-pressed='true'] {
     width: 48px;
     height: 62px;
   }
+
+  /*
+   * Over the board, Volty's bubble would cover the posts and holes he is pointing at, so it sits
+   * along the top, over the title, which can wait while he talks. Taps still pass through it.
+   */
+  .workbench-aside .volty-bubble {
+    position: fixed;
+    top: 4px;
+    left: 100px;
+    right: 8px;
+    bottom: auto;
+    width: auto;
+    max-width: none;
+    border-radius: 12px;
+  }
 }
 
 /* Shown only where it applies: the rotate prompt on a narrow portrait screen, over everything. */
@@ -1186,5 +1201,24 @@ button[aria-pressed='true'] {
   .workbench > .board-snap {
     justify-self: center;
     align-self: center;
+  }
+}
+
+/* The part the guided tutorial says to pick up next. */
+.tray-item-guided {
+  outline: 4px solid var(--hole-active);
+  outline-offset: 2px;
+  animation: guided-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes guided-pulse {
+  to {
+    outline-color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tray-item-guided {
+    animation: none;
   }
 }
