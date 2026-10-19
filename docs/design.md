@@ -107,7 +107,7 @@ the decision and the main reason for it. When the design changes, update this fi
 - **Chapter 3 levels** (15 columns of a half-size board, the battery in the top rails): *Side by
   side* (two bulbs bright: only parallel does it), *Three's a crowd* (three in a row are too dim
   to count as lit) and *Brighter together* (rewire two dim bulbs in a row to be side by side).
-  Chapters 3–5 share that board (`src/levels/halfBoard.ts`).
+  Chapters 3–6 share that board (`src/levels/halfBoard.ts`).
 - **Chapter 4 levels** (each LED's path already has a resistor, since without one it pops; why is
   chapter 5): *Long leg, short leg* (place an LED the right way round), *Wrong way round* (turn a
   backwards LED round) and *Bulbs don't mind* (a bulb and an LED both placed backwards: only the
