@@ -164,10 +164,11 @@ test('measures a part with the multimeter', async ({ page }) => {
   await expect(meter).toContainText('2.86 V');
   await expect(meter).toContainText('286 mA');
 
-  // The level's own battery can be measured too, though it can't be moved.
+  // The level's own battery can be measured too, though it can't be moved or turned.
   await page.locator('.board .part-battery .battery-body').click();
   await expect(meter).toContainText('Battery:');
   await expect(meter).toContainText('286 mA');
+  await expect(page.getByRole('button', { name: 'Rotate' })).toBeDisabled();
 });
 
 test('shows a resistor’s value in its colour bands', async ({ page }) => {

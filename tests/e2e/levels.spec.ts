@@ -139,6 +139,13 @@ test('saves an LED with a resistor', async ({ page }) => {
   await expect(page.getByText('You did it!')).toBeVisible();
 });
 
+test('leaves a fixed part unselected while there is no meter to read it', async ({ page }) => {
+  await page.locator('[data-level="loop-1"]').click();
+  await page.locator('.board .part-battery .battery-body').click();
+  await expect(page.locator('.board .part-selected')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Rotate' })).toBeEnabled();
+});
+
 test('unlocks the multimeter once a chapter 3 level is finished', async ({ page }) => {
   await page.locator('[data-level="pair-1"]').click();
   await expect(page.getByRole('button', { name: 'Meter' })).toHaveCount(0);

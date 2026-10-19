@@ -364,7 +364,9 @@ export function Workbench({
       setControl(id, !part.spec.closed);
     }
     // A level's own parts can't be moved, but tapping selects them so the meter can measure them.
-    setSelectedId(id);
+    if (meter && meterOn) {
+      setSelectedId(id);
+    }
   };
 
   return (
@@ -411,7 +413,7 @@ export function Workbench({
         <button type="button" onClick={redo} disabled={!editor.canRedo}>
           {strings.redo}
         </button>
-        <button type="button" onClick={rotate}>
+        <button type="button" onClick={rotate} disabled={selected?.fixed}>
           {strings.rotate}
         </button>
         <button
