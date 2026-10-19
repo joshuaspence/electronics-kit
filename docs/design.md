@@ -107,7 +107,7 @@ the decision and the main reason for it. When the design changes, update this fi
 - **Chapter 3 levels** (15 columns of a half-size board, the battery in the top rails): *Side by
   side* (two bulbs bright: only parallel does it), *Three's a crowd* (three in a row are too dim
   to count as lit) and *Brighter together* (rewire two dim bulbs in a row to be side by side).
-  Chapters 3–5 share that board (`src/levels/halfBoard.ts`).
+  Chapters 3–6 share that board (`src/levels/halfBoard.ts`).
 - **Chapter 4 levels** (each LED's path already has a resistor, since without one it pops; why is
   chapter 5): *Long leg, short leg* (place an LED the right way round), *Wrong way round* (turn a
   backwards LED round) and *Bulbs don't mind* (a bulb and an LED both placed backwards: only the
@@ -117,6 +117,12 @@ the decision and the main reason for it. When the design changes, update this fi
   little* (swap a 10 Ω resistor, told apart by its bands, for the tray's 100 Ω). A tray offers
   each kind at its catalogue value, so other values are starting parts. Hints compare a part's
   value too, such as a resistor's ohms or an LED that has popped, but not whether a switch is on.
+- **Chapter 6 levels** (each with a bulb's path from the + rail to the − rail, and an easier way
+  round it to take away): *Rail to rail* (a wire straight across the rails), *The way round* (a
+  wire joining the bulb's two columns) and *Switch it safely* (a switch beside the bulb, which
+  shorts the battery when switched on, moved into the bulb's path). The first hint says
+  short circuit in every one, *Switch it safely* included, since its goal is checked with the
+  switch on.
 - **Finishing:** the first time the goal is met *and* the goal's bulbs are lit with the switches as
   the child left them (so a switch level finishes when they switch it on), a card floats over the
   bottom of the screen with the stars and the "Why?" text, leaving the working circuit in view, and

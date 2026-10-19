@@ -2,7 +2,7 @@ import type { Board, Location, PartSpec, PlacedPart } from '../core/build';
 import type { Rail, TerminalRow } from '../core/breadboard';
 import { newSpec } from '../core/catalogue';
 
-// The board chapters 3 to 5 share: 15 columns of a half-size board with only its top rails, which
+// The board chapters 3 to 6 share: 15 columns of a half-size board with only its top rails, which
 // keeps it short enough for tablet-sized holes (docs/design.md §5).
 
 export const halfBoard: Board = {
