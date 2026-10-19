@@ -233,6 +233,8 @@ export const levelText: Readonly<Record<string, LevelText>> = {
       'too-few-lit':
         'Electricity needs a complete loop: out of one end of the battery, through the light sensor and the bulb, and back into the other end.',
       'switch-off': 'Your circuit looks ready. Tap the light sensor and give it more light!',
+      'no-control':
+        'This one needs the light sensor in the loop, so the electricity has to go through it.',
       'not-controlled':
         'The bulb stays on even in the dark. Put the light sensor in the loop, so the electricity has to go through it.',
       'short-circuit':
@@ -248,6 +250,8 @@ export const levelText: Readonly<Record<string, LevelText>> = {
       'too-few-lit':
         'Electricity needs a complete loop: out of one end of the battery, through the light sensor and the buzzer, and back into the other end.',
       'switch-off': 'Your circuit looks ready. Tap the light sensor and give it more light!',
+      'no-control':
+        'This one needs the light sensor in the loop, so the electricity has to go through it.',
       'not-controlled':
         'The buzzer sounds even in the dark. Put the light sensor in the loop, so the electricity has to go through it.',
       'short-circuit':
