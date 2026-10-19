@@ -1,6 +1,25 @@
 import type { PartSpec } from '../core/build';
+import { type BandColour, colourBands } from '../core/colourCode';
 import { BATTERY_ROOM, type Point } from './geometry';
 import { strings } from './strings';
+
+/** Where each colour band sits along a resistor's body: three close together, then tolerance. */
+const BAND_OFFSETS = [-13, -6, 1, 13];
+
+const BAND_HEX: Readonly<Record<BandColour, string>> = {
+  black: '#1b1b1b',
+  brown: '#7a4a24',
+  red: '#d6322e',
+  orange: '#f07f1f',
+  yellow: '#f6d02f',
+  green: '#2f9a4a',
+  blue: '#2a64d6',
+  violet: '#8a45c2',
+  grey: '#8c8c8c',
+  white: '#f6f6f2',
+  gold: '#c9a227',
+  silver: '#b8bcc2',
+};
 
 /** Distance between flowing dots, in board units. */
 const DOT_GAP = 16;
@@ -135,10 +154,26 @@ function body(spec: PartSpec, from: Point, to: Point, brightness: number, beside
           <circle className="body bulb-body" cx={x} cy={y} r={16} />
         </g>
       );
-    case 'resistor':
+    case 'resistor': {
+      // Its value in colour bands along the body, which turns with the legs.
+      const angle = (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI;
       return (
-        <rect className="body resistor-body" x={x - 22} y={y - 8} width={44} height={16} rx={6} />
+        <g transform={`rotate(${angle} ${x} ${y})`}>
+          <rect className="body resistor-body" x={x - 22} y={y - 8} width={44} height={16} rx={6} />
+          {colourBands(spec.ohms).map((band, i) => (
+            <rect
+              key={i}
+              className="resistor-band"
+              x={x + BAND_OFFSETS[i]! - 2}
+              y={y - 8}
+              width={4}
+              height={16}
+              fill={BAND_HEX[band]}
+            />
+          ))}
+        </g>
       );
+    }
     case 'capacitor':
       return (
         <rect className="body capacitor-body" x={x - 10} y={y - 14} width={20} height={28} rx={6} />
