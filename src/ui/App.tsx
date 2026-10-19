@@ -157,6 +157,8 @@ export function App() {
   useEffect(() => {
     const onHashChange = () => setLink(shareLink());
     window.addEventListener('hashchange', onHashChange);
+    // The fragment can change between the first render reading it and this listener being added.
+    onHashChange();
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
   if (loaded && link !== null) {
