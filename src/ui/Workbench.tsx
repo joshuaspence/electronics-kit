@@ -240,23 +240,65 @@ export function Workbench({ board, tray, initial, onChange, hint, finished }: Wo
     };
   });
 
-  const ghost = ((): Ghost | null => {
+  // A placed part only counts as moving once the pointer has gone further than a tap.
+  const moving =
+    drag?.type === 'move' &&
+    Math.hypot(drag.pointer.x - drag.start.x, drag.pointer.y - drag.start.y) >= TAP_DISTANCE
+      ? find(drag.id)
+      : undefined;
+
+  // Where the dragged part would land if dropped now, and the part itself under the pointer.
+  const { landing, held } = ((): { landing: Ghost | null; held: Ghost | null } => {
+    const at = (spec: PartSpec, legs: Legs | null): Ghost | null =>
+      legs && { spec, from: geometry.position(legs[0]), to: geometry.position(legs[1]) };
     if (drag?.type === 'wire') {
-      return { spec: { kind: 'wire' }, from: geometry.position(drag.from), to: drag.pointer };
+      const to = geometry.nearest(drag.pointer);
+      return {
+        landing: to && at({ kind: 'wire' }, [drag.from, to]),
+        held: { spec: { kind: 'wire' }, from: geometry.position(drag.from), to: drag.pointer },
+      };
     }
-    let spec: PartSpec | undefined;
-    let legs: Legs | null = null;
     if (drag?.type === 'new' && drag.pointer) {
-      spec = drag.spec;
-      legs = newPartLegs(drag.spec, drag.pointer);
-    } else if (drag?.type === 'move') {
-      const part = find(drag.id);
-      spec = part?.spec;
-      legs = part ? movedLegs(part, drag.start, drag.pointer) : null;
+      const step = STEPS[orientation];
+      const half = (geometry.legSpan(drag.spec.kind) * geometry.pitch) / 2;
+      const offset = { x: step.columns * half, y: step.rows * half };
+      const { x, y } = drag.pointer;
+      return {
+        landing: at(drag.spec, newPartLegs(drag.spec, drag.pointer)),
+        held: {
+          spec: drag.spec,
+          from: { x: x - offset.x, y: y - offset.y },
+          to: { x: x + offset.x, y: y + offset.y },
+        },
+      };
     }
-    return spec && legs
-      ? { spec, from: geometry.position(legs[0]), to: geometry.position(legs[1]) }
-      : null;
+    if (drag?.type === 'move' && moving) {
+      const dx = drag.pointer.x - drag.start.x;
+      const dy = drag.pointer.y - drag.start.y;
+      const [a, b] = moving.at.map((l) => geometry.position(l));
+      return {
+        landing: at(moving.spec, movedLegs(moving, drag.start, drag.pointer)),
+        held: {
+          spec: moving.spec,
+          from: { x: a!.x + dx, y: a!.y + dy },
+          to: { x: b!.x + dx, y: b!.y + dy },
+        },
+      };
+    }
+    return { landing: null, held: null };
+  })();
+
+  // While dragging, light up the strips the part would join, so a child sees where it connects.
+  const targetStrips = ((): ReadonlySet<string> | null => {
+    if (!drag) {
+      return null;
+    }
+    // A wire is joined to the strip it starts from wherever it ends up.
+    const legs = [
+      drag.type === 'wire' ? drag.from : null,
+      ...[landing?.from, landing?.to].map((p) => p && geometry.nearest(p)),
+    ];
+    return new Set(legs.flatMap((l) => (l ? [geometry.stripKey(l)] : [])));
   })();
 
   const rotate = () => {
@@ -323,7 +365,10 @@ export function Workbench({ board, tray, initial, onChange, hint, finished }: Wo
         flows={flows}
         hot={hot}
         selectedId={selectedId}
-        ghost={ghost}
+        ghost={landing}
+        held={held}
+        movingId={moving?.id ?? null}
+        targetStrips={targetStrips}
         hintGhost={
           hint?.place
             ? {

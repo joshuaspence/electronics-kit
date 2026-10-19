@@ -20,7 +20,17 @@ interface BoardProps {
   flows: ReadonlyMap<string, number>;
   hot: ReadonlySet<string>;
   selectedId: string | null;
+  /** Where a part being dragged will land, drawn faintly there. */
   ghost: Ghost | null;
+  /** The part being dragged, drawn lifted under the pointer wherever it is. */
+  held: Ghost | null;
+  /** A placed part being moved, drawn faded where it was. */
+  movingId: string | null;
+  /**
+   * While dragging, the strips the part would join if dropped now, highlighted in place of the
+   * strip under the pointer; none when it wouldn't land.
+   */
+  targetStrips: ReadonlySet<string> | null;
   /** A part one of Volty's hints suggests placing, drawn faintly where it goes. */
   hintGhost: Ghost | null;
   /** A placed part one of Volty's hints points at. */
@@ -43,12 +53,16 @@ export function Board({
   hot,
   selectedId,
   ghost,
+  held,
+  movingId,
+  targetStrips,
   hintGhost,
   hintedId,
   onHolePointerDown,
   onPartPointerDown,
 }: BoardProps) {
-  const [activeStrip, setActiveStrip] = useState<string | null>(null);
+  const [hoverStrip, setHoverStrip] = useState<string | null>(null);
+  const lit = (strip: string) => (targetStrips ? targetStrips.has(strip) : strip === hoverStrip);
   const { width, height } = geometry;
 
   // Each power rail gets a red or blue stripe and a + or − at its right end, clear of the battery's
@@ -75,13 +89,13 @@ export function Board({
       <circle
         key={geometry.name(location)}
         data-hole={geometry.name(location)}
-        className={strip === activeStrip ? 'hole hole-active' : 'hole'}
+        className={lit(strip) ? 'hole hole-active' : 'hole'}
         cx={x}
         cy={y}
         r={geometry.radius}
-        onPointerEnter={() => setActiveStrip(strip)}
+        onPointerEnter={() => setHoverStrip(strip)}
         onPointerDown={(event) => {
-          setActiveStrip(strip);
+          setHoverStrip(strip);
           onHolePointerDown(location, event);
         }}
       />
@@ -95,7 +109,7 @@ export function Board({
       viewBox={`0 0 ${width} ${height}`}
       role="img"
       aria-label={strings.boardLabel}
-      onPointerLeave={() => setActiveStrip(null)}
+      onPointerLeave={() => setHoverStrip(null)}
     >
       <rect className="board-body" x={0} y={0} width={width} height={height} rx={16} />
       {rails}
@@ -106,6 +120,7 @@ export function Board({
           <g
             key={part.id}
             data-part={part.id}
+            className={part.id === movingId ? 'part-moving' : undefined}
             onPointerDown={(event) => onPartPointerDown(part.id, event)}
           >
             <PartShape
@@ -131,6 +146,11 @@ export function Board({
         <PartShape spec={hintGhost.spec} from={hintGhost.from} to={hintGhost.to} ghost hinted />
       )}
       {ghost && <PartShape spec={ghost.spec} from={ghost.from} to={ghost.to} ghost />}
+      {held && (
+        <g className="held">
+          <PartShape spec={held.spec} from={held.from} to={held.to} />
+        </g>
+      )}
     </svg>
   );
 }
