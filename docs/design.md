@@ -54,7 +54,9 @@ the decision and the main reason for it. When the design changes, update this fi
 - The **sandbox** offers every part unlocked so far, so it grows with the child.
 - **Failure is explained and safe, never "game over".** A shorted battery gets a cartoon "hot!"
   warning; a backwards LED stays dark with a polarity hint; an over-driven LED pops with a comic puff
-  and comes back on undo.
+  and comes back on undo. A blown LED is part of the build (`blown`, open from then on), set by
+  `blowOverdrivenLeds` as `BuildEditor` settles each edit, so it belongs to the edit that overdrove
+  it and is never an undo step of its own: one undo takes back both.
 - **Stars (1–3)** reward fewer parts and no hints, **never speed**: one for finishing, one for
   placing no more than the level's par, one for using no hints. No level has time pressure.
 - **Goals** (`src/core/levels.ts`) are evaluated on the DC solution. A bulb is *lit* at a quarter

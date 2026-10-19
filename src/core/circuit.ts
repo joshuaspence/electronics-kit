@@ -39,13 +39,15 @@ export interface Bulb extends PartBase {
 /**
  * A light-emitting diode: pins[0] is the anode (long leg) and pins[1] the cathode. It conducts only
  * from anode to cathode, once the voltage across it passes `forwardVolts`, through a small series
- * resistance. At `ratedAmps` it is at full brightness.
+ * resistance. At `ratedAmps` it is at full brightness. A `blown` LED took too much current and
+ * conducts no more.
  */
 export interface Led extends PartBase {
   readonly kind: 'led';
   readonly forwardVolts: number;
   readonly ohms: number;
   readonly ratedAmps: number;
+  readonly blown: boolean;
 }
 
 export interface Wire extends PartBase {
@@ -127,6 +129,8 @@ export function conducts(part: Part): boolean {
       return part.closed;
     case 'button':
       return part.pressed;
+    case 'led':
+      return !part.blown;
     default:
       return true;
   }

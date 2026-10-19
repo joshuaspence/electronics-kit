@@ -1,10 +1,20 @@
 import { useMemo, useReducer, useRef } from 'react';
-import { type Board, type Build, BuildEditor, type Edit, type EditResult } from '../core/build';
+import {
+  type Board,
+  blowOverdrivenLeds,
+  type Build,
+  BuildEditor,
+  type Edit,
+  type EditResult,
+} from '../core/build';
 import type { PartAllowance } from '../core/levels';
 
 /** A BuildEditor whose changes re-render the component that holds it. */
 export function useEditor(board: Board, tray: readonly PartAllowance[], initial: Build) {
-  const editor = useMemo(() => new BuildEditor(board, tray, initial), [board, tray, initial]);
+  const editor = useMemo(
+    () => new BuildEditor(board, tray, initial, (build) => blowOverdrivenLeds(board, build)),
+    [board, tray, initial],
+  );
   const [, rerender] = useReducer((n: number) => n + 1, 0);
   const nextId = useRef(0);
 

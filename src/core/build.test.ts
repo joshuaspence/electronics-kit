@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { Hole } from './breadboard';
-import { type Board, BuildEditor, type Location, type PlacedPart, toCircuit } from './build';
+import {
+  type Board,
+  blowOverdrivenLeds,
+  type Build,
+  BuildEditor,
+  type Location,
+  type PlacedPart,
+  toCircuit,
+} from './build';
+import { newSpec } from './catalogue';
 import { solveDc } from './dc';
 
 const hole = (row: 'a' | 'b' | 'e' | 'f' | 'j', column: number): Hole => ({
@@ -179,5 +188,58 @@ describe('BuildEditor', () => {
     expect(editor.undo()).toBe(true);
     expect(editor.canUndo).toBe(false);
     expect(editor.setControl('b', true)).toEqual({ ok: false, reason: 'unknown-part' });
+  });
+});
+
+describe('blowOverdrivenLeds', () => {
+  const led = (id: string, at: readonly [Location, Location]): PlacedPart => ({
+    id,
+    spec: newSpec('led'),
+    at,
+    fixed: false,
+  });
+  const resistor = (id: string, at: readonly [Location, Location]): PlacedPart => ({
+    id,
+    spec: newSpec('resistor'),
+    at,
+    fixed: false,
+  });
+  const blown = (build: Build) =>
+    build.parts.filter((p) => p.spec.kind === 'led' && p.spec.blown).map((p) => p.id);
+  const power = battery([snap(1, 1), snap(1, 2)]);
+
+  it('blows an LED straight across the battery, which then stays dark', () => {
+    const build = blowOverdrivenLeds(snapBoard, {
+      parts: [power, led('led', [snap(1, 1), snap(1, 2)])],
+    });
+    expect(blown(build)).toEqual(['led']);
+    expect(solveDc(toCircuit(snapBoard, build)).parts.get('led')!.current).toBeCloseTo(0, 6);
+  });
+
+  it('leaves an LED behind a resistor, and one the wrong way round, alone', () => {
+    const build = {
+      parts: [
+        power,
+        led('safe', [snap(1, 1), snap(2, 1)]),
+        resistor('r', [snap(2, 1), snap(1, 2)]),
+        led('backwards', [snap(1, 2), snap(1, 1)]),
+      ],
+    };
+    expect(blowOverdrivenLeds(snapBoard, build)).toBe(build);
+  });
+
+  it('pops as part of the edit that overdrove it, so one undo brings it back', () => {
+    const tray = [{ kind: 'led', count: 1 }] as const;
+    const editor = new BuildEditor(snapBoard, tray, { parts: [power] }, (build) =>
+      blowOverdrivenLeds(snapBoard, build),
+    );
+    editor.apply({ kind: 'place', part: led('led', [snap(1, 1), snap(1, 2)]) });
+    expect(blown(editor.build)).toEqual(['led']);
+
+    expect(editor.undo()).toBe(true);
+    expect(editor.build.parts.map((p) => p.id)).toEqual(['battery']);
+    expect(editor.canUndo).toBe(false);
+    expect(editor.redo()).toBe(true);
+    expect(blown(editor.build)).toEqual(['led']);
   });
 });

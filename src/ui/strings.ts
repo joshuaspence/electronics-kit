@@ -27,6 +27,8 @@ export const strings = {
   hot: 'Hot!',
   shortCircuit:
     'Whoa, short circuit! The electricity is rushing straight back to the battery without going through anything, so the battery is getting hot.',
+  ledPopped:
+    'Pop! Too much electricity rushed through the LED and it burnt out. Press Undo to get it back.',
   soundOn: 'Sound on',
   soundOff: 'Sound off',
   backToLevels: 'Levels',

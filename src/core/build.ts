@@ -1,5 +1,6 @@
 import { type BoardLayout, type Hole, holeName, isValidHole, stripOf } from './breadboard';
 import type { Circuit, Part, PartKind, PointId } from './circuit';
+import { ledPops, solveDc } from './dc';
 import type { PartAllowance } from './levels';
 
 /**
@@ -82,6 +83,31 @@ export function toCircuit(board: Board, build: Build): Circuit {
 }
 
 /**
+ * The build with every LED the circuit overdrives blown (docs/design.md §3). Blowing one changes
+ * the currents through the rest, so it repeats until none pops; each round blows at least one LED,
+ * so it ends.
+ */
+export function blowOverdrivenLeds(board: Board, build: Build): Build {
+  for (;;) {
+    const solution = solveDc(toCircuit(board, build));
+    const popped = new Set(
+      build.parts
+        .filter((p) => p.spec.kind === 'led' && !p.spec.blown)
+        .filter((p) => ledPops(solution.parts.get(p.id)!))
+        .map((p) => p.id),
+    );
+    if (popped.size === 0) {
+      return build;
+    }
+    build = {
+      parts: build.parts.map((p) =>
+        popped.has(p.id) ? { ...p, spec: { ...p.spec, blown: true } as PartSpec } : p,
+      ),
+    };
+  }
+}
+
+/**
  * A build being edited, with undo and redo. Edits are checked against the board, the holes already
  * taken and the level's tray; inputs (`setControl`) change a switch or button without becoming an
  * undo step, since flipping a switch is playing with the circuit, not building it.
@@ -91,12 +117,18 @@ export class BuildEditor {
   private future: Build[] = [];
   private current: Build;
 
+  /**
+   * `settle` is what the circuit itself does to a build, such as blowing an overdriven LED. It is
+   * applied to every build the editor arrives at and is part of the edit that caused it, never an
+   * undo step of its own: undoing the edit undoes its consequences too.
+   */
   constructor(
     readonly board: Board,
     readonly tray: readonly PartAllowance[],
     initial: Build,
+    private readonly settle: (build: Build) => Build = (build) => build,
   ) {
-    this.current = initial;
+    this.current = settle(initial);
   }
 
   get build(): Build {
@@ -125,7 +157,7 @@ export class BuildEditor {
     }
     this.past.push(this.current);
     this.future = [];
-    this.current = next;
+    this.current = this.settle(next);
     return { ok: true };
   }
 
@@ -135,7 +167,7 @@ export class BuildEditor {
       return false;
     }
     this.future.push(this.current);
-    this.current = previous;
+    this.current = this.settle(previous);
     return true;
   }
 
@@ -145,7 +177,7 @@ export class BuildEditor {
       return false;
     }
     this.past.push(this.current);
-    this.current = next;
+    this.current = this.settle(next);
     return true;
   }
 
@@ -160,7 +192,7 @@ export class BuildEditor {
     const update = (build: Build): Build => ({
       parts: build.parts.map((p) => (p.id === id ? { ...p, spec } : p)),
     });
-    this.current = update(this.current);
+    this.current = this.settle(update(this.current));
     // Keep the control where the child left it when they undo or redo around it.
     this.past = this.past.map((build) =>
       build.parts.some((p) => p.id === id) ? update(build) : build,

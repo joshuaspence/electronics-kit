@@ -125,6 +125,7 @@ describe('TransientSimulation', () => {
       forwardVolts: 2,
       ohms: 10,
       ratedAmps: 0.02,
+      blown: false,
     };
     const sim = new TransientSimulation({ parts: [...rc().parts, led] });
     expect(sim.solution.parts.get('led')!.current).toBeCloseTo(0, 9);

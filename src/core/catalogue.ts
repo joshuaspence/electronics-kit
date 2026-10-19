@@ -14,7 +14,7 @@ export function newSpec(kind: PartKind): PartSpec {
     case 'bulb':
       return { kind, ohms: 10, ratedWatts: 0.5 };
     case 'led':
-      return { kind, forwardVolts: 2, ohms: 10, ratedAmps: 0.02 };
+      return { kind, forwardVolts: 2, ohms: 10, ratedAmps: 0.02, blown: false };
     case 'resistor':
       return { kind, ohms: 100 };
     case 'capacitor':

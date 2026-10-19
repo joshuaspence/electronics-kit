@@ -45,7 +45,7 @@ export function solveWithLeds(
   circuit: Circuit,
   capacitor: (part: Capacitor) => Norton,
 ): CircuitSolution {
-  const leds = circuit.parts.filter((part): part is Led => part.kind === 'led');
+  const leds = circuit.parts.filter((part): part is Led => part.kind === 'led' && conducts(part));
   let on = new Set<string>();
   let solution: CircuitSolution;
   for (let round = 0; ; round++) {

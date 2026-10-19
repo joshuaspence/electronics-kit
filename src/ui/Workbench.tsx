@@ -28,7 +28,7 @@ import {
   turned,
 } from './geometry';
 import { strings } from './strings';
-import { playChime, playSnap, playWarning } from './sound';
+import { playChime, playPop, playSnap, playWarning } from './sound';
 import { Tray } from './Tray';
 import { useEditor } from './useEditor';
 
@@ -105,6 +105,16 @@ export function Workbench({ board, tray, initial, onChange, hint, finished }: Wo
     }
     wasShorted.current = shorted;
   }, [shorted, muted]);
+
+  // Pop as an LED blows, the same way: blowing more of them pops again, undoing them doesn't.
+  const blown = build.parts.filter((p) => p.spec.kind === 'led' && p.spec.blown).length;
+  const wasBlown = useRef(blown);
+  useEffect(() => {
+    if (blown > wasBlown.current && !muted) {
+      playPop();
+    }
+    wasBlown.current = blown;
+  }, [blown, muted]);
 
   // Chime once as the level is finished, the same way.
   const wasFinished = useRef(false);
@@ -302,7 +312,7 @@ export function Workbench({ board, tray, initial, onChange, hint, finished }: Wo
         snap={board.kind === 'snap'}
       />
       <p className="warning" role="status">
-        {shorted ? strings.shortCircuit : ''}
+        {shorted ? strings.shortCircuit : blown > 0 ? strings.ledPopped : ''}
       </p>
       <Board
         ref={svgRef}

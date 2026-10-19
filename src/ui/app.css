@@ -135,6 +135,30 @@ button:disabled {
   fill: #ff8a8d;
 }
 
+.part-blown .led-body {
+  fill: #6b6b6b;
+}
+
+/* A comic puff of smoke, once, as the LED blows. */
+.led-puff {
+  fill: #c8c8c8;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: led-puff 0.6s ease-out;
+}
+
+@keyframes led-puff {
+  from {
+    opacity: 0.9;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
 .led-cathode {
   stroke: #7a1d20;
   stroke-width: 3;
@@ -220,7 +244,8 @@ button:disabled {
 
 @media (prefers-reduced-motion: reduce) {
   .flow,
-  .part-hot .battery-body {
+  .part-hot .battery-body,
+  .led-puff {
     animation: none;
   }
 }
