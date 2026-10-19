@@ -127,7 +127,7 @@ export const levelText: Readonly<Record<string, LevelText>> = {
   },
   'led-2': {
     title: 'Wrong way round',
-    goal: 'This LED won’t glow. Work out why, then fix it. Tap it and press Rotate to turn it.',
+    goal: 'This LED won’t glow. Work out why, then fix it. Tap it, then keep pressing Rotate until it’s turned round.',
     why: 'The LED was in backwards, so it blocked the electricity. Turned round, it lets it through.',
     more: 'Backwards, an LED is reverse-biased: the battery pushes against the way it conducts, so almost no current flows. That’s why a backwards LED stays dark rather than breaking.',
   },
