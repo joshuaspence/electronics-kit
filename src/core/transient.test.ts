@@ -117,6 +117,24 @@ describe('TransientSimulation', () => {
     expect(run()[0]).toBe(500);
   });
 
+  it('turns an LED on once the capacitor beside it charges past its forward voltage', () => {
+    const led: Part = {
+      id: 'led',
+      kind: 'led',
+      pins: ['c', '-'],
+      forwardVolts: 2,
+      ohms: 10,
+      ratedAmps: 0.02,
+    };
+    const sim = new TransientSimulation({ parts: [...rc().parts, led] });
+    expect(sim.solution.parts.get('led')!.current).toBeCloseTo(0, 9);
+    sim.run(stepsFor(10 * TAU));
+    // The LED now takes all the current and holds the capacitor just above 2 V.
+    const amps = (VOLTS - 2) / (OHMS + INTERNAL_OHMS + 10);
+    expect(sim.solution.parts.get('led')!.current).toBeCloseTo(amps, 5);
+    expect(sim.capacitorVoltage('cap')).toBeCloseTo(2 + 10 * amps, 3);
+  });
+
   it('rejects inputs to missing or mismatched parts', () => {
     const sim = new TransientSimulation(rc());
     expect(() => sim.applyInput({ kind: 'switch', partId: 'nope', closed: true })).toThrow(
