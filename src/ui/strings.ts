@@ -49,6 +49,8 @@ export const strings = {
       'Electricity needs a complete loop: out of one end of the battery, through the bulb and back into the other end.',
     'led-blown':
       'That LED popped: too much electricity went through it. Press Undo to get it back, then give it something to slow the electricity down.',
+    'led-overdriven':
+      'Careful: that LED would pop! It needs something to slow the electricity down, like a resistor in the loop with it.',
     'led-backwards':
       'An LED only lets electricity through one way. Turn it round so its long leg, the +, is on the battery’s + side.',
     'short-circuit':

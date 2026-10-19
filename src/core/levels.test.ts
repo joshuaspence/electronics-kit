@@ -183,6 +183,23 @@ describe('checkGoal: LEDs', () => {
     const c = circuit(led('led', ['+', 'x']), resistor('r', ['x', 'y']));
     expect(checkGoal(goal, c)).toEqual({ met: false, reason: 'too-few-lit' });
   });
+
+  it('does not count an LED that switching on would pop, and says it needs a resistor', () => {
+    // The switch is open, so the LED hasn't popped yet; switched on, it would.
+    const c = circuit(
+      { id: 's', kind: 'switch', pins: ['+', 'x'], closed: false },
+      led('led', ['x', '-']),
+    );
+    expect(checkGoal({ kind: 'control-lights', lights: 1 }, c)).toEqual({
+      met: false,
+      reason: 'led-overdriven',
+    });
+  });
+
+  it('asks for a resistor before turning round a backwards LED that turned round would pop', () => {
+    const c = circuit(led('led', ['-', '+']));
+    expect(checkGoal(goal, c)).toEqual({ met: false, reason: 'led-overdriven' });
+  });
 });
 
 describe('starsFor', () => {

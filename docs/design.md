@@ -65,8 +65,10 @@ the decision and the main reason for it. When the design changes, update this fi
   closed and button pressed; `control-lights` also needs every light dark with every switch open
   and button released; `every-control` also needs them dark with any one switch open or button
   released and the rest on. No goal is met while a battery is shorted, and a failed check says
-  why (short circuit, too few lit, an LED popped or the wrong way round, not controlled, no
-  switch, not every control) so hints can respond to it.
+  why (short circuit, too few lit, an LED popped, would pop or is the wrong way round, not
+  controlled, no switch, not every control) so hints can respond to it. An LED that would pop,
+  with every control on or turned round, counts as dark, so Volty asks for a resistor before
+  saying to switch it on or turn it round.
 - **No level needs two buttons held at once:** a mouse or touchpad has one pointer, and Chromebooks
   are a primary target (§9). Levels about needing several controls use switches.
 - **Level data** (`src/levels/`): each level has a board, its starting parts (fixed, or movable

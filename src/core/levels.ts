@@ -1,6 +1,6 @@
 import type { Board, PlacedPart } from './build';
 import { type Circuit, type Part, type PartKind } from './circuit';
-import { bulbBrightness, isShorted, ledBrightness, solveDc } from './dc';
+import { bulbBrightness, isShorted, ledBrightness, ledPops, solveDc } from './dc';
 
 /** A light (a bulb or an LED) counts as lit at a quarter of full brightness or more. */
 export const LIT_BRIGHTNESS = 0.25;
@@ -63,6 +63,7 @@ export type GoalFailure =
   | 'short-circuit'
   | 'too-few-lit'
   | 'led-blown'
+  | 'led-overdriven'
   | 'led-backwards'
   | 'not-controlled'
   | 'no-control'
@@ -75,13 +76,7 @@ export function checkGoal(goal: Goal, circuit: Circuit): GoalResult {
     return { met: false, reason: 'short-circuit' };
   }
   if (onResult.lit < goal.lights) {
-    // Say why an LED is dark when its own wiring is the reason, not just that too few are lit.
-    const reason = onResult.blown
-      ? 'led-blown'
-      : onResult.backwards
-        ? 'led-backwards'
-        : 'too-few-lit';
-    return { met: false, reason };
+    return { met: false, reason: whyDark(onResult) };
   }
 
   switch (goal.kind) {
@@ -160,6 +155,11 @@ interface Lights {
   readonly shorted: boolean;
   /** An LED has popped, so it stays dark however it is wired. */
   readonly blown: boolean;
+  /**
+   * An LED has, or turned round would have, more current than it can take: it would pop. It counts
+   * as dark, since the child would see it pop rather than glow.
+   */
+  readonly overdriven: boolean;
   /** A dark LED has more than its forward voltage across it the wrong way: turned round, it lights. */
   readonly backwards: boolean;
 }
@@ -169,6 +169,7 @@ function litLights(circuit: Circuit): Lights {
   let lit = 0;
   let shorted = false;
   let blown = false;
+  let overdriven = false;
   let backwards = false;
   for (const part of circuit.parts) {
     const reading = solution.parts.get(part.id)!;
@@ -176,11 +177,21 @@ function litLights(circuit: Circuit): Lights {
       case 'bulb':
         lit += bulbBrightness(part, reading) >= LIT_BRIGHTNESS ? 1 : 0;
         break;
-      case 'led':
-        lit += ledBrightness(part, reading) >= LIT_BRIGHTNESS ? 1 : 0;
+      case 'led': {
+        const pops = !part.blown && ledPops(reading);
+        lit += !pops && ledBrightness(part, reading) >= LIT_BRIGHTNESS ? 1 : 0;
         blown ||= part.blown;
-        backwards ||= !part.blown && reading.voltage < -part.forwardVolts;
+        overdriven ||= pops;
+        if (!part.blown && reading.voltage < -part.forwardVolts) {
+          // Turning it round is only good advice if it wouldn't then pop.
+          if (popsTurnedRound(circuit, part.id)) {
+            overdriven = true;
+          } else {
+            backwards = true;
+          }
+        }
         break;
+      }
       case 'battery':
         shorted ||= isShorted(part, reading);
         break;
@@ -188,5 +199,32 @@ function litLights(circuit: Circuit): Lights {
         break;
     }
   }
-  return { lit, shorted, blown, backwards };
+  return { lit, shorted, blown, overdriven, backwards };
+}
+
+/**
+ * Why too few lights are lit, most specific first: an LED's own state or wiring is the reason
+ * before the loop as a whole is.
+ */
+function whyDark(lights: Lights): GoalFailure {
+  if (lights.blown) {
+    return 'led-blown';
+  }
+  if (lights.overdriven) {
+    return 'led-overdriven';
+  }
+  if (lights.backwards) {
+    return 'led-backwards';
+  }
+  return 'too-few-lit';
+}
+
+/** Whether the LED `id` would pop with its legs the other way round. */
+function popsTurnedRound(circuit: Circuit, id: string): boolean {
+  const turned = {
+    parts: circuit.parts.map((part): Part =>
+      part.id === id ? { ...part, pins: [part.pins[1], part.pins[0]] } : part,
+    ),
+  };
+  return ledPops(solveDc(turned).parts.get(id)!);
 }
