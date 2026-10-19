@@ -72,8 +72,8 @@ the decision and the main reason for it. When the design changes, update this fi
   forty wires (`sandboxTray`). It opens from the level list, on the full-size board
   (`src/levels/sandbox.ts`) with pan, zoom and the meter, and has no goal.
 - **Failure is explained and safe, never "game over".** A shorted battery gets a cartoon "hot!"
-  warning; a backwards LED stays dark with a polarity hint; an over-driven LED pops with a comic puff
-  and comes back on undo. A blown LED is part of the build (`blown`, open from then on), set by
+  warning; a backwards LED stays dark with a polarity hint; an over-driven LED pops with a comic
+  puff and comes back on undo. A blown LED is part of the build (`blown`, open from then on), set by
   `blowOverdrivenLeds` as `BuildEditor` settles each edit, so it belongs to the edit that overdrove
   it and is never an undo step of its own: one undo takes back both. When flipping a switch or
   pressing a button is what pops it, that input becomes an undo step, for the same reason.
@@ -128,9 +128,9 @@ the decision and the main reason for it. When the design changes, update this fi
 **One modified nodal analysis (MNA) engine in `core/`, with two solve modes sharing all component
 models.**
 
-1. **DC operating point**, solved immediately whenever the circuit is edited (capacitors open). Gives
-   instant feedback while editing, is the starting state for the transient run, and is what most
-   chapter 1–5 win checks evaluate.
+1. **DC operating point**, solved immediately whenever the circuit is edited (capacitors open).
+   Gives instant feedback while editing, is the starting state for the transient run, and is what
+   most chapter 1–5 win checks evaluate.
 2. **Transient run** at a **fixed Δt = 1 ms**, using backward-Euler companion models for
    capacitors. It starts at t = 0 with **every capacitor discharged**: an uncharged capacitor
    conducts like a wire for that instant, so the child sees the inrush and then watches it charge.
