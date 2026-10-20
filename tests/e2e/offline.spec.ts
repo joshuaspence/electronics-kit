@@ -9,7 +9,35 @@ test('has a web app manifest for installing', async ({ page, request }) => {
     name: 'Electronics Kit',
     short_name: 'Circuits',
     display: 'standalone',
+    id: '/electronics-kit/',
   });
+});
+
+test('offers to install when the browser allows it, then says where to find it', async ({
+  page,
+}) => {
+  await page.goto('./');
+  await expect(page.getByRole('heading', { name: 'Chapter 1: Make a loop' })).toBeVisible();
+  // Nothing until the browser offers to install.
+  await expect(page.getByRole('button', { name: 'Install' })).toHaveCount(0);
+
+  await page.evaluate(() => {
+    const offer = Object.assign(new Event('beforeinstallprompt', { cancelable: true }), {
+      prompt: () => {
+        (window as unknown as { prompted: boolean }).prompted = true;
+        return Promise.resolve();
+      },
+    });
+    window.dispatchEvent(offer);
+  });
+  await page.getByRole('button', { name: 'Install' }).click();
+  expect(await page.evaluate(() => (window as unknown as { prompted?: boolean }).prompted)).toBe(
+    true,
+  );
+  await expect(page.getByRole('button', { name: 'Install' })).toHaveCount(0);
+
+  await page.evaluate(() => window.dispatchEvent(new Event('appinstalled')));
+  await expect(page.getByRole('status')).toHaveText(/Look for “Circuits” in your apps/);
 });
 
 test('works offline once loaded', async ({ page, context }) => {

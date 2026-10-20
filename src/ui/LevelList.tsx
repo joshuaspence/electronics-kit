@@ -5,6 +5,7 @@ import { chapterTitles, levelText } from '../levels/strings';
 import { strings } from './strings';
 import { SmallScreenNote } from './ScreenNotes';
 import { UpdatePrompt } from './UpdatePrompt';
+import { InstallPrompt } from './InstallPrompt';
 
 interface LevelListProps {
   levels: readonly Level[];
@@ -53,6 +54,7 @@ export function LevelList({
       <SmallScreenNote />
       {/* Offered only between levels, never in the middle of one. */}
       <UpdatePrompt />
+      <InstallPrompt />
       {chapters.map((chapter) => (
         <section key={chapter} className="chapter">
           <h2>{strings.chapter(chapter, chapterTitles[chapter] ?? '')}</h2>
