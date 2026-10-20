@@ -183,11 +183,11 @@ h2 {
     margin-top: 0;
   }
 
-  /* Two to a row, so the column stays short enough for the meter below it. */
   .workbench > .wire-hint {
     grid-area: wires;
   }
 
+  /* Two to a row, so the column stays short enough for the meter below it. */
   .workbench > .tools {
     grid-area: tools;
     display: grid;
