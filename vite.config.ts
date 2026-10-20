@@ -33,6 +33,7 @@ export default defineConfig({
         short_name: 'Circuits',
         description: 'Build circuits on a virtual breadboard and learn how electricity works.',
         lang: 'en-AU',
+        id: '/electronics-kit/',
         start_url: '/electronics-kit/',
         scope: '/electronics-kit/',
         display: 'standalone',
@@ -49,6 +50,13 @@ export default defineConfig({
             purpose: 'maskable',
           },
           { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml' },
+        ],
+        // Itself, so the game can ask Chrome whether it's already installed (InstallPrompt.tsx).
+        related_applications: [
+          {
+            platform: 'webapp',
+            url: 'https://joshuaspence.github.io/electronics-kit/manifest.webmanifest',
+          },
         ],
       },
       workbox: {

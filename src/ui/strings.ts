@@ -75,6 +75,9 @@ export const strings = {
   unlockAllAbout:
     'Unlocking everything puts every part in the sandbox and turns on the multimeter, for every player on this device. Levels are always open, so it doesn’t skip any, and nobody loses stars.',
   update: 'Update',
+  installOffer: 'Put Electronics Kit on this device, to play it like any other app.',
+  install: 'Install',
+  installed: 'Electronics Kit is installed on this device. Look for “Circuits” in your apps.',
   askVolty: 'Ask Volty for a hint',
   hint: 'Hint',
   stuck: 'Stuck? Tap me for a hint!',
