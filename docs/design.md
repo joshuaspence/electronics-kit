@@ -14,9 +14,9 @@ the decision and the main reason for it. When the design changes, update this fi
 | Decision | Detail |
 |---|---|
 | Form | A **TypeScript web app**, installable as a **PWA** and playable offline once loaded. |
-| Hosting | **GitHub Pages** at `https://joshuaspence.github.io/electronics-kit/` (Vite `base: '/electronics-kit/'`, PWA scope to match). |
+| Hosting | **GitHub Pages** at `https://spence.com.au/electronics-kit/` (Vite `base: '/electronics-kit/'`, PWA scope to match). |
 | Why not Unity | The game is 2D drag-and-drop. A browser handles that natively, loads fast, runs on iPads and school Chromebooks with nothing to install, and needs no Unity licence, keystores or Apple developer account. |
-| Custom domain | Not now. Progress lives in browser storage tied to the origin, so **moving the domain after launch loses every child's progress** and makes installed copies different apps. Decide before real children use it. |
+| Custom domain | **`spence.com.au`**, the owner's GitHub Pages domain, which `joshuaspence.github.io` now redirects to. Progress lives in browser storage tied to the origin, so progress saved on the old address stays there and a copy installed from it is a different app. **Don't move the domain again**: each move loses every child's progress. |
 
 ## 2. Players, accounts and data
 
@@ -408,7 +408,7 @@ tests/e2e/   Playwright
 - **PWA** (`vite-plugin-pwa`, `generateSW`): the service worker precaches every built file, so the
   game works offline once loaded. The manifest names the app "Electronics Kit" ("Circuits" on the
   home screen), in landscape, with a bulb icon in SVG and PNG (`public/`). Its `id` is set to the
-  start URL, so it stays apart from other apps on `joshuaspence.github.io`.
+  start URL, so it stays apart from other apps on `spence.com.au`.
 - **Install offer.** Chrome's own install banner shows only now and then, and its menu item is easy
   to miss, so the level list offers **Install** whenever the browser allows it
   (`beforeinstallprompt`). Once installed, the manifest's `related_applications` (the game itself)

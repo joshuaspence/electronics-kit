@@ -19,7 +19,7 @@ function commit(): string {
 }
 
 export default defineConfig({
-  // Served from https://joshuaspence.github.io/electronics-kit/ (docs/design.md §1).
+  // Served from https://spence.com.au/electronics-kit/ (docs/design.md §1).
   base: '/electronics-kit/',
   plugins: [
     react(),
@@ -55,7 +55,7 @@ export default defineConfig({
         related_applications: [
           {
             platform: 'webapp',
-            url: 'https://joshuaspence.github.io/electronics-kit/manifest.webmanifest',
+            url: 'https://spence.com.au/electronics-kit/manifest.webmanifest',
           },
         ],
       },
