@@ -109,6 +109,22 @@ describe('solveDc', () => {
     expect(isShorted(b, reading(normal, 'battery'))).toBe(false);
   });
 
+  it('isn’t shorted by current pushed back into it, or when turned off', () => {
+    // A 1 V supply across a 3 V battery: 2 A is pushed back into it, more than half its own 2 A
+    // short-circuit current, but it is the one being driven, not shorted.
+    const low = (volts: number): Battery => ({ ...battery(['+', '-'], volts), id: 'low' });
+    const driven = { parts: [battery(['+', '-']), low(1)] };
+    expect(reading(driven, 'low').current).toBeGreaterThan(1);
+    expect(isShorted(low(1), reading(driven, 'low'))).toBe(false);
+    // A supply turned off pushes nothing, whatever runs through it.
+    const off = { parts: [battery(['+', '-']), low(0)] };
+    expect(Math.abs(reading(off, 'low').current)).toBeGreaterThan(1);
+    expect(isShorted(low(0), reading(off, 'low'))).toBe(false);
+    // Turned around, a supply is still shorted by a wire.
+    const reversed = { parts: [battery(['+', '-'], -3), wire('w', ['+', '-'])] };
+    expect(isShorted(battery(['+', '-'], -3), reading(reversed, 'battery'))).toBe(true);
+  });
+
   it('bypasses a bulb with a wire across it', () => {
     const circuit = {
       parts: [battery(['+', '-']), bulb('bulb', ['+', '-']), wire('w', ['+', '-'])],
