@@ -28,6 +28,7 @@ import type { CircuitSolution } from '../core/mna';
 import { flowSpeed } from '../core/flow';
 import type { PartAllowance } from '../core/levels';
 import { Board, type Ghost } from './Board';
+import { ToolIcon } from './ToolIcon';
 import {
   type BoardGeometry,
   geometryFor,
@@ -585,9 +586,11 @@ export function Workbench({
       />
       <div className="tools" role="toolbar" aria-label={strings.toolsLabel}>
         <button type="button" onClick={undo} disabled={!editor.canUndo}>
+          <ToolIcon name="undo" />
           {strings.undo}
         </button>
         <button type="button" onClick={redo} disabled={!editor.canRedo}>
+          <ToolIcon name="redo" />
           {strings.redo}
         </button>
         {zoomable && (
@@ -597,14 +600,17 @@ export function Workbench({
               onClick={() => zoomBy(ZOOM_STEP)}
               disabled={view.zoom >= MAX_ZOOM}
             >
+              <ToolIcon name="zoom-in" />
               {strings.zoomIn}
             </button>
             <button type="button" onClick={() => zoomBy(1 / ZOOM_STEP)} disabled={view.zoom <= 1}>
+              <ToolIcon name="zoom-out" />
               {strings.zoomOut}
             </button>
           </>
         )}
         <button type="button" onClick={rotate} disabled={selected?.fixed}>
+          <ToolIcon name="rotate" />
           {strings.rotate}
         </button>
         <button
@@ -616,6 +622,7 @@ export function Workbench({
             }
           }}
         >
+          <ToolIcon name="remove" />
           {strings.remove}
         </button>
         {timed && (
@@ -624,10 +631,12 @@ export function Workbench({
             aria-label={strings.speedLabel}
             onClick={() => setSpeed((s) => SPEEDS[(SPEEDS.indexOf(s) + 1) % SPEEDS.length]!)}
           >
+            <ToolIcon name="speed" />
             {strings.speed(speed)}
           </button>
         )}
         <button type="button" aria-pressed={muted} onClick={() => setMuted((m) => !m)}>
+          <ToolIcon name={muted ? 'sound-off' : 'sound-on'} />
           {muted ? strings.soundOff : strings.soundOn}
         </button>
         {meter && (
@@ -642,6 +651,7 @@ export function Workbench({
               }
             }}
           >
+            <ToolIcon name="meter" />
             {strings.meter}
           </button>
         )}
