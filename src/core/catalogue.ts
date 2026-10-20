@@ -1,6 +1,15 @@
 import type { PartSpec } from './build';
 import type { PartKind } from './circuit';
 
+/** The kit battery's voltage, which the sandbox's power supply also starts at. */
+export const BATTERY_VOLTS = 3;
+
+/**
+ * The sandbox's bench power supply (docs/design.md §3): the kit battery's model with a voltage the
+ * child turns up and down, from off to 9 V in half-volt steps. It starts at `BATTERY_VOLTS`.
+ */
+export const SUPPLY_VOLTS = { min: 0, max: 9, step: 0.5 } as const;
+
 /**
  * The parts in the kit: what each starts as when taken from the tray. A 3 V battery pack (two AA
  * cells) and small bulbs rated so that one bulb across the pack is at full brightness. An LED
@@ -14,15 +23,6 @@ import type { PartKind } from './circuit';
  * battery is cut off, fading as it empties (a time constant of 2.2 s through the bulb's 10 Ω and
  * its own 1 Ω). A blinker chip is on for half a second, then off for half a second.
  */
-/** The kit battery's voltage, which the sandbox's power supply also starts at. */
-export const BATTERY_VOLTS = 3;
-
-/**
- * The sandbox's bench power supply (docs/design.md §3): the kit battery's model with a voltage the
- * child turns up and down, from off to 9 V in half-volt steps. It starts at `BATTERY_VOLTS`.
- */
-export const SUPPLY_VOLTS = { min: 0, max: 9, step: 0.5 } as const;
-
 export function newSpec(kind: PartKind): PartSpec {
   switch (kind) {
     case 'battery':
