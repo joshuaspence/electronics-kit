@@ -66,6 +66,7 @@ export function SandboxScreen({ tray, meter, initial, badLink, onBack }: Sandbox
         onChange={setBuild}
         meter={meter}
         zoomable
+        supply
       />
     </main>
   );

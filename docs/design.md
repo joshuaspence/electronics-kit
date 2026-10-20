@@ -42,10 +42,11 @@ the decision and the main reason for it. When the design changes, update this fi
 - **M1:** one implicit profile. **M3:** several local profiles (name + avatar, no passwords) for
   shared family and classroom devices, and **share links** that encode a circuit in the URL
   fragment (`#c=<code>`), which never reaches a server.
-- **Share links** (`src/core/share.ts`) carry a sandbox circuit as short text rather than
-  compressed bytes, so `src/core` needs no compression API: a version, then a token per part the
-  child placed, `<kind>.<hole>.<hole>[.<value>]` joined by `_` (`1_w.top+3.a3_r.b3.b6.100`). The
-  battery isn't in it; the sandbox places it. A code from another version, with a hole off the
+- **Share links** (`src/core/share.ts`) carry a sandbox circuit as short text rather than compressed
+  bytes, so `src/core` needs no compression API: a version, then a token per part the child placed,
+  `<kind>.<hole>.<hole>[.<value>]` joined by `_` (`1_w.top+3.a3_r.b3.b6.100`). The power supply
+  isn't in it, since the sandbox places it, but one turned away from 3 V adds its voltage first
+  (`1_v.4.5_…`), so older links still open at 3 V. A code from another version, with a hole off the
   board, two legs in one hole or anything else malformed is refused whole, and the sandbox opens
   empty saying the link didn't work. Opening a link, or pasting one into a tab already showing the
   game, opens the sandbox with its circuit; parts the child hasn't unlocked come with it, but the
@@ -79,6 +80,12 @@ the decision and the main reason for it. When the design changes, update this fi
   finished level's tray offered, starting with chapter 1's bulbs and wires, eight of each part and
   forty wires (`sandboxTray`). It opens from the level list, on the full-size board
   (`src/levels/sandbox.ts`) with pan, zoom and the meter, and has no goal.
+- The sandbox's source is a **bench power supply** rather than the levels' battery pack: the same
+  model, with − and + buttons above the board that turn it from off to 9 V in half-volt steps
+  (`SUPPLY_VOLTS`), starting at the battery's 3 V. Its display and knob show the setting. Like a
+  switch, turning it is playing with the circuit, not building it, so it isn't an undo step unless
+  it pops an LED. Levels keep the fixed 3 V battery, which their puzzles are built around. A bulb
+  over its rating just stays at full brightness; it doesn't blow (yet).
 - **Failure is explained and safe, never "game over".** A shorted battery gets a cartoon "hot!"
   warning; a backwards LED stays dark with a polarity hint; an over-driven LED pops with a comic
   puff and comes back on undo. A blown LED is part of the build (`blown`, open from then on), set by
@@ -337,7 +344,9 @@ selected at all, so **Rotate** still turns the parts that come out of the tray.
   for legibility and self-hosted (`@fontsource`), so it makes no network calls. Each toolbar
   button has a line icon beside its word (`src/ui/ToolIcon.tsx`), for a child still learning to
   read. The battery pack is a black cell on its side with a silver nub and red end at +, a − at the
-  other end and a yellow lightning bolt.
+  other end and a yellow lightning bolt. The sandbox's power supply is a grey case with a green
+  readout of its volts, a knob turned as far as they are, and a red + and black − terminal with a
+  lead to each rail.
 - Feedback: bulb glow, spinning motors, wobbling buzzers, flowing current dots, a confetti burst on
   success. A motor's fan turns faster with the current and backwards with it reversed; a buzzer
   wobbles and shows sound waves while it sounds. Both stop moving under reduce-motion.

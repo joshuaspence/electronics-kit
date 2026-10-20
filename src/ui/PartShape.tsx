@@ -1,5 +1,6 @@
 import type { PartSpec } from '../core/build';
 import { type BandColour, colourBands } from '../core/colourCode';
+import { SUPPLY_VOLTS } from '../core/catalogue';
 import { BATTERY_ROOM, type Point } from './geometry';
 import { strings } from './strings';
 
@@ -44,6 +45,8 @@ interface PartShapeProps {
   selected?: boolean;
   /** A battery plugged into the rails at the board's edge: the pack sits beside the board. */
   beside?: boolean;
+  /** A battery beside the board drawn as the sandbox's bench power supply, showing its volts. */
+  supply?: boolean;
 }
 
 /**
@@ -61,6 +64,7 @@ export function PartShape({
   ghost,
   selected,
   beside = false,
+  supply = false,
 }: PartShapeProps) {
   const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
   const className = [
@@ -89,12 +93,56 @@ export function PartShape({
     <g className={className}>
       {!beside && <line className="leg" x1={from.x} y1={from.y} x2={to.x} y2={to.y} />}
       {!beside && <Flow from={from} to={to} speed={flow} />}
-      {body(spec, from, to, brightness, beside)}
+      {beside && supply && spec.kind === 'battery'
+        ? supplyBody(spec.volts, from, to)
+        : body(spec, from, to, brightness, beside)}
       {hot && (
         <text className="hot-label" x={mid.x} y={mid.y + 36}>
           {strings.hot}
         </text>
       )}
+    </g>
+  );
+}
+
+/**
+ * A bench power supply in the room left of the first column: a case with a display of its volts, a
+ * knob turned as far as they are, and a red + and black − terminal with a lead to each rail.
+ */
+function supplyBody(volts: number, from: Point, to: Point) {
+  const left = from.x - BATTERY_ROOM - 12;
+  const top = (from.y + to.y) / 2 - 32;
+  const knob = { x: left + 18, y: top + 46 };
+  const turn = -135 + (270 * (volts - SUPPLY_VOLTS.min)) / (SUPPLY_VOLTS.max - SUPPLY_VOLTS.min);
+  const plus = { x: left + 44, y: top + 46 };
+  const minus = { x: left + 62, y: top + 46 };
+  return (
+    <g>
+      <rect
+        className="body battery-body supply-body"
+        x={left}
+        y={top}
+        width={74}
+        height={64}
+        rx={6}
+      />
+      <rect className="supply-screen" x={left + 6} y={top + 6} width={62} height={22} rx={3} />
+      <text className="supply-reading" x={left + 37} y={top + 23}>
+        {strings.supplyVolts(volts)}
+      </text>
+      <circle className="supply-knob" cx={knob.x} cy={knob.y} r={11} />
+      <line
+        className="supply-pointer"
+        x1={knob.x}
+        y1={knob.y}
+        x2={knob.x}
+        y2={knob.y - 8}
+        transform={`rotate(${turn} ${knob.x} ${knob.y})`}
+      />
+      <line className="lead lead-plus" x1={plus.x} y1={plus.y} x2={from.x} y2={from.y} />
+      <line className="lead lead-minus" x1={minus.x} y1={minus.y} x2={to.x} y2={to.y} />
+      <circle className="supply-terminal supply-plus" cx={plus.x} cy={plus.y} r={6} />
+      <circle className="supply-terminal supply-minus" cx={minus.x} cy={minus.y} r={6} />
     </g>
   );
 }

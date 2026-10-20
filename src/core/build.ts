@@ -1,5 +1,6 @@
 import { type BoardLayout, type Hole, holeName, isValidHole, stripOf } from './breadboard';
 import type { Circuit, Part, PartKind, PointId } from './circuit';
+import { SUPPLY_VOLTS } from './catalogue';
 import { ledPops, solveDc } from './dc';
 import type { PartAllowance } from './levels';
 
@@ -200,6 +201,20 @@ export class BuildEditor {
       return { ok: false, reason: 'unknown-part' };
     }
     return this.setInput(id, { ...part.spec, light: Math.min(1, Math.max(0, light)) });
+  }
+
+  /**
+   * Turns a power supply to `volts`, kept within `SUPPLY_VOLTS` and on one of its steps. An input,
+   * like `setControl`.
+   */
+  setVolts(id: string, volts: number): EditResult {
+    const part = this.current.parts.find((p) => p.id === id);
+    if (!part || part.spec.kind !== 'battery' || !Number.isFinite(volts)) {
+      return { ok: false, reason: 'unknown-part' };
+    }
+    const { min, max, step } = SUPPLY_VOLTS;
+    const stepped = Math.round(volts / step) * step;
+    return this.setInput(id, { ...part.spec, volts: Math.min(max, Math.max(min, stepped)) });
   }
 
   private setInput(id: string, spec: PartSpec): EditResult {

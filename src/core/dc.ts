@@ -150,8 +150,14 @@ export function ledPops(reading: PartReading): boolean {
   return reading.current > LED_MAX_AMPS;
 }
 
-/** Whether a battery is shorted out: connected across something with almost no resistance. */
+/**
+ * Whether a battery is shorted out: connected across something with almost no resistance, so it
+ * pushes out most of the current it can. Current pushed back into it, such as a charged capacitor
+ * emptying into a power supply turned down, doesn't count, and a supply turned off pushes none.
+ */
 export function isShorted(part: Battery, reading: PartReading): boolean {
   const shortCircuitAmps = Math.abs(part.volts) / part.internalOhms;
-  return Math.abs(reading.current) > SHORT_CIRCUIT_FRACTION * shortCircuitAmps;
+  // Out of + and in at −, which is against pins[0] to pins[1] for a battery the right way up.
+  const pushed = -Math.sign(part.volts) * reading.current;
+  return pushed > SHORT_CIRCUIT_FRACTION * shortCircuitAmps;
 }

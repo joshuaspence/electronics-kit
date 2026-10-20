@@ -1,6 +1,6 @@
 import { type BoardLayout, holeName, parseHole } from './breadboard';
 import type { Build, PartSpec, PlacedPart } from './build';
-import { newSpec } from './catalogue';
+import { BATTERY_VOLTS, newSpec, SUPPLY_VOLTS } from './catalogue';
 import type { PartKind } from './circuit';
 import { colourBands } from './colourCode';
 
@@ -10,7 +10,9 @@ import { colourBands } from './colourCode';
  * then a token per part the child placed, `<kind>.<hole>.<hole>[.<value>]`, joined by `_`. A 100 Ω
  * resistor from b3 to b6 is `r.b3.b6.100`; a closed switch `s.e3.e5.1`. The value comes last and
  * a hole name has no `.`, so the value keeps any decimal point of its own: `c.a1.a3.0.001`. The
- * level's own fixed parts, such as the battery, aren't in it: the sandbox places them.
+ * level's own fixed parts, such as the battery, aren't in it: the sandbox places them. A power
+ * supply turned away from the battery's 3 V adds `v.<volts>`, such as `v.4.5`, so a link from
+ * before the supply could be turned still opens at 3 V.
  */
 
 const VERSION = '1';
@@ -31,8 +33,16 @@ const LETTERS: Readonly<Record<Exclude<PartKind, 'battery'>, string>> = {
 
 const KINDS = new Map(Object.entries(LETTERS).map(([kind, letter]) => [letter, kind as PartKind]));
 
-/** The share code for the parts of `build` the child placed, on a breadboard. */
+/** The letter of a power supply's voltage token, which has no holes. */
+const VOLTS = 'v';
+
+/** The share code for the parts of `build` the child placed, on a breadboard, and its supply. */
 export function encodeCircuit(build: Build): string {
+  const supply = build.parts.find((part) => part.fixed && part.spec.kind === 'battery')?.spec;
+  const volts =
+    supply?.kind === 'battery' && supply.volts !== BATTERY_VOLTS
+      ? [`${VOLTS}.${supply.volts}`]
+      : [];
   const tokens = build.parts
     .filter((part) => !part.fixed && part.spec.kind !== 'battery')
     .map((part) => {
@@ -41,7 +51,7 @@ export function encodeCircuit(build: Build): string {
       const value = valueOf(spec);
       return [LETTERS[spec.kind], ...legs, ...(value === null ? [] : [value])].join('.');
     });
-  return [VERSION, ...tokens].join('_');
+  return [VERSION, ...volts, ...tokens].join('_');
 }
 
 /**
@@ -55,6 +65,18 @@ export function decodeCircuit(layout: BoardLayout, initial: Build, code: string)
     return null;
   }
   const taken = new Set(initial.parts.flatMap((part) => part.at.map(holeKey)));
+  let board = initial.parts;
+  if (tokens[0]?.startsWith(`${VOLTS}.`)) {
+    const volts = supplyVolts(tokens.shift()!.slice(VOLTS.length + 1));
+    if (volts === null || !board.some((part) => part.fixed && part.spec.kind === 'battery')) {
+      return null;
+    }
+    board = board.map((part) =>
+      part.fixed && part.spec.kind === 'battery'
+        ? { ...part, spec: { ...part.spec, volts } }
+        : part,
+    );
+  }
   const parts: PlacedPart[] = [];
   for (const [i, token] of tokens.entries()) {
     const [letter, from, to, ...value] = token.split('.');
@@ -74,7 +96,17 @@ export function decodeCircuit(layout: BoardLayout, initial: Build, code: string)
     }
     parts.push({ id: `shared-${i}`, spec, at: [a, b], fixed: false });
   }
-  return { parts: [...initial.parts, ...parts] };
+  return { parts: [...board, ...parts] };
+}
+
+/** A supply voltage from its token, or nothing if the supply can't be turned to it. */
+function supplyVolts(value: string): number | null {
+  const volts = Number(value);
+  const { min, max, step } = SUPPLY_VOLTS;
+  // Number('') is 0, so an empty value has to be refused before it reads as off.
+  return value !== '' && volts >= min && volts <= max && Number.isInteger(volts / step)
+    ? volts
+    : null;
 }
 
 function holeKey(location: PlacedPart['at'][number]): string {

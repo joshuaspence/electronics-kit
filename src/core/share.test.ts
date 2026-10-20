@@ -55,6 +55,23 @@ describe('share codes', () => {
     expect(decodeCircuit(layout, initial, encodeCircuit(initial))).toEqual(initial);
   });
 
+  it('carries a power supply turned away from 3 V, and opens an older link at 3 V', () => {
+    const turned: Build = {
+      parts: [
+        { ...battery, spec: { ...battery.spec, volts: 4.5 } as PartSpec },
+        placed('b', newSpec('bulb'), 'a3', 'a5'),
+      ],
+    };
+    expect(encodeCircuit(turned)).toBe('1_v.4.5_b.a3.a5');
+    expect(decodeCircuit(layout, initial, '1_v.4.5_b.a3.a5')!.parts[0]!.spec).toEqual(
+      turned.parts[0]!.spec,
+    );
+    expect(decodeCircuit(layout, initial, '1_v.0')!.parts[0]!.spec).toMatchObject({ volts: 0 });
+    expect(decodeCircuit(layout, initial, '1_b.a3.a5')!.parts[0]!.spec).toMatchObject({
+      volts: 3,
+    });
+  });
+
   it('refuses a code it can’t trust, rather than build half a circuit', () => {
     for (const code of [
       '2_b.a1.a3', // another version
@@ -72,6 +89,10 @@ describe('share codes', () => {
       '1_b.a1.a3.9', // a value on a part that has none
       '1_b.a1.a3_w.a3.a9', // two legs in one hole
       '1_w.top+1.a5', // a leg in the battery's hole
+      '1_v.12', // more than the supply gives
+      '1_v.4.2', // between the supply's steps
+      '1_v.', // an empty voltage
+      '1_b.a1.a3_v.4.5', // a voltage after the parts
       '', // nothing at all
     ]) {
       expect(decodeCircuit(layout, initial, code), code).toBeNull();

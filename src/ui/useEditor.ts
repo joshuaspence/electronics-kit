@@ -35,6 +35,10 @@ export function useEditor(board: Board, tray: readonly PartAllowance[], initial:
       editor.setLight(id, light);
       rerender();
     },
+    setVolts: (id: string, volts: number) => {
+      editor.setVolts(id, volts);
+      rerender();
+    },
     undo: () => {
       editor.undo();
       rerender();

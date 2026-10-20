@@ -215,6 +215,30 @@ describe('BuildEditor', () => {
     expect(editor.canUndo).toBe(false);
     expect(editor.setLight('battery', 0.5)).toEqual({ ok: false, reason: 'unknown-part' });
   });
+
+  it('turns a power supply as an input, in half-volt steps from off to 9 V', () => {
+    const editor = new BuildEditor(mini, tray, { parts: [battery([hole('a', 1), hole('a', 2)])] });
+    editor.apply({ kind: 'place', part: bulb('b', [hole('b', 3), hole('b', 4)]) });
+    const volts = () => {
+      const spec = editor.build.parts.find((p) => p.id === 'battery')!.spec;
+      return spec.kind === 'battery' ? spec.volts : null;
+    };
+
+    expect(editor.setVolts('battery', 4.5)).toEqual({ ok: true });
+    expect(volts()).toBe(4.5);
+    editor.setVolts('battery', 6.2);
+    expect(volts()).toBe(6);
+    editor.setVolts('battery', 20);
+    expect(volts()).toBe(9);
+    editor.setVolts('battery', -1);
+    expect(volts()).toBe(0);
+    // Not an undo step: undoing the bulb leaves the supply where it was turned.
+    expect(editor.undo()).toBe(true);
+    expect(editor.canUndo).toBe(false);
+    expect(volts()).toBe(0);
+    expect(editor.setVolts('battery', Number.NaN)).toEqual({ ok: false, reason: 'unknown-part' });
+    expect(editor.setVolts('b', 3)).toEqual({ ok: false, reason: 'unknown-part' });
+  });
 });
 
 describe('blowOverdrivenLeds', () => {
