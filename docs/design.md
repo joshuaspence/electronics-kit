@@ -255,8 +255,8 @@ selected at all, so **Rotate** still turns the parts that come out of the tray.
   column, laid out with the rest rather than fixed to a corner, so on a short landscape screen he
   can't cover the tools.
   A short landscape screen (500 px tall or less, a phone on its side) keeps that layout but makes it
-  compact: smaller type, 40 px buttons, the tools three to a row and the parts bin two to a row with
-  the wires' line across its foot, so every level fits 844×390 without scrolling. Its holes are
+  compact: smaller type, 40 px buttons, the tools three to a row and the parts bin two to a row, so
+  every level fits 844×390 without scrolling. Its holes are
   small there, 21 px between half-size holes (about 4 mm), which is why phones are a secondary
   target (§9).
   A narrow or portrait screen stacks them as before, with Volty in the bottom-right corner. The
@@ -330,9 +330,14 @@ selected at all, so **Rotate** still turns the parts that come out of the tray.
   only.
 - **A maker's bench** (`src/ui/app.css`): the screen is a green self-healing cutting mat with its
   printed grid, the one bold element; the board is plain white plastic with recessed holes sitting
-  on it, the tray a parts bin with a picture of each part, and buttons chunky plastic keys. The
+  on it, the tray a parts bin with a picture of each part, and buttons chunky plastic keys. Wires
+  aren't picked up, so they aren't in the bin: a note on the mat under it says how to draw them
+  and how many are left. The
   strips a dragged part would join light up signal yellow. Type is Atkinson Hyperlegible, designed
-  for legibility and self-hosted (`@fontsource`), so it makes no network calls.
+  for legibility and self-hosted (`@fontsource`), so it makes no network calls. Each toolbar
+  button has a line icon beside its word (`src/ui/ToolIcon.tsx`), for a child still learning to
+  read. The battery pack is a black cell on its side with a silver nub and red end at +, a − at the
+  other end and a yellow lightning bolt.
 - Feedback: bulb glow, spinning motors, wobbling buzzers, flowing current dots, a confetti burst on
   success. A motor's fan turns faster with the current and backwards with it reversed; a buzzer
   wobbles and shows sound waves while it sounds. Both stop moving under reduce-motion.

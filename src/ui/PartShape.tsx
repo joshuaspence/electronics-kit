@@ -137,16 +137,26 @@ function body(spec: PartSpec, from: Point, to: Point, brightness: number, beside
               <line className="lead lead-minus" x1={bx} y1={y} x2={to.x} y2={to.y} />
             </>
           )}
+          {/* A big black cell on its side: the + terminal's nub and a red end on the left. */}
+          <rect className="body battery-nub" x={bx - 35} y={y - 7} width={7} height={14} rx={2} />
           <rect
             className="body battery-body"
-            x={bx - 26}
-            y={y - 14}
-            width={52}
-            height={28}
-            rx={5}
+            x={bx - 30}
+            y={y - 15}
+            width={60}
+            height={30}
+            rx={6}
           />
-          <text className="body-label" x={bx} y={y + 6}>
-            + −
+          <rect className="battery-plus" x={bx - 27} y={y - 12} width={15} height={24} rx={3} />
+          <path
+            className="battery-bolt"
+            d={`M ${bx + 2} ${y - 11} L ${bx - 6} ${y + 2} H ${bx - 1} L ${bx - 3} ${y + 11} L ${bx + 6} ${y - 3} H ${bx + 1} Z`}
+          />
+          <text className="body-label" x={bx - 19.5} y={y + 5.5}>
+            +
+          </text>
+          <text className="body-label" x={bx + 20} y={y + 5.5}>
+            −
           </text>
         </g>
       );

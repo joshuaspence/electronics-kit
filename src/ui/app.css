@@ -139,10 +139,11 @@ h2 {
   .workbench {
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto 1fr;
+    grid-template-rows: auto auto auto auto auto 1fr;
     grid-template-areas:
       'tray warning'
       'tray board'
+      'wires board'
       'tools board'
       'meter board'
       'aside board';
@@ -183,6 +184,10 @@ h2 {
   }
 
   /* Two to a row, so the column stays short enough for the meter below it. */
+  .workbench > .wire-hint {
+    grid-area: wires;
+  }
+
   .workbench > .tools {
     grid-area: tools;
     display: grid;
@@ -343,6 +348,23 @@ button[aria-pressed='true'] {
   list-style: none;
 }
 
+.tools button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Drawn in the button's ink, so it fades with it when the button is disabled. */
+.tool-icon {
+  flex: none;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 /* The tray is a parts bin: one compartment per part, each showing what's in it. */
 .tray {
   display: flex;
@@ -376,12 +398,26 @@ button[aria-pressed='true'] {
   pointer-events: none;
 }
 
-.tray-info {
-  display: inline-flex;
+/* On the mat under the bin, not in it: wires aren't picked up, they're drawn on the board. */
+.wire-hint {
+  display: flex;
   align-items: center;
-  gap: 0.3em;
-  min-height: 44px;
-  padding: 0 10px;
+  gap: 0.4em;
+  margin: 0 0 12px;
+}
+
+.wire-hint-icon {
+  flex: none;
+  width: 32px;
+  height: 16px;
+  fill: #d64545;
+  stroke: #d64545;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.wire-hint-icon path {
+  fill: none;
 }
 
 .tray-count {
@@ -408,6 +444,23 @@ button[aria-pressed='true'] {
 
 .battery-body {
   fill: #2b2a28;
+}
+
+.battery-nub {
+  fill: #b8bcc2;
+}
+
+.battery-plus {
+  fill: #d64545;
+}
+
+.battery-plus,
+.battery-bolt {
+  pointer-events: none;
+}
+
+.battery-bolt {
+  fill: #f6d02f;
 }
 
 /* A part's labels are part of its picture: a tap on one is a tap on the part. */
@@ -1087,14 +1140,10 @@ button[aria-pressed='true'] {
     padding: 4px;
   }
 
-  /* Two parts to a row, with the wires' line across the foot, so a full bin stays short. */
+  /* Two parts to a row, so a full bin stays short. */
   .workbench > .tray {
     display: grid;
     grid-template-columns: 1fr 1fr;
-  }
-
-  .workbench > .tray > .tray-info {
-    grid-column: 1 / -1;
   }
 
   .tray-item {
@@ -1108,8 +1157,8 @@ button[aria-pressed='true'] {
     height: 26px;
   }
 
-  .tray-info {
-    min-height: 40px;
+  .wire-hint {
+    margin-bottom: 6px;
   }
 
   .warning {
