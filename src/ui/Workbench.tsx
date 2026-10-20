@@ -25,6 +25,7 @@ import {
   type PartReading,
 } from '../core/dc';
 import type { CircuitSolution } from '../core/mna';
+import { SUPPLY_VOLTS } from '../core/catalogue';
 import { flowSpeed } from '../core/flow';
 import type { PartAllowance } from '../core/levels';
 import { Board, type Ghost } from './Board';
@@ -135,6 +136,8 @@ interface WorkbenchProps {
   meter?: boolean;
   /** A board too big to show whole, such as the sandbox's: it pans and zooms. */
   zoomable?: boolean;
+  /** The battery is a power supply the child turns up and down (the sandbox's). */
+  supply?: boolean;
 }
 
 /** The board, the parts tray and the editing tools, wired to a BuildEditor. */
@@ -149,8 +152,9 @@ export function Workbench({
   aside,
   meter = false,
   zoomable = false,
+  supply = false,
 }: WorkbenchProps) {
-  const { editor, build, newId, apply, setControl, setLight, undo, redo } = useEditor(
+  const { editor, build, newId, apply, setControl, setLight, setVolts, undo, redo } = useEditor(
     board,
     tray,
     initial,
@@ -283,6 +287,9 @@ export function Workbench({
 
   const find = (id: string) => build.parts.find((p) => p.id === id);
   const selected = selectedId === null ? undefined : find(selectedId);
+  // The battery the power supply control turns, and how far it's turned.
+  const power = supply ? build.parts.find((p) => p.fixed && p.spec.kind === 'battery') : undefined;
+  const volts = power?.spec.kind === 'battery' ? power.spec.volts : null;
 
   const toBoard = (clientX: number, clientY: number): Point | null => {
     const matrix = svgRef.current?.getScreenCTM();
@@ -530,6 +537,28 @@ export function Workbench({
         snap={board.kind === 'snap'}
         guided={guided}
       />
+      {power && volts !== null && (
+        <div className="supply-control" role="group" aria-label={strings.supply}>
+          <span aria-hidden="true">{strings.supply}</span>
+          <button
+            type="button"
+            aria-label={strings.supplyDown}
+            disabled={volts <= SUPPLY_VOLTS.min}
+            onClick={() => setVolts(power.id, volts - SUPPLY_VOLTS.step)}
+          >
+            −
+          </button>
+          <output>{strings.supplyVolts(volts)}</output>
+          <button
+            type="button"
+            aria-label={strings.supplyUp}
+            disabled={volts >= SUPPLY_VOLTS.max}
+            onClick={() => setVolts(power.id, volts + SUPPLY_VOLTS.step)}
+          >
+            +
+          </button>
+        </div>
+      )}
       <p className="warning" role="status">
         {shorted ? strings.shortCircuit : blown > 0 ? strings.ledPopped : ''}
       </p>
@@ -558,6 +587,7 @@ export function Workbench({
         hintedId={hint?.removeId ?? null}
         onHolePointerDown={onHolePointerDown}
         onPartPointerDown={onPartPointerDown}
+        supply={supply}
         view={
           zoomable
             ? viewBox(

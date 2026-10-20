@@ -162,6 +162,42 @@ test('shares a sandbox circuit in a link that opens it again', async ({ page, co
   await expect(opened.locator('.board .part-wire:not(.part-ghost)')).toHaveCount(1);
 });
 
+test('turns the sandbox’s power supply, and shares how far it’s turned', async ({
+  page,
+  context,
+}) => {
+  await page.getByRole('button', { name: 'Sandbox' }).click();
+  const supply = page.getByRole('group', { name: 'Power supply' });
+  const down = supply.getByRole('button', { name: 'Turn the power supply down' });
+  await expect(supply.locator('output')).toHaveText('3.0 V');
+  await expect(page.locator('.board .supply-reading')).toHaveText('3.0 V');
+
+  for (let i = 0; i < 3; i++) {
+    await supply.getByRole('button', { name: 'Turn the power supply up' }).click();
+  }
+  await expect(supply.locator('output')).toHaveText('4.5 V');
+  await expect(page.locator('.board .supply-reading')).toHaveText('4.5 V');
+
+  // Turning it isn't building, so there's nothing to undo.
+  await expect(page.getByRole('button', { name: 'Undo' })).toBeDisabled();
+
+  await page.getByRole('button', { name: 'Share' }).click();
+  const link = await page.getByRole('textbox', { name: 'Share' }).inputValue();
+  expect(link).toContain('#c=1_v.4.5');
+  const opened = await context.newPage();
+  await opened.goto(link);
+  await expect(opened.getByRole('group', { name: 'Power supply' }).locator('output')).toHaveText(
+    '4.5 V',
+  );
+
+  // Off is as far down as it goes.
+  for (let i = 0; i < 9; i++) {
+    await down.click();
+  }
+  await expect(supply.locator('output')).toHaveText('0.0 V');
+  await expect(down).toBeDisabled();
+});
+
 test('opens a share link with the parts unlocked so far', async ({ page, context }) => {
   // Saved progress that has finished *switch-1*, which unlocks the switch.
   await page.evaluate(

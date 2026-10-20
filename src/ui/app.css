@@ -139,8 +139,9 @@ h2 {
   .workbench {
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto auto 1fr;
+    grid-template-rows: auto auto auto auto auto auto 1fr;
     grid-template-areas:
+      'tray supply'
       'tray warning'
       'tray board'
       'wires board'
@@ -201,6 +202,10 @@ h2 {
 
   .workbench > .warning {
     grid-area: warning;
+  }
+
+  .workbench > .supply-control {
+    grid-area: supply;
   }
 
   /* Fills the rows the warning leaves; the drawing keeps its shape, centred in them. */
@@ -446,6 +451,56 @@ button[aria-pressed='true'] {
   fill: #2b2a28;
 }
 
+/* A bench power supply: a grey case with a green readout, a knob and two terminals. */
+.supply-body {
+  fill: #5d6670;
+}
+
+.supply-screen {
+  fill: #16231b;
+}
+
+.supply-reading {
+  fill: #7dffa0;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-anchor: middle;
+}
+
+.supply-knob {
+  fill: #2b2a28;
+  stroke: #9aa2ab;
+  stroke-width: 2;
+}
+
+.supply-pointer {
+  stroke: #fff;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.supply-terminal {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+.supply-plus {
+  fill: #e5484d;
+}
+
+.supply-minus {
+  fill: #2b2b2b;
+}
+
+.supply-screen,
+.supply-reading,
+.supply-knob,
+.supply-pointer,
+.supply-terminal {
+  pointer-events: none;
+}
+
 .battery-nub {
   fill: #b8bcc2;
 }
@@ -592,6 +647,31 @@ button[aria-pressed='true'] {
   gap: 10px;
   margin: 0 0 12px;
   font-weight: 700;
+}
+
+/* The power supply's own buttons, above the board: down, what it's set to, up. */
+.supply-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.supply-control button {
+  min-width: 48px;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.supply-control output {
+  min-width: 4.5em;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #16231b;
+  color: #7dffa0;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
 .light-control input {

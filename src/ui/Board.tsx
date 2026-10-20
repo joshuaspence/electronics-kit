@@ -50,6 +50,8 @@ interface BoardProps {
   view?: readonly [number, number, number, number] | undefined;
   /** A press on the board itself, between holes and parts: on a zoomable board, a pan. */
   onBackgroundPointerDown?: ((event: ReactPointerEvent) => void) | undefined;
+  /** The battery beside the board is the sandbox's power supply. */
+  supply?: boolean;
 }
 
 /**
@@ -75,6 +77,7 @@ export function Board({
   onPartPointerDown,
   view,
   onBackgroundPointerDown,
+  supply = false,
 }: BoardProps) {
   const [hoverStrip, setHoverStrip] = useState<string | null>(null);
   const lit = (strip: string) => (targetStrips ? targetStrips.has(strip) : strip === hoverStrip);
@@ -168,6 +171,7 @@ export function Board({
                 part.spec.kind === 'battery' &&
                 part.at.every((l) => l.kind === 'rail' && l.position === 1)
               }
+              supply={supply}
             />
           </g>
         );
