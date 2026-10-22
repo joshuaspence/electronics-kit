@@ -1,4 +1,4 @@
-name: CI
+name: Test
 
 on:
   pull_request:
@@ -9,12 +9,22 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  check:
-    name: Lint, typecheck, unit tests and build
+  # The one name the `master` ruleset requires, however the jobs below grow.
+  all:
+    name: Test
+    needs: [unit, e2e]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - if: needs.unit.result != 'success' || needs.e2e.result != 'success'
+        run: exit 1
+
+  unit:
+    name: Vitest
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -24,22 +34,17 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm typecheck
       - run: pnpm test
-      - run: pnpm exec vite build
-      - name: Check bundle size
-        run: pnpm size
-      # PR preview: download the artifact and serve it with `pnpm preview` (docs/design.md §8).
-      - uses: actions/upload-artifact@v7
-        with:
-          name: site
-          path: dist
-          retention-days: 14
 
   e2e:
-    name: Playwright (Chromium, WebKit)
+    name: Playwright (${{ matrix.browser }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser:
+          - chromium
+          - webkit
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -48,11 +53,11 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium webkit
-      - run: pnpm test:e2e
+      - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+      - run: pnpm test:e2e --project ${{ matrix.browser }}
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.browser }}
           path: playwright-report
           retention-days: 14

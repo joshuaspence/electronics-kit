@@ -378,7 +378,7 @@ selected at all, so **Rotate** still turns the parts that come out of the tray.
 | Lint/format | ESLint (typescript-eslint) + Prettier; a lint rule bans `core/` from importing `ui/` or React |
 | Package manager | pnpm, Node version pinned |
 | Deploy | `actions/deploy-pages` on push to `master` |
-| PR previews | The built site uploaded as the `site` artifact of the CI run |
+| PR previews | The built site uploaded as the `site` artifact of the Build run |
 | Dependency updates | Dependabot (npm and GitHub Actions, weekly, minor/patch grouped) |
 
 Layout:
