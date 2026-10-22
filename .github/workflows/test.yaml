@@ -25,7 +25,7 @@ jobs:
         run: 'exit 1'
 
   unit:
-    name: 'Vitest'
+    name: 'Unit Test'
     runs-on: 'ubuntu-latest'
     steps:
       - uses: 'actions/checkout@v7'
@@ -37,8 +37,9 @@ jobs:
       - run: 'pnpm install --frozen-lockfile'
       - run: 'pnpm test'
 
+  # GitHub appends the matrix values, so these run as `E2E Test (chromium)` and `E2E Test (webkit)`.
   e2e:
-    name: 'Playwright (${{ matrix.browser }})'
+    name: 'E2E Test'
     runs-on: 'ubuntu-latest'
     strategy:
       fail-fast: false
