@@ -18,9 +18,9 @@ jobs:
     name: 'Build'
     runs-on: 'ubuntu-latest'
     steps:
-      - uses: 'actions/checkout@v7'
-      - uses: 'pnpm/action-setup@v6'
-      - uses: 'actions/setup-node@v7'
+      - uses: 'actions/checkout@v7.0.1'
+      - uses: 'pnpm/action-setup@v6.0.10'
+      - uses: 'actions/setup-node@v7.1.0'
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
@@ -32,7 +32,7 @@ jobs:
         run: 'pnpm size'
 
       # PR preview: download the artifact and serve it with `pnpm preview` (docs/design.md §8).
-      - uses: 'actions/upload-artifact@v7'
+      - uses: 'actions/upload-artifact@v7.0.2'
         with:
           name: 'site'
           path: 'dist'
