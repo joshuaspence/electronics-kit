@@ -28,9 +28,9 @@ jobs:
     name: 'Unit Test'
     runs-on: 'ubuntu-latest'
     steps:
-      - uses: 'actions/checkout@v7'
-      - uses: 'pnpm/action-setup@v6'
-      - uses: 'actions/setup-node@v7'
+      - uses: 'actions/checkout@v7.0.1'
+      - uses: 'pnpm/action-setup@v6.0.10'
+      - uses: 'actions/setup-node@v7.1.0'
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
@@ -48,9 +48,9 @@ jobs:
           - 'chromium'
           - 'webkit'
     steps:
-      - uses: 'actions/checkout@v7'
-      - uses: 'pnpm/action-setup@v6'
-      - uses: 'actions/setup-node@v7'
+      - uses: 'actions/checkout@v7.0.1'
+      - uses: 'pnpm/action-setup@v6.0.10'
+      - uses: 'actions/setup-node@v7.1.0'
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
@@ -58,7 +58,7 @@ jobs:
       - run: 'pnpm exec playwright install --with-deps ${{ matrix.browser }}'
       - run: 'pnpm test:e2e --project ${{ matrix.browser }}'
 
-      - uses: 'actions/upload-artifact@v7'
+      - uses: 'actions/upload-artifact@v7.0.2'
         if: 'failure()'
         with:
           name: 'playwright-report-${{ matrix.browser }}'
