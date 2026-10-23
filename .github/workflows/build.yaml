@@ -1,38 +1,39 @@
-name: Build
+---
+name: 'Build'
 
 on:
-  pull_request:
+  pull_request: {}
   push:
-    branches: [master]
+    branches: ['master']
 
 permissions:
-  contents: read
+  contents: 'read'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: '${{ github.workflow }}-${{ github.ref }}'
   cancel-in-progress: true
 
 jobs:
   build:
-    name: Build
-    runs-on: ubuntu-latest
+    name: 'Build'
+    runs-on: 'ubuntu-latest'
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: 'actions/checkout@v7'
+      - uses: 'pnpm/action-setup@v6'
+      - uses: 'actions/setup-node@v7'
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+      - run: 'pnpm install --frozen-lockfile'
 
       # `vite build` rather than `pnpm build`, which typechecks first: `lint.yaml` already does.
-      - run: pnpm exec vite build
-      - name: Check bundle size
-        run: pnpm size
+      - run: 'pnpm exec vite build'
+      - name: 'Check bundle size'
+        run: 'pnpm size'
 
       # PR preview: download the artifact and serve it with `pnpm preview` (docs/design.md §8).
-      - uses: actions/upload-artifact@v7
+      - uses: 'actions/upload-artifact@v7'
         with:
-          name: site
-          path: dist
+          name: 'site'
+          path: 'dist'
           retention-days: 14

@@ -1,63 +1,66 @@
-name: Test
+---
+name: 'Test'
 
 on:
-  pull_request:
+  pull_request: {}
   push:
-    branches: [master]
+    branches: ['master']
 
 permissions:
-  contents: read
+  contents: 'read'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: '${{ github.workflow }}-${{ github.ref }}'
   cancel-in-progress: true
 
 jobs:
   # The one name the `master` ruleset requires, however the jobs below grow.
   all:
-    name: Test
-    needs: [unit, e2e]
-    if: always()
-    runs-on: ubuntu-latest
+    name: 'Test'
+    needs: ['unit', 'e2e']
+    if: 'always()'
+    runs-on: 'ubuntu-latest'
     steps:
-      - if: needs.unit.result != 'success' || needs.e2e.result != 'success'
-        run: exit 1
+      - if: "needs.unit.result != 'success' || needs.e2e.result != 'success'"
+        run: 'exit 1'
 
   unit:
-    name: Vitest
-    runs-on: ubuntu-latest
+    name: 'Unit Test'
+    runs-on: 'ubuntu-latest'
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: 'actions/checkout@v7'
+      - uses: 'pnpm/action-setup@v6'
+      - uses: 'actions/setup-node@v7'
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm test
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+      - run: 'pnpm install --frozen-lockfile'
+      - run: 'pnpm test'
 
+  # GitHub appends the matrix values, so these run as `E2E Test (chromium)` and `E2E Test (webkit)`.
   e2e:
-    name: Playwright (${{ matrix.browser }})
-    runs-on: ubuntu-latest
+    name: 'E2E Test'
+    runs-on: 'ubuntu-latest'
     strategy:
       fail-fast: false
       matrix:
         browser:
-          - chromium
-          - webkit
+          - 'chromium'
+          - 'webkit'
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: 'actions/checkout@v7'
+      - uses: 'pnpm/action-setup@v6'
+      - uses: 'actions/setup-node@v7'
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
-      - run: pnpm test:e2e --project ${{ matrix.browser }}
-      - uses: actions/upload-artifact@v7
-        if: failure()
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+      - run: 'pnpm install --frozen-lockfile'
+      - run: 'pnpm exec playwright install --with-deps ${{ matrix.browser }}'
+      - run: 'pnpm test:e2e --project ${{ matrix.browser }}'
+
+      - uses: 'actions/upload-artifact@v7'
+        if: 'failure()'
         with:
-          name: playwright-report-${{ matrix.browser }}
-          path: playwright-report
+          name: 'playwright-report-${{ matrix.browser }}'
+          path: 'playwright-report'
           retention-days: 14
